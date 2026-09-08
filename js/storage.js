@@ -466,7 +466,13 @@ const CJStorage = {
       const store = this.getStoreById(auditData.storeId);
       if (store) {
         store.status = (auditData.tempStatus === 'pass' && auditData.score >= 80) ? 'good' : ((auditData.tempStatus === 'danger' || !auditData.isPowered) ? 'danger' : 'warning');
-        store.lastAuditDate = new Date().toLocaleDateString("vi-VN");
+        store.isAudited = true;
+        const now = new Date();
+        store.lastAuditDate = now.toLocaleDateString("vi-VN");
+        store.lastAuditTime = now.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
+        store.lastAuditFull = `${store.lastAuditTime} ${store.lastAuditDate}`;
+        store.lastAuditor = auditData.auditorName || (typeof CJAuth !== "undefined" && CJAuth.getCurrentUser()?.name) || "";
+        store.posmCondition = auditData.condition || auditData.workingCondition || "Hoạt động tốt";
         store.lastTemp = auditData.temperature;
         store.lastScore = auditData.score;
         this.updateStore(store);
@@ -855,7 +861,11 @@ const CJStorage = {
       const stores = this.getAllStores();
       stores.forEach(s => {
         s.status = "good";
+        s.isAudited = false;
         s.lastAuditDate = "Chưa kiểm tra";
+        delete s.lastAuditTime;
+        delete s.lastAuditFull;
+        delete s.lastAuditor;
         s.posmCondition = "Sử Dụng Được";
         delete s.ticketCreated;
         delete s.ticketDetails;

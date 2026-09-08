@@ -653,8 +653,22 @@ const CJAudit = {
       return;
     }
 
+    const allAudits = (typeof CJStorage !== "undefined" && CJStorage.getAudits) ? CJStorage.getAudits() : [];
+    const auditMap = new Map();
+    allAudits.forEach(a => {
+      if (a.storeId && !auditMap.has(a.storeId)) {
+        auditMap.set(a.storeId, a);
+      }
+    });
+
     container.innerHTML = stores.map((store, idx) => {
       const freezer = CJStorage.getFreezerById(store.freezerId);
+      const storeAudit = auditMap.get(store.id);
+      const isAudited = Boolean(store.isAudited || storeAudit || (store.lastAuditDate && store.lastAuditDate !== "Chưa kiểm tra"));
+      const auditTimeStr = storeAudit ? (storeAudit.auditTime || storeAudit.date) : (store.lastAuditFull || store.lastAuditDate || "");
+      const auditorNameStr = storeAudit ? (storeAudit.auditorName || storeAudit.auditorUser || "") : (store.lastAuditor || store.salesRep || store.gsbhName || "");
+      const auditCondStr = storeAudit ? (storeAudit.condition || storeAudit.workingCondition || "") : (store.posmCondition || "");
+
       const isGood = store.status === 'good';
       const isWarning = store.status === 'warning';
       const statusText = isGood ? 'Tủ tốt' : isWarning ? 'Cảnh báo (-14°C)' : 'Sự cố / Hư hỏng';
@@ -662,17 +676,27 @@ const CJAudit = {
       const gmapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${store.lat},${store.lng}`;
 
       return `
-        <div class="bg-white rounded-2xl border border-gray-200 p-3.5 sm:p-4 shadow-sm space-y-2.5 hover:border-blue-300 transition">
+        <div class="bg-white rounded-2xl border ${isAudited ? 'border-2 border-emerald-500/80 bg-emerald-50/10' : 'border-gray-200'} p-3.5 sm:p-4 shadow-sm space-y-2.5 hover:border-blue-300 transition">
           
-          <!-- Header: Store Name + Status Pill + GT Badge (Khớp 100% Ảnh Mẫu 3) -->
+          <!-- Header: Store Name + Status Pill + GT Badge + Audited Status Badge -->
           <div class="flex items-start justify-between gap-2">
-            <div>
-              <div class="flex items-center gap-1.5 mb-0.5">
+            <div class="flex-1">
+              <div class="flex flex-wrap items-center gap-1.5 mb-0.5">
                 <span class="text-[10px] bg-red-100 text-cj-red font-black px-1.5 py-0.5 rounded">GT</span>
                 <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${store.isActive !== false ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-600'}">
                   ${store.isActive !== false ? 'Hoạt động' : 'Ngừng'}
                 </span>
                 <span class="text-[10px] text-gray-400 font-bold">${store.id}</span>
+                ${isAudited ? `
+                <span class="text-[10px] font-black px-2 py-0.5 rounded-full bg-emerald-600 text-white shadow-xs flex items-center gap-1 ml-auto">
+                  <span>✓</span>
+                  <span>ĐÃ KIỂM TRA</span>
+                </span>
+                ` : `
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-300 ml-auto">
+                  Chưa kiểm
+                </span>
+                `}
               </div>
               <h3 class="font-black text-gray-900 text-sm sm:text-base leading-tight">${store.name}</h3>
             </div>
@@ -708,17 +732,48 @@ const CJAudit = {
             </span>
           </div>
 
-          <!-- CORE ACTION BUTTONS: [🔍 Kiểm tra] + [📍 Maps] -->
+          <!-- DÒNG THỂ HIỆN RÕ RÀNG TRẠNG THÁI ĐÃ KIỂM TRA (YÊU CẦU NGƯỜI DÙNG) -->
+          ${isAudited ? `
+          <div class="bg-gradient-to-r from-emerald-50 to-teal-50 border-2 border-emerald-500/80 p-2.5 rounded-xl flex items-center justify-between text-xs shadow-xs">
+            <div class="flex items-center gap-2">
+              <span class="w-6 h-6 rounded-full bg-emerald-600 text-white flex items-center justify-center font-black text-xs shadow shrink-0">✓</span>
+              <div>
+                <div class="font-black text-emerald-900 text-xs flex items-center gap-1">
+                  <span>ĐÃ KIỂM TRA:</span>
+                  <span class="text-emerald-700 font-bold">${auditTimeStr || 'Đã hoàn tất'}</span>
+                </div>
+                <div class="text-[10px] text-emerald-800 font-medium mt-0.5">
+                  Người kiểm: <b class="font-extrabold text-emerald-950">${auditorNameStr || 'Nhân sự phụ trách'}</b> ${auditCondStr ? `• Trạng thái: <b class="text-emerald-900">${auditCondStr}</b>` : ''}
+                </div>
+              </div>
+            </div>
+            <span class="bg-emerald-600 text-white text-[10px] font-black px-2.5 py-1 rounded-lg uppercase tracking-wider shrink-0 shadow-xs">
+              ✓ Đã kiểm
+            </span>
+          </div>
+          ` : `
+          <div class="bg-amber-50/70 border border-dashed border-amber-300 px-3 py-1.5 rounded-xl flex items-center justify-between text-xs text-amber-900">
+            <div class="flex items-center gap-1.5 font-bold">
+              <span>⏳</span>
+              <span>Chưa kiểm tra tủ đông tại điểm bán này</span>
+            </div>
+            <span class="text-[10px] font-black bg-amber-200/80 text-amber-950 px-2 py-0.5 rounded-md uppercase">
+              Cần kiểm
+            </span>
+          </div>
+          `}
+
+          <!-- CORE ACTION BUTTONS: [🔍 Kiểm tra / 🔄 Kiểm tra lại] + [📍 Maps] -->
           <div class="flex items-center gap-2 pt-1">
             
-            <!-- Button 1: Kiểm tra -> Mở màn hình kiểm tra tủ đông POSM -->
+            <!-- Button 1: Kiểm tra / Kiểm tra lại -->
             <button 
               type="button" 
               onclick="CJAudit.selectStore('${store.id}')" 
-              class="flex-1 bg-[#184594] hover:bg-[#123675] text-white font-black text-xs py-2.5 px-3 rounded-xl shadow flex items-center justify-center gap-1.5 transition active:scale-95 cursor-pointer" 
-              title="Bắt đầu kiểm tra thiết bị tủ đông tại điểm bán">
-              <span class="text-sm font-black">🔍</span>
-              <span>Kiểm tra</span>
+              class="flex-1 ${isAudited ? 'bg-emerald-700 hover:bg-emerald-800 border border-emerald-600' : 'bg-[#184594] hover:bg-[#123675]'} text-white font-black text-xs py-2.5 px-3 rounded-xl shadow flex items-center justify-center gap-1.5 transition active:scale-95 cursor-pointer" 
+              title="${isAudited ? 'Xem lại hoặc kiểm tra lại tủ đông tại điểm bán này' : 'Bắt đầu kiểm tra thiết bị tủ đông tại điểm bán'}">
+              <span class="text-sm font-black">${isAudited ? '🔄' : '🔍'}</span>
+              <span>${isAudited ? 'Kiểm tra lại' : 'Kiểm tra'}</span>
             </button>
 
             <!-- Button 2: Google Maps Direct Link -->
@@ -1253,7 +1308,12 @@ const CJAudit = {
       const storeObj = CJStorage.getStoreById(this.currentStore.id);
       if (storeObj) {
         storeObj.status = isAbnormal ? "danger" : "good";
-        storeObj.lastAuditDate = new Date().toLocaleDateString("vi-VN");
+        storeObj.isAudited = true;
+        const now = new Date();
+        storeObj.lastAuditDate = now.toLocaleDateString("vi-VN");
+        storeObj.lastAuditTime = now.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
+        storeObj.lastAuditFull = `${storeObj.lastAuditTime} ${storeObj.lastAuditDate}`;
+        storeObj.lastAuditor = user.name;
         storeObj.posmCondition = condition;
         if (CJStorage.updateStore) CJStorage.updateStore(storeObj);
         else if (CJStorage.saveStore) CJStorage.saveStore(storeObj);
@@ -1306,6 +1366,7 @@ const CJAudit = {
     if (typeof CJDashboard !== "undefined") {
       CJDashboard.refresh();
     }
+    this.renderStoreList();
   },
 
   // ================= MODAL THU HỒI POSM =================
