@@ -1,0 +1,267 @@
+/* ==========================================================================
+   CJ Foods MarketAudit - Professional FMCG Styling
+   ========================================================================== */
+
+:root {
+  --cj-red: #E31837;
+  --cj-red-dark: #B80F27;
+  --cj-blue: #002B49;
+  --cj-orange: #F47920;
+  --cj-green: #10B981;
+}
+
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+  background-color: #F3F4F6;
+  color: #1F2937;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #F1F5F9;
+}
+::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94A3B8;
+}
+
+/* Mobile screen container simulator */
+.mobile-frame-container {
+  transition: max-width 0.3s ease, border 0.3s ease, box-shadow 0.3s ease;
+  background: #FFFFFF;
+}
+
+/* ==========================================================================
+   DEVICE VIEW MODES: MOBILE SMARTPHONE SIMULATOR vs DESKTOP WEB PORTAL
+   ========================================================================== */
+
+/* 1. Mobile Phone Simulator (414px smartphone canvas on PC) */
+.app-phone-simulator {
+  max-width: 418px;
+  width: 100%;
+  margin: 0 auto;
+  background-color: #FFFFFF;
+  border-radius: 46px;
+  border: 9px solid #0f172a;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.1);
+  position: relative;
+  overflow: hidden;
+  min-height: 840px;
+  padding-bottom: 64px; /* clearance for bottom 5-tab bar */
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Phone Speaker & Dynamic Island Notch */
+.phone-speaker-notch {
+  width: 110px;
+  height: 18px;
+  background-color: #0f172a;
+  border-radius: 9999px;
+  margin: 6px auto 2px auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  z-index: 30;
+  position: relative;
+}
+
+.phone-speaker-notch .notch-camera {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: #1e293b;
+  border: 1px solid #334155;
+}
+
+.phone-speaker-notch .notch-speaker {
+  width: 40px;
+  height: 3.5px;
+  border-radius: 9999px;
+  background-color: #334155;
+}
+
+/* Phone Home Indicator Bar at bottom */
+.phone-home-indicator {
+  width: 120px;
+  height: 4px;
+  background-color: #94a3b8;
+  border-radius: 9999px;
+  position: absolute;
+  bottom: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 30;
+  pointer-events: none;
+}
+
+/* 2. Desktop Web Portal (Widescreen 1280px canvas on PC) */
+.app-desktop-portal {
+  max-width: 80rem; /* max-w-7xl */
+  width: 100%;
+  margin: 0 auto;
+  background-color: transparent;
+  border-radius: 0;
+  border: none;
+  box-shadow: none;
+  position: relative;
+  overflow: visible;
+  min-height: auto;
+  padding-bottom: 2rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.app-desktop-portal .phone-speaker-notch,
+.app-desktop-portal .phone-home-indicator,
+.app-desktop-portal .mobile-shell-statusbar {
+  display: none !important;
+}
+
+/* Desktop 2-column grid for categories when in desktop mode */
+.app-desktop-portal #dashAuditCategoriesContainer {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.25rem;
+}
+
+/* Desktop split layout for customer list + interactive map */
+.app-desktop-portal .desktop-customer-split {
+  display: grid;
+  grid-template-columns: 7fr 5fr;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.app-desktop-portal .desktop-customer-split #subViewStoreMap {
+  display: block !important;
+  position: sticky;
+  top: 5rem;
+}
+
+.app-desktop-portal .desktop-customer-split #gsbhMap {
+  height: 600px !important;
+}
+
+.app-desktop-portal .desktop-customer-split #subViewStoreList {
+  max-height: 800px;
+}
+
+/* Hide mobile bottom tab bar in desktop mode */
+.app-desktop-portal #mobileBottomNavBar {
+  display: none !important;
+}
+
+/* Visibility switches between Mobile Simulator and Desktop Portal */
+.app-phone-simulator .mobile-dash-header {
+  display: block !important;
+}
+.app-phone-simulator .desktop-dash-header {
+  display: none !important;
+}
+.app-phone-simulator .mobile-dash-kpi {
+  display: grid !important;
+}
+.app-phone-simulator .desktop-toolbar-box {
+  display: none !important;
+}
+.app-phone-simulator .desktop-customer-split {
+  display: block !important;
+}
+
+.app-desktop-portal .mobile-dash-header {
+  display: none !important;
+}
+.app-desktop-portal .desktop-dash-header {
+  display: block !important;
+}
+.app-desktop-portal .mobile-dash-kpi {
+  display: none !important;
+}
+.app-desktop-portal .desktop-toolbar-box {
+  display: flex !important;
+}
+
+/* Mobile real phone media queries (< 768px) */
+@media (max-width: 767px) {
+  body {
+    background-color: #F8FAFC;
+  }
+  .app-phone-simulator {
+    max-width: 100% !important;
+    width: 100% !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    margin: 0 !important;
+    min-height: 100vh !important;
+    padding-bottom: 70px !important;
+  }
+  .phone-speaker-notch,
+  .phone-home-indicator {
+    display: none !important;
+  }
+  #deviceModeIndicator {
+    display: none !important;
+  }
+}
+
+/* Photo capture card hover effects */
+.photo-slot {
+  transition: all 0.2s ease-in-out;
+}
+.photo-slot:hover {
+  border-color: #E31837;
+  background-color: #FEF2F2;
+}
+
+/* Status pulses */
+@keyframes pulse-subtle {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.85; transform: scale(1.03); }
+}
+
+.pulse-alert {
+  animation: pulse-subtle 2s infinite ease-in-out;
+}
+
+/* Custom Map Marker */
+.custom-map-marker {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Hide elements nicely */
+.hidden {
+  display: none !important;
+}
+
+/* Mobile Bottom Navigation Bar */
+.mobile-bottom-nav {
+  box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* Slider styling */
+input[type=range] {
+  accent-color: #E31837;
+}
+
+/* Print view optimization */
+@media print {
+  header, nav, .no-print {
+    display: none !important;
+  }
+  body {
+    background: #FFFFFF;
+  }
+}
+

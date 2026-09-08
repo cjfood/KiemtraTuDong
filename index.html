@@ -1,0 +1,2490 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>CJ MarketAudit Pro - Ứng Dụng Kiểm Tra Thị Trường Cho GSBH Kênh GT (CJ Foods)</title>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            cj: {
+              red: '#E31837',
+              redDark: '#B80F27',
+              blue: '#002B49',
+              orange: '#F47920',
+              green: '#10B981'
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Leaflet Maps CSS & JS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- SheetJS (Excel Import & Export) -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col antialiased">
+
+  <!-- ================= MÀN HÌNH ĐĂNG NHẬP CJ FOODS DMS ================= -->
+  <div id="loginModalOverlay" class="fixed inset-0 z-50 bg-[#07162c] flex items-center justify-center p-2 sm:p-4 overflow-y-auto font-sans">
+    
+    <!-- Mobile Phone Mockup Device Canvas -->
+    <div class="w-full max-w-[380px] sm:max-w-[400px] min-h-[690px] rounded-[38px] overflow-hidden shadow-2xl relative flex flex-col justify-between border-2 sm:border-4 border-gray-800/80 bg-gradient-to-b from-[#f8fafc] via-[#edf4fa] to-[#0d2b5c] select-none my-auto">
+      
+      <!-- Upper Section: White/Light Blue Background with Status Bar, Flag & CJ FOODS Logo -->
+      <div class="relative bg-gradient-to-b from-[#f4f8fd] via-[#ffffff] to-[#f8fafd] pt-2 pb-6 px-4">
+        
+        <!-- Status Bar -->
+        <div class="flex items-center justify-between text-[11px] text-gray-800 font-bold mb-3 px-1">
+          <!-- Clock & Bell Icon -->
+          <div class="flex items-center gap-1">
+            <span id="loginClock">09:42</span>
+            <!-- Bell vibrating/silent icon -->
+            <svg class="w-3.5 h-3.5 text-gray-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+              <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+              <line x1="2" y1="2" x2="22" y2="22" stroke="currentColor" stroke-width="2"/>
+            </svg>
+          </div>
+
+          <!-- Signal, 5G & Battery -->
+          <div class="flex items-center gap-1.5 text-[11px]">
+            <!-- 4 dots cellular signal -->
+            <div class="flex items-center gap-0.5">
+              <span class="w-1.5 h-1.5 rounded-full bg-gray-800"></span>
+              <span class="w-1.5 h-1.5 rounded-full bg-gray-800"></span>
+              <span class="w-1.5 h-1.5 rounded-full bg-gray-800"></span>
+              <span class="w-1.5 h-1.5 rounded-full bg-gray-800"></span>
+            </div>
+            <span class="font-bold text-[10px] ml-0.5">5G</span>
+            <!-- Battery capsule with 85 -->
+            <div class="flex items-center bg-gray-800 text-white text-[9px] font-black px-1.5 py-0.5 rounded-md leading-none ml-0.5">
+              85
+            </div>
+          </div>
+        </div>
+
+        <!-- Top Right Flag Dropdown (Vietnam Flag) -->
+        <div class="flex justify-end mb-2 pr-1">
+          <div class="flex items-center gap-1 bg-white/80 backdrop-blur px-1.5 py-0.5 rounded shadow-sm border border-gray-200/60 cursor-pointer">
+            <!-- Vietnam Flag SVG -->
+            <svg class="w-6 h-4 rounded-sm shadow-inner" viewBox="0 0 30 20">
+              <rect width="30" height="20" fill="#da251d"/>
+              <polygon points="15,4 16.5,8.8 21.6,8.8 17.5,11.8 19,16.6 15,13.6 11,16.6 12.5,11.8 8.4,8.8 13.5,8.8" fill="#ffff00"/>
+            </svg>
+            <!-- Down arrow -->
+            <svg class="w-3 h-3 text-black fill-current" viewBox="0 0 20 20">
+              <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/>
+            </svg>
+          </div>
+        </div>
+
+        <!-- CJ FOODS Brand Logo (Khớp 100% chuẩn nhận diện) -->
+        <div class="flex flex-col items-center justify-center pt-1 pb-2">
+          <!-- CJ Petals Emblem -->
+          <div class="relative w-24 h-20 flex items-center justify-center">
+            <svg class="w-24 h-20" viewBox="0 0 120 90" fill="none">
+              <!-- Blue petal on top -->
+              <path d="M58 8 C58 8 72 15 70 32 C68 45 52 46 50 36 C48 24 58 8 58 8 Z" fill="#0077c8"/>
+              <!-- Red petal on bottom-left -->
+              <path d="M38 48 C38 48 50 48 56 62 C62 76 46 86 36 78 C26 70 38 48 38 48 Z" fill="#e31837"/>
+              <!-- Yellow-Orange petal on bottom-right -->
+              <path d="M68 45 C68 45 84 45 86 58 C88 72 72 78 64 68 C58 60 68 45 68 45 Z" fill="#f58220"/>
+              <!-- CJ bold letters in center -->
+              <text x="32" y="44" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="28" fill="#111827" letter-spacing="-1">CJ</text>
+            </svg>
+          </div>
+          <!-- FOODS text -->
+          <div class="font-black text-xl tracking-[0.18em] text-gray-900 mt-1 uppercase" style="font-family: 'Arial Black', Impact, sans-serif;">
+            FOODS
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Middle Floating Card: Login Box (Khớp 100% ảnh mẫu) -->
+      <div class="px-4 -mt-2 z-10">
+        <div class="bg-white rounded-3xl p-5 sm:p-6 shadow-[0_12px_36px_rgba(0,0,0,0.18)] border border-gray-100">
+          
+          <h2 class="text-xl sm:text-2xl font-black text-gray-900 text-center mb-5 tracking-tight">
+            Đăng nhập
+          </h2>
+
+          <form id="appLoginForm" class="space-y-3.5">
+            
+            <!-- Username input with User Icon -->
+            <div class="rounded-2xl border border-gray-300 px-3.5 py-3 flex items-center gap-2.5 bg-white focus-within:border-blue-600 focus-within:ring-2 focus-within:ring-blue-100 transition shadow-sm">
+              <svg class="w-5 h-5 text-gray-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                <circle cx="12" cy="7" r="4"/>
+              </svg>
+              <input type="text" id="loginUsername" value="" placeholder="Nhập tài khoản hoặc Mã NV (vd: admin)" class="w-full text-sm sm:text-base font-semibold text-gray-800 outline-none bg-transparent placeholder-gray-400" required />
+            </div>
+
+            <!-- Password input with Lock Icon & Eye toggle -->
+            <div class="rounded-2xl border border-gray-300 px-3.5 py-3 flex items-center gap-2.5 bg-white focus-within:border-blue-600 focus-within:ring-2 focus-within:ring-blue-100 transition shadow-sm">
+              <svg class="w-5 h-5 text-gray-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+              </svg>
+              <input type="password" id="loginPassword" value="" placeholder="Nhập mật khẩu (mặc định: 123)" class="w-full text-sm sm:text-base font-semibold text-gray-800 outline-none bg-transparent placeholder-gray-400 tracking-wider" required />
+              
+              <!-- Eye-slash toggle button -->
+              <button type="button" onclick="CJApp.togglePasswordVisibility()" class="text-gray-400 hover:text-gray-700 transition p-0.5 shrink-0" title="Ẩn/Hiện mật khẩu">
+                <svg id="eyeIconOpen" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+                  <line x1="1" y1="1" x2="23" y2="23"/>
+                </svg>
+              </button>
+            </div>
+
+            <!-- Row: Remember me + Change Password Link -->
+            <div class="flex items-center justify-between text-xs pt-1 px-1">
+              <label class="flex items-center gap-1.5 cursor-pointer select-none text-gray-600 font-medium">
+                <input type="checkbox" id="loginRememberMe" checked class="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+                <span>Ghi nhớ đăng nhập</span>
+              </label>
+              <button type="button" onclick="CJApp.openChangePasswordModal()" class="text-blue-700 hover:text-blue-900 font-bold hover:underline flex items-center gap-1">
+                <span>🔒</span>
+                <span>Đổi mật khẩu</span>
+              </button>
+            </div>
+
+            <!-- Submit Button (Màu xanh navy chuẩn ảnh) -->
+            <button type="submit" class="w-full bg-[#1c3668] hover:bg-[#13274e] text-white font-black text-sm sm:text-base py-3.5 rounded-2xl shadow-lg transition active:scale-95 text-center flex items-center justify-center tracking-wide mt-1">
+              Đăng nhập
+            </button>
+
+          </form>
+
+        </div>
+      </div>
+
+      <!-- Lower Section: Deep Navy Blue Background with 3D Cyber Waves -->
+      <div class="relative bg-gradient-to-b from-[#12366b] via-[#0d2a58] to-[#081b3a] py-6 px-4 text-center overflow-hidden">
+        
+        <!-- 3D Vector Cyber Waves Mesh -->
+        <svg class="absolute inset-0 w-full h-full opacity-35 pointer-events-none" viewBox="0 0 400 200" fill="none">
+          <path d="M-50,180 C50,140 120,40 200,60 C280,80 350,160 450,120" stroke="#38bdf8" stroke-width="1.2" fill="none"/>
+          <path d="M-50,170 C60,130 130,30 210,50 C290,70 360,150 450,110" stroke="#60a5fa" stroke-width="1" fill="none"/>
+          <path d="M-50,160 C70,120 140,20 220,40 C300,60 370,140 450,100" stroke="#0284c7" stroke-width="0.8" fill="none"/>
+          <path d="M-50,190 C40,150 110,50 190,70 C270,90 340,170 450,130" stroke="#0ea5e9" stroke-width="1" fill="none"/>
+          <path d="M-50,150 C80,110 150,10 230,30 C310,50 380,130 450,90" stroke="#93c5fd" stroke-width="0.7" fill="none"/>
+          <path d="M-50,200 C30,160 100,60 180,80 C260,100 330,180 450,140" stroke="#38bdf8" stroke-width="0.9" fill="none"/>
+          <path d="M-50,140 C90,100 160,0 240,20 C320,40 390,120 450,80" stroke="#60a5fa" stroke-width="0.6" fill="none"/>
+        </svg>
+
+        <div class="relative z-10 text-blue-200/70 text-[11px] font-medium">
+          CJ Foods Vietnam • Market Audit & DMS System
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- ================= MODAL: CHANGE PASSWORD ================= -->
+  <div id="modalChangePassword" class="hidden fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-sm w-full p-5 space-y-4 shadow-2xl animate-fade-in border border-gray-200">
+      <div class="flex items-center justify-between border-b pb-3">
+        <div class="flex items-center gap-2">
+          <div class="w-9 h-9 rounded-xl bg-[#002B49] text-white flex items-center justify-center font-bold text-base shadow">
+            🔒
+          </div>
+          <div>
+            <h3 class="font-extrabold text-sm sm:text-base text-gray-900">Đổi Mật Khẩu</h3>
+            <p class="text-[11px] text-gray-500">Cập nhật mật khẩu tài khoản GSBH / NVBH / Admin</p>
+          </div>
+        </div>
+        <button type="button" onclick="CJApp.closeChangePasswordModal()" class="text-gray-400 hover:text-gray-700 text-xl font-bold p-1">✕</button>
+      </div>
+
+      <form id="formChangePassword" onsubmit="CJApp.submitChangePassword(event)" class="space-y-3">
+        <div>
+          <label class="block text-xs font-bold text-gray-700 mb-1">Chọn hoặc nhập tài khoản:</label>
+          <select id="cpUsernameSelect" onchange="CJApp.onSelectUserForPasswordChange(this.value)" class="w-full text-xs font-semibold border border-gray-300 rounded-xl p-2.5 outline-none focus:ring-2 focus:ring-blue-500 bg-white mb-1.5 cursor-pointer">
+            <option value="">-- Chọn tài khoản từ danh sách --</option>
+          </select>
+          <input type="text" id="cpUsername" placeholder="Hoặc gõ tài khoản (vd: CJ1330714, gsbh.bao, admin...)" class="w-full text-xs font-semibold border border-gray-300 rounded-xl p-2.5 outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50" required />
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-gray-700 mb-1">Mật Khẩu Hiện Tại:</label>
+          <input type="password" id="cpOldPassword" placeholder="Mật khẩu cũ (mặc định: 123 - Admin bỏ trống)" class="w-full text-xs font-semibold border border-gray-300 rounded-xl p-2.5 outline-none focus:ring-2 focus:ring-blue-500" />
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-gray-700 mb-1">Mật Khẩu Mới:</label>
+          <input type="password" id="cpNewPassword" placeholder="Nhập mật khẩu mới (ít nhất 3 ký tự)" class="w-full text-xs font-semibold border border-gray-300 rounded-xl p-2.5 outline-none focus:ring-2 focus:ring-blue-500" required />
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-gray-700 mb-1">Xác Nhận Mật Khẩu Mới:</label>
+          <input type="password" id="cpConfirmPassword" placeholder="Nhập lại mật khẩu mới" class="w-full text-xs font-semibold border border-gray-300 rounded-xl p-2.5 outline-none focus:ring-2 focus:ring-blue-500" required />
+        </div>
+
+        <div class="pt-2 flex justify-end gap-2 border-t">
+          <button type="button" onclick="CJApp.closeChangePasswordModal()" class="px-3.5 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-xs font-semibold transition">
+            Hủy
+          </button>
+          <button type="submit" class="px-4 py-2 bg-[#1c3668] hover:bg-[#13274e] text-white rounded-xl text-xs font-bold shadow transition active:scale-95">
+            Xác Nhận Đổi
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ================= TOP APPLICATION HEADER ================= -->
+  <header class="bg-[#002B49] text-white sticky top-0 z-40 shadow-md border-b-4 border-cj-red">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16">
+        
+        <!-- Logo & Title -->
+        <div class="flex items-center gap-3">
+          <div class="bg-cj-red text-white font-black text-lg px-2.5 py-1 rounded-lg shadow flex items-center gap-1 tracking-wider">
+            <span>CJ</span>
+            <span class="text-xs bg-white text-cj-red px-1 rounded font-black">FOODS</span>
+          </div>
+          <div>
+            <div class="font-extrabold text-base sm:text-lg tracking-tight flex items-center gap-2">
+              <span>CJ MarketAudit Pro</span>
+              <span class="hidden sm:inline-block text-[10px] bg-cj-orange text-white px-2 py-0.5 rounded font-bold uppercase tracking-wider">GSBH Kênh GT</span>
+            </div>
+            <div class="text-[11px] text-gray-300 hidden md:block">Quản Lý Tủ Đông Thị Trường & Dẫn Đường Điểm Bán Google Maps</div>
+          </div>
+        </div>
+
+        <!-- Desktop Navigation Tabs (2 Màn Hình Chính & Menu Phụ) -->
+        <nav class="hidden lg:flex items-center space-x-1.5">
+          <button class="app-nav-btn px-4 py-2 rounded-xl text-xs font-black transition flex items-center gap-1.5 shadow-sm border border-transparent" data-tab="dashboard">
+            <span>📊</span>
+            <span>MÀN HÌNH 1: DASHBOARD (GT)</span>
+          </button>
+          <button class="app-nav-btn px-4 py-2 rounded-xl text-xs font-black transition flex items-center gap-1.5 shadow-sm border border-transparent" data-tab="mobileAudit">
+            <span>🏪</span>
+            <span>MÀN HÌNH 2: KHÁCH HÀNG (GT)</span>
+          </button>
+          <button class="app-nav-btn px-3 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1 text-gray-300 hover:text-white" data-tab="promotions">
+            <span>🎁</span> CTKM
+          </button>
+          <button class="app-nav-btn px-3 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1 text-gray-300 hover:text-white" data-tab="products">
+            <span>📦</span> Sản Phẩm
+          </button>
+          <button class="app-nav-btn px-3 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1 text-gray-300 hover:text-white" data-tab="auditLog">
+            <span>📋</span> Nhật Ký
+          </button>
+          <button class="app-nav-btn px-3 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1 text-gray-300 hover:text-white" data-tab="tickets">
+            <span>🛠️</span> Ticket
+          </button>
+          <button class="app-nav-btn px-3 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1 text-gray-300 hover:text-white" data-tab="stores">
+            <span>📁</span> Dữ Liệu KH
+          </button>
+        </nav>
+
+        <!-- Right Controls: Device Mode Switcher, Export Excel, User Badge -->
+        <div class="flex items-center gap-2 sm:gap-3">
+          
+          <!-- Device Mode Switcher (Phân biệt rõ ràng Điện Thoại vs Máy Tính) -->
+          <div class="flex items-center bg-[#07162c] p-1 rounded-xl border border-blue-800/80 shadow-inner">
+            <button type="button" id="btnModeMobile" onclick="CJApp.setDeviceViewMode('mobile')" class="px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-black transition flex items-center gap-1.5 shadow bg-blue-600 text-white active:scale-95" title="Mô phỏng 100% ứng dụng di động thực địa cho GSBH/NVBH">
+              <span>📱</span>
+              <span class="hidden sm:inline">Bản Điện Thoại</span>
+              <span class="sm:hidden">Mobile</span>
+            </button>
+            <button type="button" id="btnModeDesktop" onclick="CJApp.setDeviceViewMode('desktop')" class="px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 text-gray-300 hover:text-white active:scale-95" title="Mở rộng cổng thông tin Web Portal quản lý máy tính">
+              <span>💻</span>
+              <span class="hidden sm:inline">Bản Máy Tính</span>
+              <span class="sm:hidden">Web</span>
+            </button>
+          </div>
+
+          <!-- Export Excel -->
+          <button onclick="CJExcel.exportAuditReport()" class="hidden md:flex bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-2.5 py-1.5 rounded-xl shadow items-center gap-1 transition active:scale-95" title="Xuất báo cáo Excel">
+            <span>📥</span>
+            <span class="hidden lg:inline">Xuất Excel</span>
+          </button>
+
+          <!-- Admin Tools: Upload & Export by User -->
+          <button id="btnAdminImportModal" onclick="CJApp.openImportModal()" class="hidden bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-2.5 py-1.5 rounded-xl shadow items-center gap-1 transition active:scale-95 cursor-pointer" title="Admin: Upload danh sách khách hàng theo từng User">
+            <span>📂</span>
+            <span class="hidden lg:inline">Upload DS KH</span>
+          </button>
+          <button id="btnAdminExportModal" onclick="CJApp.openAdminExportModal()" class="hidden bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs px-2.5 py-1.5 rounded-xl shadow items-center gap-1 transition active:scale-95 cursor-pointer" title="Admin: Xuất báo cáo theo từng User">
+            <span>👑</span>
+            <span class="hidden lg:inline">Admin Export</span>
+          </button>
+          <button id="btnHeaderGoogleSheet" onclick="openGoogleSheetConfigDirect()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs px-2.5 py-1.5 rounded-xl shadow flex items-center gap-1 transition active:scale-95 cursor-pointer" title="Cấu hình Google Sheets & Drive">
+            <span>📊</span>
+            <span class="hidden lg:inline">Google Sheets</span>
+          </button>
+
+          <!-- Current GSBH Identity Badge -->
+          <div class="flex items-center gap-2 pl-2 border-l border-gray-700">
+            <span id="headerUserAvatar" class="text-xl bg-gray-800 p-1 rounded-full border border-gray-600">👮‍♂️</span>
+            <div class="text-right hidden sm:block leading-tight">
+              <div id="headerUserName" class="text-xs font-extrabold text-yellow-300">Đang đăng nhập...</div>
+              <div id="headerUserRole" class="text-[10px] text-gray-300">GSBH Kênh GT</div>
+            </div>
+            <!-- Logout Button -->
+            <button id="btnLogoutHeader" onclick="CJApp.logout()" class="bg-red-700 hover:bg-red-800 text-white font-bold text-xs px-2.5 py-1.5 rounded-xl transition shadow active:scale-95 cursor-pointer" title="Đăng xuất và đổi tài khoản GSBH khác">
+              🚪 Đổi GSBH
+            </button>
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+  </header>
+
+  <!-- ================= MAIN CONTENT VIEWS ================= -->
+  <main class="flex-1 w-full mx-auto p-2 sm:p-4 pb-24 lg:pb-8 flex flex-col items-center">
+
+    <!-- Top Mode Indicator Banner (Phân biệt rõ ràng Điện Thoại vs Máy Tính) -->
+    <div id="deviceModeIndicator" class="w-full max-w-7xl mb-3.5 px-4 py-2.5 rounded-2xl flex flex-wrap items-center justify-between gap-3 text-xs shadow-sm border transition bg-gradient-to-r from-blue-900/90 to-indigo-950 text-white border-blue-700/60">
+      <!-- Populated dynamically via CJApp.applyDeviceViewMode() -->
+    </div>
+
+    <!-- Admin User Control & Switcher Bar (Chỉ hiển thị khi đăng nhập quyền Admin) -->
+    <div id="adminUserControlBar" class="hidden w-full max-w-7xl mb-3.5 px-4 py-3 rounded-2xl bg-gradient-to-r from-[#2c1d0b] via-[#11192e] to-[#0a1224] border-2 border-amber-500/70 shadow-lg text-white flex flex-wrap items-center justify-between gap-3 text-xs">
+      <div class="flex items-center gap-2.5">
+        <div class="w-9 h-9 rounded-xl bg-amber-500 text-slate-950 flex items-center justify-center font-black text-lg shadow">
+          👑
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="font-black text-amber-400 uppercase tracking-wide">QUYỀN QUẢN TRỊ VIÊN (ADMIN DMS):</span>
+            <span id="adminControlledUserBadge" class="text-[10px] bg-amber-400 text-slate-950 px-2 py-0.5 rounded-md font-black">Đang xem: Toàn Quốc</span>
+          </div>
+          <p class="text-[11px] text-slate-300 mt-0.5">Bạn có toàn quyền theo dõi, kiểm soát và điều khiển dữ liệu của tất cả GSBH và Sales Rep GT.</p>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-2.5">
+        <div class="flex items-center gap-2 bg-slate-800/90 px-3 py-1.5 rounded-xl border border-amber-500/50">
+          <span class="text-amber-400 text-xs font-bold">👁️ Điều khiển:</span>
+          <select id="adminActiveUserFilter" onchange="CJApp.onAdminSwitchUser(this.value)" class="bg-slate-950 text-amber-300 font-extrabold text-xs py-1.5 px-2.5 rounded-lg border border-slate-700 outline-none cursor-pointer focus:ring-2 focus:ring-amber-400">
+            <!-- Populated dynamically -->
+          </select>
+        </div>
+
+        <button type="button" onclick="CJApp.openAdminUserManagementModal()" class="px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xs shadow-md transition active:scale-95 flex items-center gap-1.5 cursor-pointer">
+          <span>👥</span>
+          <span>Quản Lý User</span>
+        </button>
+
+        <!-- Nút Upload Danh Sách KH Theo User dành riêng cho Admin -->
+        <button type="button" onclick="CJApp.openImportModal()" class="px-3.5 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-500 hover:to-teal-600 text-white font-black text-xs shadow-md transition active:scale-95 flex items-center gap-1.5 cursor-pointer border border-emerald-400/50">
+          <span>📂</span>
+          <span>Upload DS Khách Hàng Theo User</span>
+        </button>
+
+        <!-- Nút Cấu hình Google Sheets & Drive -->
+        <button type="button" onclick="openGoogleSheetConfigDirect()" class="px-3.5 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-blue-700 hover:from-indigo-500 hover:to-blue-600 text-white font-black text-xs shadow-md transition active:scale-95 flex items-center gap-1.5 cursor-pointer border border-indigo-400/50" title="Cấu hình lưu dữ liệu và hình ảnh lên Google Sheets & Drive">
+          <span>📊</span>
+          <span>Google Sheets & Drive</span>
+        </button>
+
+        <!-- Nút Xóa Lịch Sử Test -->
+        <button type="button" onclick="CJApp.clearTestAudits()" class="px-3.5 py-2 rounded-xl bg-gradient-to-r from-rose-600 to-red-700 hover:from-rose-500 hover:to-red-600 text-white font-black text-xs shadow-md transition active:scale-95 flex items-center gap-1.5 cursor-pointer border border-rose-400/50" title="Xóa toàn bộ biên bản kiểm tra & ticket test (Vẫn giữ nguyên 100% danh sách khách hàng)">
+          <span>🧹</span>
+          <span>Xóa Lịch Sử Test</span>
+        </button>
+
+        <!-- Nút Xóa Hết KH Để Upload Lại -->
+        <button type="button" onclick="CJApp.clearAllStoresAndReupload()" class="px-3.5 py-2 rounded-xl bg-gradient-to-r from-red-600 via-rose-700 to-red-800 hover:from-red-500 hover:to-rose-600 text-white font-black text-xs shadow-md transition active:scale-95 flex items-center gap-1.5 cursor-pointer border border-red-400/60" title="Xóa toàn bộ điểm bán hiện tại và mở cửa sổ nạp lại file Excel">
+          <span>🗑️</span>
+          <span>Xóa Hết KH Để Upload Lại</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- DÒNG CẤU HÌNH GOOGLE SHEETS TRỰC TIẾP (DỄ NHẤT - HIỆN THẲNG TRÊN MÀN HÌNH ADMIN) -->
+    <div id="adminGoogleSheetDirectBar" class="w-full max-w-7xl mb-3.5 px-4 py-3 rounded-2xl bg-gradient-to-r from-[#0d2137] via-[#102a45] to-[#14365d] border-2 border-indigo-400/80 shadow-md text-white flex flex-wrap items-center justify-between gap-3 text-xs">
+      <div class="flex items-center gap-2.5">
+        <div class="w-9 h-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-black text-base shadow shrink-0">
+          📊
+        </div>
+        <div>
+          <div class="font-black text-indigo-300 uppercase tracking-wide flex items-center gap-2">
+            <span>KẾT NỐI GOOGLE SHEETS & DRIVE:</span>
+            <span id="directSheetStatusBadge" class="text-[10px] px-2 py-0.5 rounded font-bold bg-amber-500/30 text-amber-300 border border-amber-400/40">⚪ Chưa kết nối</span>
+          </div>
+          <p class="text-[11px] text-gray-300 mt-0.5">Dán link Web App vào ô bên phải rồi bấm [Lưu Kết Nối] để dữ liệu tự động lưu về Google Sheet.</p>
+        </div>
+      </div>
+
+      <div class="flex flex-1 items-center gap-2 min-w-[300px] max-w-2xl">
+        <input 
+          type="url" 
+          id="directGoogleSheetUrlInput" 
+          placeholder="Dán link Web App (https://script.google.com/macros/s/.../exec) vào đây" 
+          class="flex-1 bg-slate-900 text-white text-xs font-mono px-3.5 py-2.5 rounded-xl border border-indigo-400/60 outline-none focus:ring-2 focus:ring-yellow-400 placeholder-gray-400 shadow-inner"
+        />
+        <button 
+          type="button" 
+          onclick="saveGoogleSheetDirectFromBar()" 
+          class="bg-indigo-600 hover:bg-indigo-500 text-white font-black text-xs px-4 py-2.5 rounded-xl shadow-lg transition active:scale-95 flex items-center gap-1.5 cursor-pointer whitespace-nowrap">
+          <span>💾</span>
+          <span>Lưu Kết Nối</span>
+        </button>
+      </div>
+    </div>
+
+    <script>
+      function saveGoogleSheetDirectFromBar() {
+        var inp = document.getElementById("directGoogleSheetUrlInput");
+        var url = inp ? inp.value.trim() : "";
+        if (!url) {
+          alert("⚠️ Vui lòng dán đường link Web App (https://script.google.com/macros/s/.../exec) vào ô trước khi bấm Lưu!");
+          return;
+        }
+        localStorage.setItem("cj_google_sheet_url", url);
+        if (window.CJCloudSync && window.CJCloudSync.setScriptUrl) {
+          window.CJCloudSync.setScriptUrl(url);
+        }
+        updateDirectSheetBadge();
+        alert("🎉 ĐÃ LƯU KẾT NỐI GOOGLE SHEETS THÀNH CÔNG!\nTừ bây giờ mọi kết quả kiểm tra sẽ tự động đồng bộ về Google Sheet & Drive của bạn.");
+      }
+
+      function updateDirectSheetBadge() {
+        var url = localStorage.getItem("cj_google_sheet_url") || "";
+        var inp = document.getElementById("directGoogleSheetUrlInput");
+        var badge = document.getElementById("directSheetStatusBadge");
+        if (inp && url && !inp.value) inp.value = url;
+        if (badge) {
+          if (url) {
+            badge.className = "text-[10px] px-2 py-0.5 rounded font-bold bg-emerald-500/30 text-emerald-300 border border-emerald-400/40";
+            badge.innerHTML = "🟢 Đã kết nối";
+          } else {
+            badge.className = "text-[10px] px-2 py-0.5 rounded font-bold bg-amber-500/30 text-amber-300 border border-amber-400/40";
+            badge.innerHTML = "⚪ Chưa kết nối";
+          }
+        }
+      }
+
+      window.addEventListener("DOMContentLoaded", updateDirectSheetBadge);
+      setTimeout(updateDirectSheetBadge, 500);
+    </script>
+
+    <!-- MASTER DEVICE SHELL: Khung Điện Thoại khi Mobile / Cổng Quản Trị Rộng khi Desktop -->
+    <div id="appDeviceShell" class="app-phone-simulator transition-all duration-300">
+      
+      <!-- Phone Speaker & Dynamic Island Notch (Chỉ hiển thị khi ở khung Điện thoại) -->
+      <div class="phone-speaker-notch">
+        <div class="notch-camera"></div>
+        <div class="notch-speaker"></div>
+      </div>
+
+      <!-- ================= VIEW 1: GSBH FIELD AUDIT (PRIMARY VIEW) ================= -->
+      <section id="view_mobileAudit" class="space-y-4">
+        
+        <!-- Top Managerial Desktop Toolbar & Controls (Hiện ở Bản Máy Tính) -->
+        <div class="desktop-toolbar-box bg-white p-3.5 sm:p-4 rounded-2xl border border-gray-200 shadow-sm flex flex-wrap items-center justify-between gap-3">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-2xl bg-blue-100 text-blue-900 flex items-center justify-center text-xl font-bold">
+              👥
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <h1 class="text-sm sm:text-base font-black text-gray-900 leading-tight" id="currentGsbhTitle">GSBH Kênh GT</h1>
+                <span class="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">Kênh GT Hoạt Động</span>
+              </div>
+              <p class="text-xs text-gray-500 mt-0.5">
+                Khu vực: <b id="headerUserAreaBanner" class="text-gray-800">Khu vực TP.HCM</b> • <span id="assignedStoreCountBadge" class="text-cj-red font-bold">13 điểm bán</span>
+              </p>
+            </div>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2">
+            <button onclick="CJExcel.downloadImportTemplate()" class="bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 text-xs font-bold px-2.5 py-1.5 rounded-xl flex items-center gap-1 transition active:scale-95" title="Tải file Excel mẫu">
+              <span>📥</span>
+              <span class="hidden sm:inline">File Mẫu Excel</span>
+            </button>
+            <button onclick="CJApp.openImportModal()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-2.5 py-1.5 rounded-xl shadow flex items-center gap-1 transition active:scale-95" title="Tải danh sách Excel lên">
+              <span>📂</span>
+              <span>Nạp Excel</span>
+            </button>
+            <button id="btnToggleFrame" onclick="CJApp.toggleDeviceMode()" class="text-xs font-bold px-3 py-1.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 transition flex items-center gap-1" title="Chuyển đổi nhanh giữa Bản Điện Thoại và Bản Máy Tính">
+              <span>📱</span>
+              <span id="btnToggleFrameLabel">Bản Điện Thoại / Máy Tính</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Main Container: Smartphone DMS Mockup / Web Responsive Frame (Khớp 100% Ảnh Mẫu 3) -->
+        <div class="flex justify-center">
+          <div id="mobileAuditContainer" class="w-full bg-white transition-all duration-300 relative">
+          
+          <!-- STEP 1: CUSTOMER LIST (KHÁCH HÀNG CỦA TÔI - ẢNH 3 media_1788835584457.png) -->
+          <div id="stepStoreSelect" class="space-y-0">
+            
+            <!-- Mobile Simulated Status Bar (09:42, 5G, Wi-Fi, Pin) -->
+            <div class="bg-[#14366e] text-gray-200 px-4 pt-2.5 pb-1 flex items-center justify-between text-[11px] font-semibold select-none">
+              <span id="customerListClock">09:42</span>
+              <div class="flex items-center gap-1.5 text-[10px]">
+                <span class="tracking-tighter">5G</span>
+                <span>📶</span>
+                <span>🔋 98%</span>
+              </div>
+            </div>
+
+            <!-- Mobile Subheader Bar: Back Button, Distributor Title & Sales Rep Dropdown -->
+            <div class="bg-gradient-to-r from-[#14366e] to-[#184594] text-white px-3 py-2 flex items-center justify-between border-b border-blue-800/40">
+              <div class="flex items-center gap-2">
+                <button type="button" onclick="CJApp.switchTab('dashboard')" class="p-1 text-white hover:text-blue-200 transition rounded-full active:scale-90" title="Quay lại Dashboard">
+                  <svg class="w-5 h-5 stroke-current stroke-2 fill-none" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+                  </svg>
+                </button>
+                <div class="flex items-center gap-1.5">
+                  <span class="text-xs bg-red-600 font-black px-1.5 py-0.5 rounded text-white tracking-wider">CJ</span>
+                  <span class="text-xs font-black tracking-wide text-white">FOODS DMS</span>
+                </div>
+              </div>
+
+              <!-- Sales Rep Selector Dropdown (Hùng ▼ - Khớp 100% Ảnh Mẫu) -->
+              <div class="relative flex items-center">
+                <select id="filterSalesRepSelect" onchange="CJAudit.onSalesRepChange(this.value)" class="appearance-none bg-blue-900/80 hover:bg-blue-900 text-white font-bold text-xs py-1.5 pl-3 pr-7 rounded-xl border border-blue-400/40 outline-none cursor-pointer shadow-inner">
+                  <!-- Populated via audit.js with Hùng, Trí, etc. -->
+                  <option value="hung.nv">Hùng ▼</option>
+                </select>
+                <div class="pointer-events-none absolute right-2 text-white text-[10px]">▼</div>
+              </div>
+            </div>
+
+            <!-- Royal Blue Header Banner: 👥 Khách hàng của tôi + Embedded Search Bar -->
+            <div class="bg-[#184594] px-4 pt-3 pb-4 space-y-2.5 text-white shadow-md">
+              <div class="flex items-center justify-between">
+                <h2 class="text-base font-black tracking-wide flex items-center gap-2">
+                  <span>👥</span>
+                  <span>Khách hàng của tôi</span>
+                </h2>
+                <div class="flex items-center gap-2">
+                  <button type="button" onclick="CJApp.openImportModal()" class="text-[11px] bg-emerald-500 hover:bg-emerald-400 text-slate-950 px-2.5 py-1 rounded-xl font-black shadow flex items-center gap-1 transition active:scale-95 cursor-pointer" title="Upload danh sách khách hàng từ file Excel cho User này">
+                    <span>📂</span>
+                    <span>Upload KH</span>
+                  </button>
+                  <span class="text-[11px] bg-white/20 text-white px-2.5 py-0.5 rounded-full font-bold" id="customerBannerBadge">
+                    GT: 13 KH
+                  </span>
+                </div>
+              </div>
+
+              <!-- Search Bar inside Royal Blue Banner -->
+              <div class="relative">
+                <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400 text-sm">
+                  🔍
+                </span>
+                <input 
+                  type="text" 
+                  id="storeSearchInput" 
+                  placeholder="Tìm theo tên, địa chỉ, mã..." 
+                  class="w-full pl-9 pr-8 py-2.5 rounded-xl bg-white text-gray-900 placeholder-gray-400 text-xs font-medium outline-none shadow focus:ring-2 focus:ring-yellow-400 transition" 
+                />
+                <button type="button" id="btnClearSearch" onclick="CJAudit.clearSearch()" class="hidden absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 font-bold text-sm">
+                  ✕
+                </button>
+              </div>
+            </div>
+
+            <!-- Quick Status Filter Pills (Tất cả, Hoạt động, Ngừng - Khớp 100% Ảnh Mẫu 3) -->
+            <div class="bg-gray-100/90 px-3 py-2.5 border-b border-gray-200 flex items-center justify-between gap-1.5 overflow-x-auto select-none">
+              <div class="flex items-center gap-1.5 flex-1 min-w-max">
+                <!-- Pill 1: Tất cả -->
+                <button 
+                  type="button" 
+                  id="pillAllStores" 
+                  onclick="CJAudit.setStatusFilter('all')" 
+                  class="pill-filter-btn px-3 py-1.5 rounded-full text-xs font-black transition shadow-sm bg-[#184594] text-white border border-[#184594]">
+                  Tất cả (<span id="pillCountAll">13</span>)
+                </button>
+
+                <!-- Pill 2: Hoạt động -->
+                <button 
+                  type="button" 
+                  id="pillActiveStores" 
+                  onclick="CJAudit.setStatusFilter('active')" 
+                  class="pill-filter-btn px-3 py-1.5 rounded-full text-xs font-bold transition bg-white text-gray-700 hover:bg-gray-50 border border-gray-300">
+                  Hoạt động (<span id="pillCountActive">13</span>)
+                </button>
+
+                <!-- Pill 3: Ngừng -->
+                <button 
+                  type="button" 
+                  id="pillInactiveStores" 
+                  onclick="CJAudit.setStatusFilter('inactive')" 
+                  class="pill-filter-btn px-3 py-1.5 rounded-full text-xs font-bold transition bg-white text-gray-700 hover:bg-gray-50 border border-gray-300">
+                  Ngừng (<span id="pillCountInactive">0</span>)
+                </button>
+              </div>
+
+              <!-- Map Toggle Icon Button -->
+              <button 
+                type="button" 
+                id="btnToggleMapView" 
+                onclick="CJAudit.toggleMapView()" 
+                class="px-2.5 py-1.5 rounded-xl bg-white hover:bg-blue-50 text-blue-700 border border-blue-200 text-xs font-bold transition flex items-center gap-1 shrink-0" 
+                title="Bật/Tắt Bản đồ My Maps">
+                <span>🗺️</span>
+                <span class="text-[11px]" id="mapToggleLabel">Bản đồ</span>
+              </button>
+            </div>
+
+            <!-- Active Audit Category Filter Indicator -->
+            <div id="activeAuditCategoryBanner" class="hidden mx-3 mt-2 p-2.5 rounded-2xl border border-blue-300 bg-blue-50/90 flex items-center justify-between text-xs animate-fade-in shadow-sm">
+              <div class="flex items-center gap-2 min-w-0">
+                <span class="text-xl shrink-0" id="activeCategoryIcon">❄️</span>
+                <div class="min-w-0">
+                  <div class="font-extrabold text-blue-950 truncate text-xs" id="activeCategoryTitle">Đang kiểm tra: Tình trạng Tủ Đông POSM</div>
+                  <div class="text-[10px] text-blue-700 leading-tight truncate" id="activeCategoryGuide">Chọn cửa hàng bên dưới và bấm [🔍 Kiểm tra] để thực hiện</div>
+                </div>
+              </div>
+              <button type="button" onclick="CJAudit.clearActiveCategoryFilter()" class="text-[10px] font-bold text-gray-600 hover:text-red-600 px-2 py-1 rounded-lg bg-white border border-gray-300 shadow-sm shrink-0 ml-1.5 active:scale-95" title="Đóng chế độ lọc theo loại kiểm tra">
+                ✕ Tất cả KH
+              </button>
+            </div>
+
+            <!-- CUSTOMER CONTENT: SPLIT VIEW ON DESKTOP / TABBED VIEW ON MOBILE -->
+            <div class="desktop-customer-split">
+              <!-- SUB-VIEW 1: STORE CARDS LIST CONTAINER (Khớp 100% Ảnh Mẫu 3 với 2 nút Viếng thăm & Đặt hàng) -->
+              <div id="subViewStoreList" class="p-3 space-y-3 max-h-[640px] overflow-y-auto bg-gray-50 rounded-2xl border border-gray-200">
+                <div id="storeListContainer" class="space-y-3">
+                  <!-- Customer cards rendered via audit.js -->
+                </div>
+              </div>
+
+              <!-- SUB-VIEW 2: GOOGLE MY MAPS INTERACTIVE VIEW -->
+              <div id="subViewStoreMap" class="hidden p-3 space-y-2 bg-gray-50 rounded-2xl border border-gray-200">
+                <div class="flex items-center justify-between text-xs bg-blue-50 p-2 rounded-xl border border-blue-200">
+                  <span class="text-blue-900 font-bold flex items-center gap-1">📍 Bản đồ điểm bán GT</span>
+                  <div class="flex items-center gap-1.5">
+                    <button onclick="CJAudit.locateUserOnMap()" class="bg-blue-600 text-white font-bold px-2 py-1 rounded-lg text-[11px]">🧭 Định vị</button>
+                    <button onclick="CJAudit.fitAllStoresOnMap()" class="bg-gray-800 text-white font-bold px-2 py-1 rounded-lg text-[11px]">🔄 Toàn bộ</button>
+                  </div>
+                </div>
+                <div id="gsbhMap" class="w-full h-[450px] lg:h-[560px] rounded-2xl border border-gray-300 shadow-inner z-10 overflow-hidden"></div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- FLOATING ACTION BUTTON (FAB): Thêm Khách Hàng Kênh GT (+) góc dưới bên phải -->
+          <button 
+            type="button" 
+            id="btnAddStoreFab" 
+            onclick="CJApp.openAddStoreModal()" 
+            class="fixed sm:absolute bottom-20 right-5 z-30 w-13 h-13 rounded-full bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white shadow-xl flex items-center justify-center font-black text-2xl transition group cursor-pointer" 
+            title="Thêm khách hàng Kênh GT mới">
+            <span class="group-hover:rotate-90 transition duration-200">+</span>
+          </button>
+
+          <!-- STEP 2: AUDIT CHECKLIST THEO GIAO DIỆN DI ĐỘNG CHUẨN DMS / POSM (KHỚP 100% ẢNH MẪU) -->
+          <div id="stepAuditForm" class="hidden">
+            
+            <!-- Mobile App Container Mockup -->
+            <div class="max-w-md mx-auto bg-white rounded-3xl shadow-2xl border border-gray-200 overflow-hidden">
+              
+              <!-- Top App Header: Gradient Navy Blue with Back Chevron -->
+              <div class="bg-gradient-to-b from-[#091a38] via-[#0f2a58] to-[#14366e] text-white pt-2.5 pb-4 px-4 shadow-md">
+                
+                <!-- Phone Status Bar -->
+                <div class="flex items-center justify-between text-[11px] text-gray-300 font-semibold mb-2 px-1 opacity-90">
+                  <span id="mobileStatusBarClock">13:02</span>
+                  <div class="flex items-center gap-1.5 text-[10px]">
+                    <span>📶</span>
+                    <span>VoLTE</span>
+                    <span>4G</span>
+                    <span>🔋 95%</span>
+                  </div>
+                </div>
+
+                <!-- App Navigation Bar: Back Arrow & Store Title -->
+                <div class="flex items-center justify-between">
+                  <button type="button" onclick="CJAudit.backToStoreList()" class="p-1.5 -ml-1 text-white hover:text-blue-200 transition rounded-full active:scale-90" title="Quay lại danh sách cửa hàng">
+                    <svg class="w-6 h-6 stroke-current stroke-2 fill-none" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+                    </svg>
+                  </button>
+
+                  <div class="text-center flex-1 px-2">
+                    <div class="text-xs font-black tracking-wide text-white uppercase" id="selectedStoreName">Tạp Hóa Chị Lan</div>
+                    <div class="text-[10px] text-blue-200 flex items-center justify-center gap-1.5 mt-0.5">
+                      <span id="selectedStoreCode" class="font-bold">STR-GT-001</span>
+                      <span>•</span>
+                      <span id="selectedStoreSalesRep">NV: Nguyễn Văn Hùng</span>
+                    </div>
+                  </div>
+
+                  <a id="formGmapsDirectLink" href="#" target="_blank" rel="noopener noreferrer" class="p-1.5 -mr-1 text-blue-200 hover:text-white transition" title="Mở Google Maps chỉ đường">
+                    <span class="text-base">📍</span>
+                  </a>
+                </div>
+              </div>
+
+              <!-- Form Body: Clean POSM Inspection (Khớp 100% layout ảnh mẫu) -->
+              <form id="mobileAuditForm" class="p-4 sm:p-5 space-y-4 bg-white" onsubmit="return false;">
+                
+                <!-- Field 1: Barcode * -->
+                <div class="space-y-1">
+                  <label class="block text-xs font-medium text-gray-500">
+                    Barcode (Số Serial) <span class="text-red-500 font-bold">*</span>
+                  </label>
+                  <div class="relative">
+                    <select id="auditBarcodeSelect" class="w-full appearance-none rounded-2xl border border-gray-300 bg-white px-4 py-3 text-base sm:text-lg font-bold text-gray-800 shadow-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition cursor-pointer pr-10">
+                      <option value="TDO03097">TDO03097</option>
+                    </select>
+                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3.5 text-blue-900">
+                      <svg class="w-4 h-4 fill-current" viewBox="0 0 20 20">
+                        <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/>
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Field: Tên tủ (Lấy từ Cột J: Model_Tu) -->
+                <div class="space-y-1">
+                  <label class="block text-xs font-medium text-gray-500">
+                    Tên tủ
+                  </label>
+                  <input type="text" id="auditFreezerModel" readonly placeholder="Tên tủ đông" value="Tủ đông SANAKY 330L" class="w-full rounded-2xl border border-gray-300 bg-gray-50/90 px-4 py-3 text-sm sm:text-base font-bold text-gray-800 shadow-sm outline-none cursor-default" />
+                </div>
+
+                <!-- Field 2: Số lượng POSM * -->
+                <div class="space-y-1">
+                  <label class="block text-xs font-medium text-gray-500">
+                    Số lượng POSM <span class="text-red-500 font-bold">*</span>
+                  </label>
+                  <input type="number" id="auditPosmQuantity" min="1" value="1" class="w-full rounded-2xl border border-gray-300 bg-white px-4 py-3 text-base font-bold text-gray-800 shadow-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition" />
+                </div>
+
+                <!-- Field 3: Đánh giá tình trạng * -->
+                <div class="space-y-1">
+                  <label class="block text-xs font-medium text-gray-500">
+                    Đánh giá tình trạng <span class="text-red-500 font-bold">*</span>
+                  </label>
+                  <div class="relative">
+                    <select id="auditPosmCondition" onchange="CJAudit.onConditionChange()" class="w-full appearance-none rounded-2xl border border-gray-300 bg-white px-4 py-3 text-base font-bold text-gray-800 shadow-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition cursor-pointer pr-10">
+                      <option value="Sử Dụng Được" selected>Sử Dụng Được</option>
+                      <option value="Hư hỏng">Hư hỏng</option>
+                      <option value="Mất (ko có tại cửa hàng)">Mất (ko có tại cửa hàng)</option>
+                      <option value="Mất tem / Rách mã QR">Mất tem / Rách mã QR</option>
+                      <option value="Lý do khác">Lý do khác</option>
+                    </select>
+                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3.5 text-blue-900">
+                      <svg class="w-4 h-4 fill-current" viewBox="0 0 20 20">
+                        <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/>
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Field 4: Ghi chú -->
+                <div class="space-y-1" id="sectionAuditNotes">
+                  <div class="flex items-center justify-between">
+                    <label class="block text-xs font-medium text-gray-500">Ghi chú</label>
+                    <span id="notesRequiredBadge" class="text-[11px] font-bold text-red-500 hidden">* BẮT BUỘC NHẬP</span>
+                  </div>
+                  <input type="text" id="auditNotes" placeholder="Nhập ghi chú" class="w-full rounded-2xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-800 shadow-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 placeholder-gray-400 transition" />
+                  <div id="notesErrorMsg" class="hidden text-xs text-red-600 font-bold flex items-center gap-1 pt-0.5">
+                    <span>❌</span>
+                    <span>Vui lòng nhập ghi chú cụ thể trước khi lưu!</span>
+                  </div>
+                </div>
+
+                <!-- Field 5: Đề nghị -->
+                <div class="space-y-1">
+                  <label class="block text-xs font-medium text-gray-500">Đề nghị</label>
+                  <input type="text" id="auditProposal" placeholder="Nhập đề nghị" class="w-full rounded-2xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-800 shadow-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 placeholder-gray-400 transition" />
+                </div>
+
+                <!-- Field 6: Hình ảnh POSM (Được đóng khung đỏ chú thích theo ảnh mẫu) -->
+                <div class="pt-1" id="sectionPhotoEvidence">
+                  <div id="photoEvidenceContainer" class="p-3.5 rounded-2xl border-2 border-red-400 bg-red-50/20 space-y-2.5 transition">
+                    <div class="flex items-center justify-between">
+                      <div class="flex items-center gap-1.5">
+                        <label class="block text-sm font-bold text-gray-900">Hình ảnh POSM</label>
+                        <button type="button" onclick="CJAudit.openPhotoPolicyModal()" class="text-[10px] text-blue-700 bg-blue-50 hover:bg-blue-100 font-bold px-2 py-0.5 rounded-full border border-blue-200 inline-flex items-center gap-1 transition" title="Xem bảng quy định các trường hợp chụp ảnh Kênh GT">
+                          <span>ℹ️</span>
+                          <span>Quy định chụp ảnh</span>
+                        </button>
+                      </div>
+                      <span id="photoRequiredBadge" class="text-[10px] font-black px-2 py-0.5 rounded-full border bg-red-100 text-red-700 border-red-300 animate-pulse">
+                        🔴 BẮT BUỘC CHỤP ẢNH
+                      </span>
+                    </div>
+
+                    <!-- Dynamic Case-Specific Photo Guide Banner -->
+                    <div id="photoCaseGuideBanner" class="p-2.5 rounded-xl border text-xs leading-relaxed flex items-start gap-2 bg-blue-50/60 border-blue-200 text-blue-900 transition">
+                      <span class="text-base shrink-0" id="photoGuideIcon">📸</span>
+                      <div class="text-[11px] leading-relaxed" id="photoGuideText">
+                        <b>Chụp ảnh bắt buộc:</b> Chụp ảnh mặt trước tủ trưng bày đầy đủ sản phẩm Bibigo & Cầu Tre tại điểm bán có đóng dấu GPS Watermark.
+                      </div>
+                    </div>
+
+                    <div class="flex items-start gap-3">
+                      <!-- Photo Upload Card (Giống hệt icon ảnh trong hình) -->
+                      <div class="relative">
+                        <label class="w-36 h-40 rounded-2xl border border-gray-200 bg-white hover:bg-blue-50/50 shadow-sm flex flex-col items-center justify-center cursor-pointer transition overflow-hidden group">
+                          
+                          <!-- Preview Image (If captured) -->
+                          <img id="preview_posm" class="hidden w-full h-full object-cover cursor-pointer" onclick="CJAudit.openPhotoModal('posm')" title="Bấm để xem ảnh phóng to" />
+                          
+                          <!-- Placeholder with Photo Icon + Plus circle (Khớp 100% ảnh mẫu) -->
+                          <div id="placeholder_posm" class="flex flex-col items-center justify-center p-2 text-center">
+                            <div class="w-14 h-14 rounded-full bg-blue-50/80 flex items-center justify-center mb-1 group-hover:scale-105 transition">
+                              <svg class="w-8 h-8 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="3" y="3" width="18" height="18" rx="3" ry="3"/>
+                                <circle cx="8.5" cy="8.5" r="1.5"/>
+                                <path d="M21 15l-5-5L5 21"/>
+                                <circle cx="16" cy="16" r="3" fill="#ffffff" stroke="#2563eb" stroke-width="2"/>
+                                <line x1="16" y1="14.5" x2="16" y2="17.5" stroke="#2563eb" stroke-width="2"/>
+                                <line x1="14.5" y1="16" x2="17.5" y2="16" stroke="#2563eb" stroke-width="2"/>
+                              </svg>
+                            </div>
+                            <span class="text-xs font-bold text-gray-700 mt-1">Thêm ảnh</span>
+                          </div>
+
+                          <input type="file" id="photo_input_posm" accept="image/*" capture="environment" class="hidden" onchange="CJAudit.handlePhotoUpload(event, 'posm')" />
+                        </label>
+
+                        <!-- Button to remove photo if already uploaded -->
+                        <button type="button" id="btnRemovePosmPhoto" onclick="CJAudit.removePhoto('posm')" class="hidden absolute -top-2 -right-2 w-6 h-6 rounded-full bg-red-600 text-white font-bold text-xs flex items-center justify-center shadow hover:bg-red-700">✕</button>
+                      </div>
+
+                      <!-- Helper Actions for Desktop & Watermark Note -->
+                      <div class="flex-1 space-y-2 text-xs">
+                        <div class="text-[11px] text-gray-600 leading-relaxed bg-white p-2.5 rounded-xl border border-gray-200">
+                          📸 <b>Quy chuẩn ảnh:</b> Tự động đóng Watermark GPS, mã barcode, thời gian viếng thăm và mục đích chụp chống gian lận.
+                        </div>
+                        <button type="button" id="btn_mock_posm" onclick="CJAudit.generateMockPhoto('posm')" class="w-full bg-blue-50 hover:bg-blue-100 text-blue-800 font-bold py-2 px-3 rounded-xl border border-blue-200 transition text-center flex items-center justify-center gap-1.5 active:scale-95 shadow-sm">
+                          <span>⚡</span>
+                          <span>Tạo ảnh mẫu nhanh (PC)</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Alert Box: Bắt buộc khi có bất thường / lý do khác -->
+                <div id="auditAbnormalAlertBox" class="hidden bg-red-50 border-2 border-red-500 p-3.5 rounded-2xl space-y-1 animate-pulse">
+                  <div class="text-xs font-black text-red-700 flex items-center gap-1.5">
+                    <span>⚠️</span>
+                    <span id="auditAbnormalAlertTitle">YÊU CẦU BẮT BUỘC KHI CÓ SỰ CỐ / LÝ DO KHÁC:</span>
+                  </div>
+                  <div class="text-[11px] text-red-900 leading-relaxed font-medium" id="auditAbnormalAlertDesc">
+                    Bạn đã ghi nhận tình trạng thiết bị có vấn đề. <b class="underline">Bắt buộc</b> phải nhập mục <b>Ghi chú</b> và chụp ít nhất <b>1 ảnh POSM</b> minh chứng trước khi bấm Lưu!
+                  </div>
+                </div>
+
+                <!-- Bottom Action Button: Lưu (Đã bỏ Thu hồi POSM theo yêu cầu) -->
+                <div class="pt-2">
+                  <div class="relative">
+                    <button type="button" onclick="CJAudit.submitAudit()" class="w-full bg-[#1a365d] hover:bg-[#132845] text-white font-bold text-base sm:text-lg py-3.5 px-4 rounded-2xl shadow-lg transition text-center active:scale-95 flex items-center justify-center gap-2">
+                      <span>💾</span>
+                      <span>Lưu Kết Quả Kiểm Tra</span>
+                    </button>
+
+                    <!-- Badge chú thích số 6 "Bấm lưu" mô phỏng theo ảnh mẫu -->
+                    <div class="hidden sm:flex items-center gap-1 absolute -top-8 right-0 bg-white/90 border border-dashed border-red-500 rounded-md px-1.5 py-0.5 text-[10px] text-blue-900 font-extrabold shadow-sm pointer-events-none">
+                      <span class="w-3.5 h-3.5 rounded-full bg-red-600 text-white flex items-center justify-center text-[9px]">6</span>
+                      <span>Bấm lưu</span>
+                    </div>
+                  </div>
+                </div>
+
+              </form>
+
+            </div>
+
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= VIEW 2: MÀN HÌNH 1 - DASHBOARD TỔNG HỢP CÁC LOẠI KIỂM TRA (KÊNH GT) ================= -->
+    <section id="view_dashboard" class="hidden space-y-3.5 max-h-[calc(100vh-140px)] sm:max-h-[760px] overflow-y-auto pb-28 pr-1 scroll-smooth">
+      
+      <!-- MOBILE-SPECIFIC DASHBOARD HEADER (Hiện khi ở Bản Điện Thoại) -->
+      <div class="mobile-dash-header space-y-0 rounded-t-3xl overflow-hidden shadow-md">
+        <!-- Status Bar -->
+        <div class="bg-[#14366e] text-gray-200 px-4 pt-2.5 pb-1 flex items-center justify-between text-[11px] font-semibold select-none">
+          <span id="dashMobileClock">09:42</span>
+          <div class="flex items-center gap-1.5 text-[10px]">
+            <span class="tracking-tighter">5G</span>
+            <span>📶</span>
+            <span>🔋 98%</span>
+          </div>
+        </div>
+
+        <!-- Mobile Top App Header Bar -->
+        <div class="bg-gradient-to-r from-[#14366e] to-[#184594] text-white px-3.5 py-2.5 flex items-center justify-between border-b border-blue-800/40">
+          <div class="flex items-center gap-1.5">
+            <span class="text-xs bg-red-600 font-black px-1.5 py-0.5 rounded text-white tracking-wider">CJ</span>
+            <span class="text-xs font-black tracking-wide text-white">FOODS DMS</span>
+          </div>
+          <div class="flex items-center gap-1.5 text-xs">
+            <span class="text-blue-200 text-[11px]">GSBH:</span>
+            <b class="text-yellow-300 font-bold" id="dashMobileGsbhBadge">Bảo</b>
+          </div>
+        </div>
+
+        <!-- Mobile Royal Blue Banner: 📊 Tổng quan kiểm tra thị trường + Filter NVBH -->
+        <div class="bg-[#184594] px-4 pt-3 pb-3 text-white space-y-2.5 shadow-md">
+          <div class="flex items-center justify-between">
+            <h2 class="text-sm font-black tracking-wide flex items-center gap-1.5">
+              <span>📊</span>
+              <span>Tổng quan kiểm tra tủ đông</span>
+            </h2>
+            <span class="text-[10px] bg-red-600 text-white px-2 py-0.5 rounded-full font-black">
+              KÊNH GT
+            </span>
+          </div>
+          <div class="relative">
+            <select id="dashMobileSalesFilter" onchange="CJDashboard.onMobileSalesFilterChange(this.value)" class="w-full appearance-none bg-blue-900/90 text-white font-bold text-xs py-2 pl-3 pr-7 rounded-xl border border-blue-400/50 outline-none cursor-pointer">
+              <option value="ALL">📋 Tất cả NVBH Kênh GT</option>
+            </select>
+            <div class="pointer-events-none absolute right-2.5 top-2.5 text-white text-[10px]">▼</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- DESKTOP-SPECIFIC DASHBOARD HEADER (Hiện khi ở Bản Máy Tính) -->
+      <div class="desktop-dash-header bg-white p-4 sm:p-5 rounded-3xl border border-gray-200 shadow-sm space-y-3">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div class="flex items-center gap-3">
+            <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#002B49] to-[#184594] text-white flex items-center justify-center text-2xl font-black shadow-md">
+              📊
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <h1 class="text-base sm:text-lg font-black text-gray-900 leading-tight">
+                  MÀN HÌNH 1: TỔNG QUAN KIỂM TRA TỦ ĐÔNG THỊ TRƯỜNG
+                </h1>
+                <span class="text-xs bg-red-100 text-cj-red font-black px-2 py-0.5 rounded-md">KÊNH GT</span>
+              </div>
+              <p class="text-xs text-gray-500 mt-0.5">
+                Tổng hợp tiến độ & chỉ số kiểm tra tủ đông POSM. Bấm vào thẻ để mở danh sách khách hàng đi tuyến.
+              </p>
+            </div>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2">
+            <select id="dashSalesFilter" class="text-xs border border-gray-300 rounded-xl px-3 py-2.5 bg-white font-bold text-gray-800 outline-none focus:ring-2 focus:ring-blue-600 shadow-sm cursor-pointer">
+              <option value="ALL">📋 Tất cả NVBH Kênh GT</option>
+            </select>
+            <button onclick="CJApp.switchTab('mobileAudit')" class="bg-[#184594] hover:bg-[#123675] text-white font-black text-xs px-4 py-2.5 rounded-xl shadow flex items-center gap-1.5 transition active:scale-95">
+              <span>👥</span>
+              <span>Xem Tất Cả KH (Màn Hình 2) ➔</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================= SỐ LIỆU TỔNG QUAN HOÀN THÀNH (NẰM PHÍA TRÊN THEO YÊU CẦU) ================= -->
+      <div class="bg-gradient-to-br from-white via-blue-50/40 to-indigo-50/30 p-4 sm:p-5 rounded-3xl border-2 border-blue-200/80 shadow-sm space-y-3">
+        
+        <!-- Header Row: Title & Completion % Pill -->
+        <div class="flex items-center justify-between gap-3">
+          <div class="flex items-center gap-2.5">
+            <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#002B49] to-[#184594] text-white flex items-center justify-center text-lg font-black shadow">
+              📈
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <h2 class="text-sm sm:text-base font-black text-gray-900 leading-tight">
+                  TIẾN ĐỘ HOÀN THÀNH HÔM NAY
+                </h2>
+                <span class="text-[10px] bg-red-100 text-cj-red font-black px-2 py-0.5 rounded-md">KÊNH GT</span>
+              </div>
+              <p class="text-[11px] text-gray-500 mt-0.5">
+                Tổng hợp kết quả đi tuyến kiểm tra thực tế
+              </p>
+            </div>
+          </div>
+
+          <!-- Large % Badge -->
+          <div class="text-right">
+            <div id="dashOverallCompletionPercent" class="text-2xl sm:text-3xl font-black text-[#184594]">
+              23%
+            </div>
+            <div class="text-[10px] text-gray-400 font-bold uppercase tracking-wider">
+              Tỷ lệ hoàn thành
+            </div>
+          </div>
+        </div>
+
+        <!-- Full-width Visual Progress Bar -->
+        <div class="space-y-1">
+          <div class="flex justify-between text-[11px] font-bold text-gray-600">
+            <span>Tiến độ thực hiện trên tuyến:</span>
+            <span id="dashOverallCompletedTasks" class="text-[#184594] font-black">3 / 13 Khách hàng</span>
+          </div>
+          <div class="w-full bg-gray-200/90 rounded-full h-3 overflow-hidden shadow-inner border border-gray-200">
+            <div id="dashOverallProgressBar" class="bg-gradient-to-r from-[#184594] via-blue-600 to-emerald-500 h-3 rounded-full transition-all duration-500" style="width: 23%"></div>
+          </div>
+        </div>
+
+        <!-- 4 Key KPI Metrics Cards (Mobile & Desktop Unified) -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 text-xs">
+          <div class="bg-white p-2.5 rounded-2xl border border-gray-200 shadow-2xs flex flex-col justify-between">
+            <div class="text-[10px] text-gray-500 font-bold">📋 Chương Trình KT:</div>
+            <div class="text-base font-black text-gray-900 mt-0.5" id="dashMobileSummaryPrograms">Kiểm tra tủ đông</div>
+            <div class="text-[9px] text-gray-400">Tủ đông POSM CJ Foods</div>
+          </div>
+          <div class="bg-blue-50/80 p-2.5 rounded-2xl border border-blue-200 flex flex-col justify-between">
+            <div class="text-[10px] text-blue-700 font-bold">🎯 Tổng Điểm Bán GT:</div>
+            <div class="text-base font-black text-blue-950 mt-0.5" id="dashMobileSummaryStores">13 Khách hàng</div>
+            <div class="text-[9px] text-blue-600" id="dashSummaryAssignedSub">Tạp hóa / Đại lý GT</div>
+          </div>
+          <div class="bg-emerald-50/80 p-2.5 rounded-2xl border border-emerald-200 flex flex-col justify-between">
+            <div class="text-[10px] text-emerald-700 font-bold">✅ Đã Hoàn Thành:</div>
+            <div class="text-base font-black text-emerald-800 mt-0.5" id="dashMobileSummaryCompleted">3 Điểm (23%)</div>
+            <div class="text-[9px] text-emerald-600">Đã đi tuyến & kiểm tra</div>
+          </div>
+          <div class="bg-red-50/80 p-2.5 rounded-2xl border border-red-200 flex flex-col justify-between">
+            <div class="text-[10px] text-red-700 font-bold">⚠️ Có Sự Cố Cần Xử Lý:</div>
+            <div class="text-base font-black text-red-600 mt-0.5" id="dashMobileSummaryDanger">1 Điểm cần xử lý</div>
+            <div class="text-[9px] text-red-500 font-semibold">Tắt nguồn / Lẫn hàng</div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ================= DANH SÁCH CÔNG VIỆC CẦN KIỂM TRA (NẰM NGAY DƯỚI SỐ LIỆU TỔNG QUAN) ================= -->
+      <div class="space-y-2.5">
+        <div class="flex items-center justify-between px-1">
+          <div class="flex items-center gap-2">
+            <span class="text-lg">📋</span>
+            <h3 class="font-black text-sm sm:text-base text-gray-900 tracking-tight">
+              DANH SÁCH CÔNG VIỆC CẦN KIỂM TRA
+            </h3>
+          </div>
+          <span class="text-[10px] font-black bg-red-100 text-cj-red px-2.5 py-1 rounded-full border border-red-200">
+            ❄️ Kiểm Tra Tủ Đông POSM
+          </span>
+        </div>
+
+        <!-- MAIN CONTAINER: DANH SÁCH CÁC LOẠI KIỂM TRA THỊ TRƯỜNG (KÊNH GT) -->
+        <div id="dashAuditCategoriesContainer" class="space-y-3.5">
+          <!-- Pre-rendered Static Fallback Card: Always visible & clickable to Screen 2 -->
+          <div 
+            onclick="CJApp.switchTab('mobileAudit'); if (typeof CJAudit !== 'undefined' && CJAudit.switchViewMode) CJAudit.switchViewMode('list');" 
+            class="bg-white rounded-3xl border-2 border-red-200 hover:border-red-500 shadow-sm hover:shadow-lg p-4 sm:p-5 transition cursor-pointer group active:scale-[0.99] space-y-3.5"
+            title="Bấm vào để mở danh sách khách hàng cần kiểm tra tủ đông ở Màn hình 2">
+            
+            <div class="flex items-start justify-between gap-2.5">
+              <div class="flex items-start gap-3">
+                <div class="w-12 h-12 rounded-2xl bg-red-50 group-hover:bg-red-100 border border-red-200 group-hover:border-red-300 text-2xl flex items-center justify-center shrink-0 transition">
+                  ❄️
+                </div>
+                <div>
+                  <div class="flex flex-wrap items-center gap-1.5 mb-1">
+                    <span class="text-[10px] font-black px-2 py-0.5 rounded-full border bg-red-100 text-cj-red border-red-200">
+                      TRỌNG TÂM • HÀNG NGÀY
+                    </span>
+                    <span class="text-[10px] text-gray-500 font-medium">
+                      Bắt buộc chụp ảnh khi tắt điện/hư hỏng/mất mã QR
+                    </span>
+                  </div>
+                  <h3 class="font-black text-base sm:text-lg text-gray-900 group-hover:text-red-700 transition leading-tight">
+                    1. Kiểm Tra Tình Trạng Tủ Đông POSM (Kênh GT)
+                  </h3>
+                </div>
+              </div>
+
+              <div class="text-right shrink-0">
+                <div class="text-xl sm:text-2xl font-black text-gray-900">23%</div>
+                <div class="text-[10px] text-gray-400 font-bold">Hoàn thành</div>
+              </div>
+            </div>
+
+            <p class="text-xs text-gray-600 leading-relaxed">
+              Kiểm tra tủ còn cắm điện hoạt động không, nhiệt độ đông sâu đạt chuẩn (-18°C), quét mã QR/Barcode tem tủ POSM và phát hiện kịp thời hư hỏng, xì gas, vỡ kính, hỏng đệm gioăng.
+            </p>
+
+            <div class="space-y-1">
+              <div class="flex justify-between text-[11px] font-bold text-gray-600">
+                <span>Tiến độ thực hiện ca:</span>
+                <span class="text-gray-900 font-black">3 / 13 hoàn thành</span>
+              </div>
+              <div class="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden border border-gray-200">
+                <div class="bg-red-600 h-2.5 rounded-full transition-all duration-500" style="width: 23%"></div>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 pt-1 text-xs">
+              <div class="p-2 rounded-xl border text-gray-900 bg-gray-50 border-gray-200 flex flex-col justify-between">
+                <span class="text-[10px] text-gray-500 font-medium">Tổng cần kiểm tra</span>
+                <span class="font-extrabold text-xs mt-0.5">13 KH</span>
+              </div>
+              <div class="p-2 rounded-xl border text-emerald-800 bg-emerald-50 border-emerald-200 flex flex-col justify-between">
+                <span class="text-[10px] text-gray-500 font-medium">Đã hoàn thành</span>
+                <span class="font-extrabold text-xs mt-0.5">3 KH</span>
+              </div>
+              <div class="p-2 rounded-xl border text-amber-800 bg-amber-50 border-amber-200 flex flex-col justify-between">
+                <span class="text-[10px] text-gray-500 font-medium">Chưa kiểm tra</span>
+                <span class="font-extrabold text-xs mt-0.5">10 KH</span>
+              </div>
+              <div class="p-2 rounded-xl border text-emerald-700 bg-emerald-50 border-emerald-200 flex flex-col justify-between">
+                <span class="text-[10px] text-gray-500 font-medium">Tủ đạt chuẩn tốt</span>
+                <span class="font-extrabold text-xs mt-0.5">11 tủ tốt</span>
+              </div>
+              <div class="p-2 rounded-xl border text-red-700 bg-red-50 border-red-200 font-black flex flex-col justify-between">
+                <span class="text-[10px] text-gray-500 font-medium">Có sự cố / Tắt điện</span>
+                <span class="font-extrabold text-xs mt-0.5">1 sự cố</span>
+              </div>
+            </div>
+
+            <div class="pt-1">
+              <button 
+                type="button" 
+                onclick="event.stopPropagation(); CJApp.switchTab('mobileAudit'); if (typeof CJAudit !== 'undefined' && CJAudit.switchViewMode) CJAudit.switchViewMode('list');" 
+                class="w-full bg-[#184594] group-hover:bg-blue-700 text-white font-black text-xs sm:text-sm py-3 px-4 rounded-2xl shadow transition flex items-center justify-center gap-2 active:scale-98 cursor-pointer">
+                <span>🛵 Bấm Vào Để Mở Danh Sách Khách Hàng Kiểm Tra Tủ Đông ➔</span>
+              </button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ================= VIEW 3: AUDIT LOGS ================= -->
+    <section id="view_auditLog" class="hidden space-y-4">
+      <div class="flex flex-wrap items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-gray-200 shadow-sm">
+        <div>
+          <h1 class="text-base font-bold text-gray-900">Nhật Ký Kiểm Tra Thực Địa Của Bạn</h1>
+          <p class="text-xs text-gray-500">Lịch sử các lượt kiểm tra kèm hình ảnh có đóng dấu Watermark</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <input type="text" id="dashAuditSearch" placeholder="Tìm tên cửa hàng, mã audit..." class="text-xs border border-gray-300 rounded-xl px-3 py-2 w-60 outline-none focus:ring-1 focus:ring-cj-red" />
+          <button onclick="CJExcel.exportAuditReport()" class="bg-emerald-600 text-white text-xs font-bold px-3 py-2 rounded-xl flex items-center gap-1 shadow">
+            <span>📥</span> Xuất Excel
+          </button>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="bg-gray-50 border-b border-gray-200 text-[11px] font-bold text-gray-600 uppercase tracking-wider">
+                <th class="py-3 px-3">Mã Audit & Giờ</th>
+                <th class="py-3 px-3">Điểm Bán & Người KT</th>
+                <th class="py-3 px-3">Kênh</th>
+                <th class="py-3 px-3">Mã Tủ</th>
+                <th class="py-3 px-3">Nguồn / Nhiệt Độ</th>
+                <th class="py-3 px-3">SOS (%)</th>
+                <th class="py-3 px-3">Xếp Hạng</th>
+                <th class="py-3 px-3">Ticket</th>
+                <th class="py-3 px-3 text-right">Chi Tiết</th>
+              </tr>
+            </thead>
+            <tbody id="dashAuditTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= VIEW 4: MAINTENANCE TICKETS ================= -->
+    <section id="view_tickets" class="hidden space-y-4">
+      <div class="flex flex-wrap items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-gray-200 shadow-sm">
+        <div>
+          <h1 class="text-base font-bold text-gray-900">Quản Lý Ticket Sự Cố & Sửa Chữa Tủ Đông</h1>
+          <p class="text-xs text-gray-500">Các sự cố tủ đông trong phạm vi khu vực của bạn</p>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="bg-gray-50 border-b border-gray-200 text-[11px] font-bold text-gray-600 uppercase tracking-wider">
+                <th class="py-3 px-3">Mã Ticket</th>
+                <th class="py-3 px-3">Điểm Bán & Tủ</th>
+                <th class="py-3 px-3">Nội Dung Sự Cố</th>
+                <th class="py-3 px-3">Mức Độ</th>
+                <th class="py-3 px-3">Trạng Thái</th>
+                <th class="py-3 px-3">Thời Gian Tạo</th>
+                <th class="py-3 px-3 text-right">Cập Nhật</th>
+              </tr>
+            </thead>
+            <tbody id="dashTicketsTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= VIEW 5: STORES MANAGEMENT ================= -->
+    <section id="view_stores" class="hidden space-y-4">
+      <div class="flex flex-wrap items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-gray-200 shadow-sm">
+        <div>
+          <h1 class="text-base font-bold text-gray-900">Danh Mục Khách Hàng Khu Vực Của Bạn</h1>
+          <p class="text-xs text-gray-500">Mỗi khách hàng được gán cho NVBH cụ thể</p>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button onclick="CJApp.openImportModal()" class="bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs px-3 py-2 rounded-xl flex items-center gap-1 shadow">
+            <span>📂</span> Import Excel
+          </button>
+          <button onclick="CJApp.openAddStoreModal()" class="bg-cj-red hover:bg-cj-redDark text-white font-bold text-xs px-3 py-2 rounded-xl flex items-center gap-1 shadow">
+            <span>+</span> Thêm Điểm Bán
+          </button>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="bg-gray-50 border-b border-gray-200 text-[11px] font-bold text-gray-600 uppercase tracking-wider">
+                <th class="py-3 px-3">Mã KH</th>
+                <th class="py-3 px-3">Tên Điểm Bán & Tuyến</th>
+                <th class="py-3 px-3">Kênh</th>
+                <th class="py-3 px-3">Địa Chỉ</th>
+                <th class="py-3 px-3">NVBH Phụ Trách</th>
+                <th class="py-3 px-3">Tủ Đông Đang Đặt</th>
+                <th class="py-3 px-3">Trạng Thái</th>
+                <th class="py-3 px-3 text-right">Thao Tác</th>
+              </tr>
+            </thead>
+            <tbody id="dashStoreTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= VIEW 6: CHƯƠNG TRÌNH KHUYẾN MÃI (CTKM - KÊNH GT) ================= -->
+    <section id="view_promotions" class="hidden space-y-4">
+      <div class="bg-white p-4 sm:p-5 rounded-2xl border border-gray-200 shadow-sm flex flex-wrap items-center justify-between gap-3">
+        <div class="flex items-center gap-3">
+          <div class="w-11 h-11 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center text-2xl font-black border border-amber-200">
+            🎁
+          </div>
+          <div>
+            <h1 class="text-base sm:text-lg font-black text-gray-900 leading-tight">
+              CHƯƠNG TRÌNH KHUYẾN MÃI KÊNH GT (CJ FOODS)
+            </h1>
+            <p class="text-xs text-gray-500 mt-0.5">
+              Chính sách khuyến mại áp dụng cho Tạp hóa, Đại lý và Điểm bán có tủ đông Bibigo & Cầu Tre
+            </p>
+          </div>
+        </div>
+        <button onclick="CJApp.switchTab('mobileAudit')" class="bg-[#184594] hover:bg-[#123675] text-white font-bold text-xs px-3.5 py-2 rounded-xl shadow transition">
+          Đi Tuyến Bán Hàng ➔
+        </button>
+      </div>
+
+      <!-- Promotions Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4" id="promotionsContainer">
+        <!-- Rendered via CJApp or static templates -->
+        <div class="bg-white rounded-2xl border border-emerald-200 p-5 shadow-sm space-y-3 relative overflow-hidden">
+          <div class="absolute top-0 right-0 bg-emerald-600 text-white text-[10px] font-black px-3 py-1 rounded-bl-xl uppercase">Đang áp dụng</div>
+          <div class="flex items-center gap-2 text-emerald-800 font-extrabold text-sm">
+            <span>🎁</span>
+            <span>MUA 5 MANDU TẶNG 1 CHẢ GIÒ</span>
+          </div>
+          <div class="text-xs text-gray-700 leading-relaxed font-medium">
+            Áp dụng cho đơn hàng Sell-out từ 5 thùng Bánh xếp Mandu Bibigo bất kỳ.
+          </div>
+          <div class="bg-emerald-50 p-3 rounded-xl border border-emerald-100 text-xs text-emerald-900 font-bold">
+            🎉 Phần thưởng: Tặng 1 Thùng Chả Giò Rế Cầu Tre (trị giá 784.000đ)
+          </div>
+          <div class="text-[11px] text-gray-400">Thời hạn: Đến hết 30/09/2026 • Kênh: GT Toàn Quốc</div>
+        </div>
+
+        <div class="bg-white rounded-2xl border border-blue-200 p-5 shadow-sm space-y-3 relative overflow-hidden">
+          <div class="absolute top-0 right-0 bg-blue-600 text-white text-[10px] font-black px-3 py-1 rounded-bl-xl uppercase">Duy trì tủ</div>
+          <div class="flex items-center gap-2 text-blue-900 font-extrabold text-sm">
+            <span>❄️</span>
+            <span>TRƯNG BÀY TỦ CHUẨN - THƯỞNG 200.000Đ</span>
+          </div>
+          <div class="text-xs text-gray-700 leading-relaxed font-medium">
+            Điểm bán duy trì tủ cắm điện liên tục ≤ -15°C, tem QR nguyên vẹn và SOS hàng CJ ≥ 80%.
+          </div>
+          <div class="bg-blue-50 p-3 rounded-xl border border-blue-100 text-xs text-blue-900 font-bold">
+            💵 Thưởng tiền mặt: 200.000đ trừ trực tiếp vào đơn hàng Sell-out hàng tháng
+          </div>
+          <div class="text-[11px] text-gray-400">Thời hạn: Đến hết 31/12/2026 • Kênh: Điểm đặt tủ CJ</div>
+        </div>
+
+        <div class="bg-white rounded-2xl border border-purple-200 p-5 shadow-sm space-y-3 relative overflow-hidden">
+          <div class="absolute top-0 right-0 bg-purple-600 text-white text-[10px] font-black px-3 py-1 rounded-bl-xl uppercase">Tích lũy</div>
+          <div class="flex items-center gap-2 text-purple-900 font-extrabold text-sm">
+            <span>🥬</span>
+            <span>TÍCH LŨY KIM CHI - CHIẾT KHẤU 3%</span>
+          </div>
+          <div class="text-xs text-gray-700 leading-relaxed font-medium">
+            Doanh số tích lũy tháng của dòng sản phẩm Kim Chi Bibigo đạt mốc 5.000.000đ.
+          </div>
+          <div class="bg-purple-50 p-3 rounded-xl border border-purple-100 text-xs text-purple-900 font-bold">
+            📈 Chiết khấu: Giảm thêm 3% trên toàn bộ hóa đơn tháng
+          </div>
+          <div class="text-[11px] text-gray-400">Thời hạn: Đến hết 15/10/2026 • Kênh: GT Toàn Quốc</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= VIEW 7: BẢNG GIÁ & SẢN PHẨM (KÊNH GT) ================= -->
+    <section id="view_products" class="hidden space-y-4">
+      <div class="bg-white p-4 sm:p-5 rounded-2xl border border-gray-200 shadow-sm flex flex-wrap items-center justify-between gap-3">
+        <div class="flex items-center gap-3">
+          <div class="w-11 h-11 rounded-2xl bg-red-50 text-cj-red flex items-center justify-center text-2xl font-black border border-red-200">
+            📦
+          </div>
+          <div>
+            <h1 class="text-base sm:text-lg font-black text-gray-900 leading-tight">
+              DANH MỤC SẢN PHẨM & BẢNG GIÁ SELL-OUT (KÊNH GT)
+            </h1>
+            <p class="text-xs text-gray-500 mt-0.5">
+              Bảng giá bán ra điểm bán (Sell-out) và giá bán lẻ khuyến nghị từ CJ Foods Việt Nam
+            </p>
+          </div>
+        </div>
+        <button onclick="CJApp.switchTab('mobileAudit')" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-3.5 py-2 rounded-xl shadow transition flex items-center gap-1.5">
+          <span>🛒</span>
+          <span>Lập Đơn Đặt Hàng</span>
+        </button>
+      </div>
+
+      <!-- Products Grid -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" id="productsCatalogContainer">
+        <!-- 1. Mandu Bắp -->
+        <div class="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm space-y-2.5">
+          <div class="flex items-start gap-3">
+            <div class="w-14 h-14 bg-amber-50 rounded-2xl flex items-center justify-center text-3xl border border-amber-200 shrink-0">🥟</div>
+            <div class="flex-1 min-w-0">
+              <span class="text-[10px] bg-red-100 text-cj-red font-black px-2 py-0.5 rounded-full">Bibigo</span>
+              <h3 class="font-extrabold text-gray-900 text-sm mt-1 leading-snug">Bánh Xếp Mandu Thịt & Bắp Bibigo (350g)</h3>
+              <div class="text-[11px] text-gray-500 mt-0.5">SKU: BBG-MANDU-BAP-350G</div>
+            </div>
+          </div>
+          <div class="bg-gray-50 p-2.5 rounded-xl text-xs space-y-1 border border-gray-100">
+            <div class="flex justify-between">
+              <span class="text-gray-500">Giá Sell-out (NPP bán tạp hóa):</span>
+              <b class="text-cj-red font-black">38.000 đ/gói</b>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-500">Giá bán lẻ đề nghị:</span>
+              <b class="text-gray-700">46.000 đ/gói</b>
+            </div>
+            <div class="flex justify-between text-[11px]">
+              <span class="text-gray-400">Quy cách:</span>
+              <span class="text-gray-600 font-medium">Thùng 20 gói x 350g (Nhiệt độ: -18°C)</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. Mandu Hải Sản -->
+        <div class="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm space-y-2.5">
+          <div class="flex items-start gap-3">
+            <div class="w-14 h-14 bg-blue-50 rounded-2xl flex items-center justify-center text-3xl border border-blue-200 shrink-0">🥟</div>
+            <div class="flex-1 min-w-0">
+              <span class="text-[10px] bg-blue-100 text-blue-800 font-black px-2 py-0.5 rounded-full">Bibigo</span>
+              <h3 class="font-extrabold text-gray-900 text-sm mt-1 leading-snug">Bánh Xếp Mandu Hải Sản Bibigo (350g)</h3>
+              <div class="text-[11px] text-gray-500 mt-0.5">SKU: BBG-MANDU-HAISAN-350G</div>
+            </div>
+          </div>
+          <div class="bg-gray-50 p-2.5 rounded-xl text-xs space-y-1 border border-gray-100">
+            <div class="flex justify-between">
+              <span class="text-gray-500">Giá Sell-out (NPP bán tạp hóa):</span>
+              <b class="text-cj-red font-black">42.000 đ/gói</b>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-500">Giá bán lẻ đề nghị:</span>
+              <b class="text-gray-700">51.000 đ/gói</b>
+            </div>
+            <div class="flex justify-between text-[11px]">
+              <span class="text-gray-400">Quy cách:</span>
+              <span class="text-gray-600 font-medium">Thùng 20 gói x 350g (Nhiệt độ: -18°C)</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. Kim Chi Cải Thảo -->
+        <div class="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm space-y-2.5">
+          <div class="flex items-start gap-3">
+            <div class="w-14 h-14 bg-emerald-50 rounded-2xl flex items-center justify-center text-3xl border border-emerald-200 shrink-0">🥬</div>
+            <div class="flex-1 min-w-0">
+              <span class="text-[10px] bg-emerald-100 text-emerald-800 font-black px-2 py-0.5 rounded-full">Bibigo</span>
+              <h3 class="font-extrabold text-gray-900 text-sm mt-1 leading-snug">Kim Chi Cải Thảo Cắt Lát Bibigo (500g)</h3>
+              <div class="text-[11px] text-gray-500 mt-0.5">SKU: BBG-KIMCHI-500G</div>
+            </div>
+          </div>
+          <div class="bg-gray-50 p-2.5 rounded-xl text-xs space-y-1 border border-gray-100">
+            <div class="flex justify-between">
+              <span class="text-gray-500">Giá Sell-out (NPP bán tạp hóa):</span>
+              <b class="text-cj-red font-black">36.000 đ/hộp</b>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-500">Giá bán lẻ đề nghị:</span>
+              <b class="text-gray-700">44.000 đ/hộp</b>
+            </div>
+            <div class="flex justify-between text-[11px]">
+              <span class="text-gray-400">Quy cách:</span>
+              <span class="text-gray-600 font-medium">Thùng 12 hộp x 500g (Nhiệt độ: 0°C - 5°C)</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4. Chả Giò Rế Cầu Tre -->
+        <div class="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm space-y-2.5">
+          <div class="flex items-start gap-3">
+            <div class="w-14 h-14 bg-amber-50 rounded-2xl flex items-center justify-center text-3xl border border-amber-200 shrink-0">🍤</div>
+            <div class="flex-1 min-w-0">
+              <span class="text-[10px] bg-amber-100 text-amber-800 font-black px-2 py-0.5 rounded-full">Cầu Tre</span>
+              <h3 class="font-extrabold text-gray-900 text-sm mt-1 leading-snug">Chả Giò Rế Tôm Thịt Đặc Biệt Cầu Tre (500g)</h3>
+              <div class="text-[11px] text-gray-500 mt-0.5">SKU: CT-CHAGIO-RE-500G</div>
+            </div>
+          </div>
+          <div class="bg-gray-50 p-2.5 rounded-xl text-xs space-y-1 border border-gray-100">
+            <div class="flex justify-between">
+              <span class="text-gray-500">Giá Sell-out (NPP bán tạp hóa):</span>
+              <b class="text-cj-red font-black">49.000 đ/gói</b>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-500">Giá bán lẻ đề nghị:</span>
+              <b class="text-gray-700">59.000 đ/gói</b>
+            </div>
+            <div class="flex justify-between text-[11px]">
+              <span class="text-gray-400">Quy cách:</span>
+              <span class="text-gray-600 font-medium">Thùng 16 gói x 500g (Nhiệt độ: -18°C)</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 5. Xúc Xích Phô Mai -->
+        <div class="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm space-y-2.5">
+          <div class="flex items-start gap-3">
+            <div class="w-14 h-14 bg-orange-50 rounded-2xl flex items-center justify-center text-3xl border border-orange-200 shrink-0">🌭</div>
+            <div class="flex-1 min-w-0">
+              <span class="text-[10px] bg-orange-100 text-orange-800 font-black px-2 py-0.5 rounded-full">CJ Foods</span>
+              <h3 class="font-extrabold text-gray-900 text-sm mt-1 leading-snug">Xúc Xích Phô Mai Tiệt Trùng CJ Foods (175g)</h3>
+              <div class="text-[11px] text-gray-500 mt-0.5">SKU: CJ-XUCXICH-PHOMAI</div>
+            </div>
+          </div>
+          <div class="bg-gray-50 p-2.5 rounded-xl text-xs space-y-1 border border-gray-100">
+            <div class="flex justify-between">
+              <span class="text-gray-500">Giá Sell-out (NPP bán tạp hóa):</span>
+              <b class="text-cj-red font-black">23.000 đ/gói</b>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-500">Giá bán lẻ đề nghị:</span>
+              <b class="text-gray-700">28.000 đ/gói</b>
+            </div>
+            <div class="flex justify-between text-[11px]">
+              <span class="text-gray-400">Quy cách:</span>
+              <span class="text-gray-600 font-medium">Thùng 24 gói x 175g (Nhiệt độ thường)</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= VIEW 8: HỒ SƠ CÁ NHÂN & CÀI ĐẶT (TAB 5) ================= -->
+    <section id="view_profile" class="hidden space-y-4">
+      <div class="bg-white p-6 rounded-3xl border border-gray-200 shadow-sm max-w-xl mx-auto space-y-4">
+        <div class="text-center space-y-2">
+          <div class="w-20 h-20 bg-blue-100 text-blue-900 rounded-full flex items-center justify-center text-4xl mx-auto border-4 border-white shadow-lg">
+            👮‍♂️
+          </div>
+          <h2 class="text-lg font-black text-gray-900" id="profileUserName">Trần Quốc Bảo</h2>
+          <div class="text-xs bg-blue-50 text-blue-800 font-bold px-3 py-1 rounded-full inline-block border border-blue-200" id="profileUserRole">
+            GSBH Kênh GT (KV TP.HCM 1)
+          </div>
+        </div>
+
+        <div class="bg-gray-50 p-4 rounded-2xl border border-gray-200 text-xs space-y-2">
+          <div class="flex justify-between border-b pb-1.5">
+            <span class="text-gray-500">Mã nhân viên:</span>
+            <b class="text-gray-900 font-extrabold" id="profileEmpCode">CJ1330714</b>
+          </div>
+          <div class="flex justify-between border-b pb-1.5">
+            <span class="text-gray-500">Khu vực phụ trách:</span>
+            <b class="text-gray-900" id="profileUserArea">TP.HCM 1 (Bình Thạnh, Gò Vấp, Q.4)</b>
+          </div>
+          <div class="flex justify-between border-b pb-1.5">
+            <span class="text-gray-500">Số điện thoại:</span>
+            <b class="text-blue-700">0909 999 888</b>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-gray-500">Email công ty:</span>
+            <b class="text-gray-800">bao.tq@cjfoods.vn</b>
+          </div>
+        </div>
+
+        <!-- Admin Exclusive Actions Section -->
+        <div id="profileAdminSection" class="hidden bg-amber-50 p-3.5 rounded-2xl border border-amber-200 space-y-2">
+          <div class="text-xs font-black text-amber-900 flex items-center gap-1.5">
+            <span>👑</span>
+            <span>QUYỀN QUẢN TRỊ VIÊN (ADMIN RTM / DMS):</span>
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <button type="button" onclick="CJApp.openImportModal()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs py-2 px-3 rounded-xl transition flex items-center justify-center gap-1 shadow-sm active:scale-95">
+              <span>📂</span>
+              <span>Import Theo User</span>
+            </button>
+            <button type="button" onclick="CJApp.openAdminExportModal()" class="bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs py-2 px-3 rounded-xl transition flex items-center justify-center gap-1 shadow-sm active:scale-95">
+              <span>📥</span>
+              <span>Export Theo User</span>
+            </button>
+          </div>
+          <button type="button" onclick="CJApp.openAdminUserManagementModal()" class="w-full bg-slate-900 hover:bg-slate-800 text-amber-300 font-extrabold text-xs py-2.5 px-3 rounded-xl transition flex items-center justify-center gap-1.5 border border-amber-500/50 shadow-sm active:scale-95 mt-1 cursor-pointer">
+            <span>👑</span>
+            <span>Quản Lý & Điều Khiển Tất Cả User Hệ Thống</span>
+          </button>
+        </div>
+
+        <!-- Action Buttons: Change Password & Logout -->
+        <div class="pt-2 space-y-2">
+          <button type="button" onclick="CJApp.openChangePasswordModal()" class="w-full bg-[#184594] hover:bg-[#123675] text-white font-bold py-3 rounded-2xl shadow transition active:scale-95 flex items-center justify-center gap-2 text-sm cursor-pointer">
+            <span>🔒</span>
+            <span>Đổi Mật Khẩu Tài Khoản</span>
+          </button>
+          <button type="button" onclick="CJApp.logout()" class="w-full bg-red-600 hover:bg-red-700 text-white font-black py-3 rounded-2xl shadow transition active:scale-95 flex items-center justify-center gap-2 text-sm cursor-pointer">
+            <span>🚪</span>
+            <span>Đăng Xuất & Đổi Tài Khoản</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= 3-TAB STREAMLINED MOBILE BOTTOM NAVIGATION BAR ================= -->
+    <!-- Chỉ giữ 3 Menu chính theo yêu cầu: Trang chủ, Khách hàng, Cá nhân (Mục đích chủ yếu kiểm tra tủ đông) -->
+    <div id="mobileBottomNavBar" class="fixed sm:absolute bottom-0 left-0 right-0 z-30 bg-white/95 backdrop-blur border-t border-gray-200 shadow-lg px-3 py-1.5 flex items-center justify-around text-center select-none">
+      
+      <!-- Tab 1: Trang chủ (Màn hình 1 - Dashboard KT Tủ Đông GT) -->
+      <button 
+        type="button" 
+        onclick="CJApp.switchTab('dashboard')" 
+        class="mobile-dms-tab flex-1 flex flex-col items-center py-1 text-[#184594] font-black transition active:scale-95 cursor-pointer" 
+        data-tab="dashboard">
+        <span class="text-xl leading-none">🏠</span>
+        <span class="text-[11px] font-bold mt-1">Trang chủ</span>
+      </button>
+
+      <!-- Tab 2: Khách hàng (Màn hình 2 - Danh sách KH Cần KT Tủ Đông) -->
+      <button 
+        type="button" 
+        onclick="CJApp.switchTab('mobileAudit'); if (typeof CJAudit !== 'undefined' && CJAudit.switchViewMode) CJAudit.switchViewMode('list');" 
+        class="mobile-dms-tab flex-1 flex flex-col items-center py-1 text-gray-500 hover:text-[#184594] transition active:scale-95 cursor-pointer" 
+        data-tab="mobileAudit">
+        <span class="text-xl leading-none">👥</span>
+        <span class="text-[11px] font-bold mt-1">Khách hàng</span>
+      </button>
+
+      <!-- Tab 3: Cá nhân (Thông tin tài khoản & Đổi mật khẩu & Đăng xuất) -->
+      <button 
+        type="button" 
+        onclick="CJApp.switchTab('profile')" 
+        class="mobile-dms-tab flex-1 flex flex-col items-center py-1 text-gray-500 hover:text-[#184594] transition active:scale-95 cursor-pointer" 
+        data-tab="profile">
+        <span class="text-xl leading-none">👤</span>
+        <span class="text-[11px] font-bold mt-1">Cá nhân</span>
+      </button>
+
+    </div>
+
+    <!-- Phone Home Indicator Bar (Chỉ hiển thị trên khung Điện thoại mô phỏng) -->
+    <div class="phone-home-indicator"></div>
+
+    </div> <!-- End #appDeviceShell -->
+  </main>
+
+  <!-- ================= MODAL: ĐẶT HÀNG SELL-OUT (KÊNH GT) ================= -->
+  <div id="modalOrderSellOut" class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-4 sm:p-6 space-y-4 shadow-2xl animate-fade-in border border-gray-200 my-auto">
+      
+      <!-- Modal Header -->
+      <div class="flex items-center justify-between border-b pb-3">
+        <div class="flex items-center gap-2.5">
+          <div class="w-10 h-10 rounded-2xl bg-amber-100 text-amber-800 flex items-center justify-center text-xl font-bold">
+            🛒
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <h3 class="font-extrabold text-sm sm:text-base text-gray-900">LẬP ĐƠN HÀNG SELL-OUT (GT)</h3>
+              <span class="text-[10px] bg-red-100 text-cj-red font-black px-2 py-0.5 rounded-full">CJ FOODS</span>
+            </div>
+            <p class="text-xs text-gray-500 mt-0.5" id="orderModalStoreSubTitle">Tạp Hóa Chị Lan • Tuyến T2-T4-T6</p>
+          </div>
+        </div>
+        <button type="button" onclick="CJAudit.closeOrderModal()" class="text-gray-400 hover:text-gray-700 text-xl font-bold p-1">✕</button>
+      </div>
+
+      <!-- Active Promotion Notice Banner -->
+      <div class="bg-emerald-50 border border-emerald-200 p-3 rounded-2xl flex items-start gap-2.5 text-xs text-emerald-900">
+        <span class="text-lg">🎁</span>
+        <div class="leading-relaxed">
+          <b class="text-emerald-800">CTKM Đang Áp Dụng:</b> Mua từ 5 thùng Bánh xếp Mandu Bibigo bất kỳ tặng ngay <b>1 Thùng Chả Giò Rế Cầu Tre (784.000đ)</b>!
+        </div>
+      </div>
+
+      <!-- Product Ordering Table / Items List -->
+      <div class="space-y-2.5 max-h-72 overflow-y-auto pr-1" id="orderProductList">
+        <!-- Rendered dynamically by CJAudit.renderOrderProductRows() -->
+      </div>
+
+      <!-- Order Summary Card -->
+      <div class="bg-gray-50 p-3.5 rounded-2xl border border-gray-200 space-y-1.5 text-xs">
+        <div class="flex justify-between text-gray-600">
+          <span>Tổng số lượng đặt:</span>
+          <span class="font-bold text-gray-900" id="orderTotalQuantity">0 gói/hộp</span>
+        </div>
+        <div class="flex justify-between text-gray-600">
+          <span>Tổng tiền hàng (Sell-out):</span>
+          <span class="font-bold text-gray-900" id="orderGrossTotal">0 đ</span>
+        </div>
+        <div class="flex justify-between text-emerald-700 font-bold" id="orderPromoAppliedRow">
+          <span>Khuyến mãi / Quà tặng:</span>
+          <span id="orderPromoRewardText">Chưa đạt điều kiện quà tặng</span>
+        </div>
+        <div class="flex justify-between text-base font-black text-blue-950 pt-1.5 border-t border-gray-200">
+          <span>Tổng Thanh Toán NPP:</span>
+          <span class="text-cj-red font-black" id="orderNetTotal">0 đ</span>
+        </div>
+      </div>
+
+      <!-- Order Notes -->
+      <div class="space-y-1 text-xs">
+        <label class="block font-bold text-gray-700">Ghi chú giao hàng từ NPP / Điểm bán:</label>
+        <input type="text" id="orderNotesInput" placeholder="Ví dụ: Giao sáng mai trước 10h, kèm hóa đơn GTGT..." class="w-full border border-gray-300 rounded-xl p-2.5 outline-none focus:ring-2 focus:ring-blue-600 text-xs" />
+      </div>
+
+      <!-- Modal Footer Action Buttons -->
+      <div class="pt-2 flex items-center justify-end gap-2 border-t">
+        <button type="button" onclick="CJAudit.closeOrderModal()" class="px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-xs font-bold transition">
+          Hủy bỏ
+        </button>
+        <button type="button" onclick="CJAudit.submitOrder()" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-md transition flex items-center gap-1.5 active:scale-95">
+          <span>🛒</span>
+          <span>Xác Nhận Lập Đơn Hàng</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ================= MODAL: AUDIT SUCCESS RECEIPT (POSM DMS) ================= -->
+  <div id="auditSuccessModal" class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 space-y-4 shadow-2xl animate-fade-in text-center border border-gray-100">
+      <div class="w-16 h-16 bg-blue-50 text-blue-800 rounded-full flex items-center justify-center mx-auto text-3xl font-black border border-blue-200">
+        ✓
+      </div>
+      <div>
+        <h3 class="text-lg font-black text-gray-900">Lưu Kiểm Tra POSM Thành Công!</h3>
+        <p class="text-xs text-gray-500 mt-1" id="modalResultStore">Tạp Hóa Chị Lan</p>
+      </div>
+
+      <div class="bg-gray-50 rounded-2xl p-4 text-xs space-y-2 text-left border border-gray-200">
+        <div class="flex justify-between items-center">
+          <span class="text-gray-500">Mã Barcode:</span>
+          <span class="font-black text-blue-900" id="modalResultBarcode">TDO2603_0025</span>
+        </div>
+        <div class="flex justify-between items-center">
+          <span class="text-gray-500">Số Lượng POSM:</span>
+          <span class="font-bold text-gray-900" id="modalResultQty">1</span>
+        </div>
+        <div class="flex justify-between items-center">
+          <span class="text-gray-500">Đánh Giá Tình Trạng:</span>
+          <span class="font-black text-emerald-700" id="modalResultCondition">Sử Dụng Được</span>
+        </div>
+        <div id="modalResultNotesRow" class="hidden pt-1.5 border-t border-gray-200">
+          <span class="text-gray-500 block font-medium">Ghi chú:</span>
+          <span class="font-semibold text-gray-800 italic" id="modalResultNotes"></span>
+        </div>
+        <div id="modalResultProposalRow" class="hidden pt-1 border-t border-gray-200">
+          <span class="text-gray-500 block font-medium">Đề nghị:</span>
+          <span class="font-semibold text-blue-900" id="modalResultProposal"></span>
+        </div>
+      </div>
+
+      <div id="modalResultTicketBox" class="hidden bg-red-50 border border-red-200 rounded-2xl p-3 text-xs text-left text-red-900">
+        <div class="font-bold flex items-center gap-1">🛠️ Đã tự động lập Ticket sự cố thiết bị:</div>
+        <div class="mt-1 font-semibold" id="modalResultTicketId">TCK-2026-0041</div>
+        <div class="text-[11px] text-red-700 mt-0.5" id="modalResultTicketIssue">Hư hỏng thiết bị</div>
+      </div>
+
+      <div class="pt-2">
+        <button onclick="CJAudit.closeSuccessModal()" class="w-full bg-[#1a365d] hover:bg-[#132845] text-white font-bold py-3.5 rounded-2xl shadow-lg transition active:scale-95 text-sm">
+          Tiếp Tục Kiểm Tra Điểm Bán Khác ➔
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL: PHOTO WATERMARK LIGHTBOX ================= -->
+  <div id="photoViewModal" class="hidden fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-3 sm:p-6" onclick="CJAudit.closePhotoModal()">
+    <div class="relative max-w-4xl w-full max-h-[90vh] flex flex-col items-center" onclick="event.stopPropagation()">
+      <button onclick="CJAudit.closePhotoModal()" class="absolute -top-10 right-0 text-white font-bold text-lg hover:text-red-400">
+        ✕ Đóng
+      </button>
+      <img id="modalPhotoImg" src="" class="max-w-full max-h-[82vh] rounded-2xl shadow-2xl object-contain border border-white/20" />
+      <div class="text-white text-xs mt-2 text-center">
+        Ảnh thực địa kèm Watermark chống gian lận (GPS, Thời gian, Tên cửa hàng, NVBH, GSBH)
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL: AUDIT DETAIL INSPECTION ================= -->
+  <div id="dashAuditDetailModal" class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-3 sm:p-6">
+    <div class="bg-white rounded-3xl max-w-3xl w-full max-h-[90vh] overflow-y-auto p-4 sm:p-6 space-y-4 shadow-2xl">
+      <div class="flex items-center justify-between border-b pb-3">
+        <div>
+          <h3 class="text-base font-bold text-gray-900" id="modalDetailTitle">Chi tiết kiểm tra</h3>
+          <p class="text-xs text-gray-500" id="detailStoreCode"></p>
+        </div>
+        <button onclick="CJDashboard.closeAuditDetailModal()" class="text-gray-400 hover:text-gray-700 font-bold text-xl">✕</button>
+      </div>
+
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+        <div class="bg-gray-50 p-2.5 rounded-xl border">
+          <div class="text-gray-400">Thời gian:</div>
+          <div class="font-semibold text-gray-800" id="detailAuditTime"></div>
+        </div>
+        <div class="bg-gray-50 p-2.5 rounded-xl border">
+          <div class="text-gray-400">Người kiểm tra:</div>
+          <div class="font-semibold text-gray-800" id="detailAuditor"></div>
+        </div>
+        <div class="bg-gray-50 p-2.5 rounded-xl border">
+          <div class="text-gray-400">Nhiệt độ tủ:</div>
+          <div class="font-bold text-cj-red" id="detailTemp"></div>
+        </div>
+        <div class="bg-gray-50 p-2.5 rounded-xl border">
+          <div class="text-gray-400">Điểm đánh giá:</div>
+          <div class="font-bold text-emerald-600" id="detailScore"></div>
+        </div>
+      </div>
+
+      <div class="text-xs space-y-1 bg-gray-50 p-3 rounded-xl border">
+        <div><b>Mã tài sản tủ:</b> <span id="detailAssetTag"></span></div>
+        <div><b>Thị phần trưng bày (SOS):</b> <span id="detailSos"></span></div>
+        <div><b>Ghi chú thực địa:</b> <span id="detailNotes" class="italic text-gray-700"></span></div>
+      </div>
+
+      <div>
+        <h4 class="text-xs font-bold text-gray-800 mb-2">📸 Hình Ảnh Thực Địa Đóng Dấu Watermark:</h4>
+        <div id="detailPhotoContainer" class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <!-- Rendered dynamically -->
+        </div>
+      </div>
+
+      <div class="pt-3 border-t text-right">
+        <button onclick="CJDashboard.closeAuditDetailModal()" class="bg-gray-200 hover:bg-gray-300 text-gray-800 text-xs font-bold px-4 py-2 rounded-xl transition">
+          Đóng cửa sổ
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL: ADD STORE ================= -->
+  <div id="addStoreModal" class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 space-y-4 shadow-2xl">
+      <div class="flex items-center justify-between border-b pb-2">
+        <h3 class="font-bold text-base text-gray-900">Thêm Điểm Bán Mới Vào Khu Vực</h3>
+        <button onclick="CJApp.closeAddStoreModal()" class="text-gray-400 hover:text-gray-700 text-lg font-bold">✕</button>
+      </div>
+
+      <form onsubmit="CJApp.saveNewStore(event)" class="space-y-3 text-xs">
+        <div>
+          <label class="block font-bold text-gray-700 mb-1">Tên Điểm Bán / Đại Lý *:</label>
+          <input type="text" id="newStoreName" required class="w-full border border-gray-300 rounded-xl p-2.5 outline-none focus:ring-1 focus:ring-cj-red" placeholder="VD: Tạp Hóa Kim Oanh" />
+        </div>
+
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block font-bold text-gray-700 mb-1">Kênh Phân Phối:</label>
+            <select id="newStoreChannel" class="w-full border border-gray-300 rounded-xl p-2.5 bg-white outline-none">
+              <option value="GT">GT (Tạp Hóa / Đại Lý)</option>
+              <option value="MT">MT (Siêu Thị / CVS)</option>
+              <option value="B2B">B2B (Horeca / Bếp)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-bold text-gray-700 mb-1">Tuyến Bán Hàng:</label>
+            <input type="text" id="newStoreRoute" class="w-full border border-gray-300 rounded-xl p-2.5 outline-none" placeholder="Tuyến 2-4-6..." />
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-bold text-gray-700 mb-1">👤 Phân Công Cho NVBH Phụ Trách:</label>
+          <select id="newStoreSalesRep" class="w-full border border-red-300 bg-red-50/50 rounded-xl p-2.5 font-bold text-gray-900 outline-none">
+            <!-- Populated via app.js -->
+          </select>
+        </div>
+
+        <div>
+          <label class="block font-bold text-gray-700 mb-1">Địa Chỉ Chi Tiết:</label>
+          <input type="text" id="newStoreAddress" class="w-full border border-gray-300 rounded-xl p-2.5 outline-none" placeholder="Số nhà, Tên đường, Quận/Huyện..." />
+        </div>
+
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block font-bold text-gray-700 mb-1">Số Điện Thoại:</label>
+            <input type="text" id="newStorePhone" class="w-full border border-gray-300 rounded-xl p-2.5 outline-none" placeholder="0908..." />
+          </div>
+          <div>
+            <label class="block font-bold text-gray-700 mb-1">Mã Tủ Đông CJ:</label>
+            <input type="text" id="newStoreFreezerTag" class="w-full border border-gray-300 rounded-xl p-2.5 outline-none" placeholder="CJF-FZ-2026-..." />
+          </div>
+        </div>
+
+        <div class="pt-2 flex justify-end gap-2 border-t">
+          <button type="button" onclick="CJApp.closeAddStoreModal()" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-semibold">
+            Hủy
+          </button>
+          <button type="submit" class="px-5 py-2 bg-cj-red hover:bg-cj-redDark text-white rounded-xl font-bold shadow">
+            Lưu Điểm Bán
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ================= MODAL: IMPORT EXCEL THEO USER ================= -->
+  <div id="importExcelModal" class="hidden fixed inset-0 bg-black/70 z-[100] flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+    <div class="bg-white rounded-3xl max-w-xl w-full p-5 sm:p-6 space-y-4 shadow-2xl animate-fade-in border border-gray-200 my-auto">
+      <div class="flex items-center justify-between border-b pb-3">
+        <div class="flex items-center gap-2.5">
+          <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-emerald-600 to-teal-700 text-white flex items-center justify-center font-black text-xl shadow">
+            📂
+          </div>
+          <div>
+            <h3 class="font-black text-sm sm:text-base text-gray-900">
+              Upload Danh Sách Khách Hàng Theo Từng User
+            </h3>
+            <p class="text-[11px] text-gray-500">Phân công điểm bán & tủ đông POSM cho GSBH hoặc NVBH cụ thể</p>
+          </div>
+        </div>
+        <button onclick="CJApp.closeImportModal()" class="text-gray-400 hover:text-gray-700 text-xl font-bold p-1 cursor-pointer">✕</button>
+      </div>
+
+      <!-- BƯỚC 1: CHỌN USER CẦN GÁN DANH SÁCH (ĐẶT LÊN ĐẦU TIÊN) -->
+      <div class="bg-amber-50 p-4 rounded-2xl border-2 border-amber-300 space-y-2">
+        <label class="block text-xs font-black text-amber-950 flex items-center justify-between">
+          <span class="flex items-center gap-1.5">
+            <span>👤</span>
+            <span>BƯỚC 1: CHỌN USER NHẬN DANH SÁCH KHÁCH HÀNG:</span>
+          </span>
+          <span class="text-[10px] bg-amber-200 text-amber-900 font-extrabold px-2 py-0.5 rounded-full border border-amber-300">QUAN TRỌNG</span>
+        </label>
+        <select id="importTargetUserSelect" class="w-full text-xs font-black border-2 border-amber-400 rounded-xl p-3 bg-white text-gray-900 outline-none focus:ring-2 focus:ring-amber-500 shadow-sm cursor-pointer">
+          <option value="AUTO">📁 Tự động phân công theo từng dòng trong file Excel (Tai_Khoan_GSBH / Tai_Khoan_NVBH)</option>
+          <!-- Populated dynamically via CJApp.populateUserSelectors() -->
+        </select>
+        <p class="text-[11px] text-amber-800 leading-relaxed font-medium">
+          💡 <b>Hướng dẫn:</b> Nếu bạn chọn 1 GSBH hoặc 1 NVBH cụ thể ở trên, toàn bộ danh sách điểm bán trong file Excel sẽ được <b>chuyển giao và gán thẳng</b> cho user đó đi tuyến kiểm tra tủ đông.
+        </p>
+      </div>
+
+      <!-- BƯỚC 2: TẢI FILE MẪU -->
+      <div class="bg-blue-50/80 p-3.5 rounded-2xl border border-blue-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5">
+        <div class="text-xs">
+          <div class="font-black text-blue-950 flex items-center gap-1">
+            <span>📥</span>
+            <span>BƯỚC 2: TẢI FILE MẪU CHUẨN CJ FOODS:</span>
+          </div>
+          <div class="text-blue-800 text-[11px] mt-0.5">
+            File mẫu gồm các cột: <b>Ma_KH, Ten_KH, Kenh (GT), Tuyen, Dia_Chi, Tai_Khoan_GSBH, Tai_Khoan_NVBH, Ma_Tu_Dong, Vi_Do_Lat, Kinh_Do_Lon</b>...
+          </div>
+        </div>
+        <button type="button" onclick="CJExcel.downloadImportTemplate()" class="shrink-0 bg-blue-600 hover:bg-blue-700 text-white font-black text-xs px-3.5 py-2.5 rounded-xl shadow transition flex items-center gap-1.5 active:scale-95 cursor-pointer">
+          <span>📥</span>
+          <span>Tải File Mẫu Excel</span>
+        </button>
+      </div>
+
+      <!-- BƯỚC 3: CHỌN HOẶC KÉO THẢ FILE EXCEL -->
+      <div class="space-y-2">
+        <div class="text-xs font-black text-gray-900 flex items-center gap-1.5">
+          <span>📊</span>
+          <span>BƯỚC 3: KÉO THẢ HOẶC CHỌN FILE EXCEL ĐÃ ĐIỀN:</span>
+        </div>
+        <label class="border-2 border-dashed border-emerald-400 hover:border-emerald-600 bg-emerald-50/40 hover:bg-emerald-50/80 rounded-2xl p-6 text-center cursor-pointer block transition group shadow-inner">
+          <span class="text-4xl block mb-2 group-hover:scale-110 transition">📊</span>
+          <span class="text-xs sm:text-sm font-black text-emerald-950 block">
+            Nhấp vào đây để chọn file Excel (.xlsx, .xls)
+          </span>
+          <span class="text-[11px] text-emerald-700 font-medium block mt-1">
+            Hệ thống tự động đọc và phân bổ khách hàng theo User bạn đã chọn ở Bước 1
+          </span>
+          <input type="file" id="excelUploadInput" accept=".xlsx, .xls" class="hidden" />
+        </label>
+
+        <!-- Tùy chọn làm sạch danh sách cũ trước khi nạp -->
+        <div class="bg-red-50 p-3 rounded-2xl border border-red-200 flex items-start gap-2.5 text-xs text-red-950 font-bold">
+          <input type="checkbox" id="importReplaceAllCheckbox" checked class="w-4 h-4 mt-0.5 rounded text-red-600 focus:ring-red-500 border-gray-300 cursor-pointer shrink-0" />
+          <label for="importReplaceAllCheckbox" class="cursor-pointer select-none leading-relaxed">
+            <span>Xóa sạch danh sách điểm bán cũ trước khi nạp mới</span>
+            <span class="block text-[11px] text-red-600 font-medium">(Khuyến nghị bật: Đảm bảo danh sách chỉ gồm các khách hàng chuẩn từ file Excel này, không bị lẫn các điểm bán cũ)</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="pt-2 flex justify-end gap-2 border-t">
+        <button type="button" onclick="CJApp.closeImportModal()" class="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-xs font-bold transition cursor-pointer">
+          Đóng
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL: ADMIN EXPORT BY USER ================= -->
+  <div id="modalAdminExport" class="hidden fixed inset-0 bg-black/65 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 space-y-4 shadow-2xl animate-fade-in border border-gray-200">
+      <div class="flex items-center justify-between border-b pb-3">
+        <div class="flex items-center gap-2.5">
+          <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#002B49] to-[#184594] text-white flex items-center justify-center text-xl font-bold shadow">
+            👑
+          </div>
+          <div>
+            <h3 class="font-extrabold text-sm sm:text-base text-gray-900">Xuất Báo Cáo Theo Từng User</h3>
+            <p class="text-[11px] text-gray-500">Quyền Admin Quản Trị Hệ Thống RTM / DMS</p>
+          </div>
+        </div>
+        <button type="button" onclick="CJApp.closeAdminExportModal()" class="text-gray-400 hover:text-gray-700 text-xl font-bold p-1">✕</button>
+      </div>
+
+      <div class="space-y-3 text-xs">
+        <div>
+          <label class="block font-bold text-gray-700 mb-1">Chọn phạm vi xuất dữ liệu theo User:</label>
+          <select id="exportTargetUserSelect" class="w-full text-xs font-bold border border-blue-300 rounded-xl p-2.5 bg-blue-50/50 text-gray-800 outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer">
+            <option value="ALL">🌐 Tất Cả User / Toàn Quốc (Toàn bộ GSBH & Sales)</option>
+            <!-- Populated dynamically via CJApp.populateUserSelectors() -->
+          </select>
+        </div>
+
+        <div class="bg-slate-50 p-3 rounded-2xl border border-slate-200 space-y-1 text-gray-600 text-[11px]">
+          <div class="font-bold text-gray-900 flex items-center gap-1">
+            <span>📑</span>
+            <span>Báo cáo Excel bao gồm 3 Sheet chuẩn:</span>
+          </div>
+          <div>1. <b>BaoCao_KiemTra_TuDong:</b> Lịch sử kiểm tra thực địa kèm GPS, nhiệt độ, SOS...</div>
+          <div>2. <b>DanhMuc_TuDong_CJ:</b> Danh mục tủ đông & khách hàng được gán cho User.</div>
+          <div>3. <b>Ticket_SuaChua:</b> Danh sách sự cố kỹ thuật và yêu cầu thu hồi POSM.</div>
+        </div>
+      </div>
+
+      <div class="pt-2 flex justify-end gap-2 border-t">
+        <button type="button" onclick="CJApp.closeAdminExportModal()" class="px-3.5 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-xs font-semibold transition">
+          Hủy bỏ
+        </button>
+        <button type="button" onclick="CJApp.submitAdminExport()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow transition flex items-center gap-1.5 active:scale-95">
+          <span>📥</span>
+          <span>Tải Báo Cáo Excel</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL: ADMIN USER MANAGEMENT & CONTROL ================= -->
+  <div id="modalAdminUserManagement" class="hidden fixed inset-0 bg-black/75 z-50 flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+    <div class="bg-white rounded-3xl max-w-4xl w-full p-4 sm:p-6 space-y-4 shadow-2xl animate-fade-in border border-gray-200 my-auto">
+      
+      <!-- Modal Header -->
+      <div class="flex items-center justify-between border-b pb-3">
+        <div class="flex items-center gap-2.5">
+          <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-amber-500 to-amber-600 text-slate-950 flex items-center justify-center font-black text-xl shadow">
+            👑
+          </div>
+          <div>
+            <h3 class="font-black text-sm sm:text-base text-gray-900">Quản Lý Nhân Sự & Cây Phân Quyền User Hệ Thống</h3>
+            <p class="text-[11px] text-gray-500">Quản trị viên RTM • Giám sát bán hàng (GSBH) • Nhân viên đi tuyến (Sales Rep GT)</p>
+          </div>
+        </div>
+        <button type="button" onclick="CJApp.closeAdminUserManagementModal()" class="text-gray-400 hover:text-gray-700 text-xl font-bold p-1 cursor-pointer">✕</button>
+      </div>
+
+      <!-- Action Toolbar: Download Template, Import Excel, Reset -->
+      <div class="bg-gradient-to-r from-blue-50 via-slate-50 to-amber-50 p-3.5 rounded-2xl border border-blue-200 flex flex-wrap items-center justify-between gap-2.5">
+        <div class="flex items-center gap-2">
+          <!-- Download User Template Button -->
+          <button type="button" onclick="CJExcel.downloadUserImportTemplate()" class="px-3 py-2 bg-white hover:bg-blue-50 text-blue-900 font-extrabold text-xs rounded-xl border border-blue-300 shadow-sm transition active:scale-95 flex items-center gap-1.5 cursor-pointer" title="Tải file Excel mẫu gồm 11 cột cấu trúc nhân sự">
+            <span class="text-base">📥</span>
+            <span>Tải Mẫu Excel User (11 Cột)</span>
+          </button>
+
+          <!-- Upload User Excel Button -->
+          <label class="px-3 py-2 bg-[#1c3668] hover:bg-[#13274e] text-white font-black text-xs rounded-xl shadow transition active:scale-95 flex items-center gap-1.5 cursor-pointer" title="Chọn file Excel để tạo/cập nhật user hàng loạt">
+            <span class="text-base">📂</span>
+            <span>Import User Từ Excel</span>
+            <input type="file" id="adminUserExcelFileInput" accept=".xlsx, .xls" class="hidden" onchange="CJApp.onUserExcelFileSelected(this)" />
+          </label>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <!-- Reset to Admin Only Button -->
+          <button type="button" onclick="CJApp.resetUsersToAdminOnly()" class="px-3 py-2 bg-red-50 hover:bg-red-100 text-red-800 font-bold text-xs rounded-xl border border-red-200 transition active:scale-95 flex items-center gap-1 cursor-pointer" title="Xóa toàn bộ user đã nạp, chỉ giữ lại tài khoản admin">
+            <span>🗑️</span>
+            <span>Chỉ Giữ Admin</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- User List Table -->
+      <div class="overflow-x-auto max-h-[55vh] border border-gray-200 rounded-2xl shadow-inner">
+        <table class="w-full text-left border-collapse text-xs">
+          <thead class="bg-slate-900 text-white font-black sticky top-0 z-10">
+            <tr>
+              <th class="p-3">User / Họ & Tên</th>
+              <th class="p-3 text-center">Mã NV</th>
+              <th class="p-3 text-center">Vai Trò</th>
+              <th class="p-3">Kênh & Khu Vực / Tuyến</th>
+              <th class="p-3">Quản Lý</th>
+              <th class="p-3 text-center">Điểm Bán</th>
+              <th class="p-3 text-right">Thao Tác Admin</th>
+            </tr>
+          </thead>
+          <tbody id="adminUserTableBody">
+            <!-- Rendered dynamically via CJApp.renderAdminUserManagementTable() -->
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="flex flex-wrap items-center justify-between gap-2 pt-2 border-t text-xs">
+        <div class="text-[11px] text-gray-500">
+          💡 <b>Cấu trúc cây vận hành:</b> Admin $\rightarrow$ GSBH $\rightarrow$ NVBH đi tuyến $\rightarrow$ Điểm bán GT $\rightarrow$ Tủ đông.
+        </div>
+        <button type="button" onclick="CJApp.closeAdminUserManagementModal()" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-bold transition">
+          Đóng
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL: THU HỒI POSM ================= -->
+  <div id="modalRecallPosm" class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full p-5 space-y-4 shadow-2xl animate-fade-in border border-gray-200">
+      <div class="flex items-center justify-between border-b pb-3">
+        <div class="flex items-center gap-2">
+          <div class="w-9 h-9 rounded-xl bg-blue-900 text-white flex items-center justify-center font-bold text-base">
+            📦
+          </div>
+          <div>
+            <h3 class="font-extrabold text-sm sm:text-base text-gray-900">Đề Xuất Thu Hồi POSM</h3>
+            <p class="text-[11px] text-gray-500">Lập phiếu yêu cầu thu hồi thiết bị về kho NPP</p>
+          </div>
+        </div>
+        <button onclick="CJAudit.closeRecallModal()" class="text-gray-400 hover:text-gray-700 text-xl font-bold p-1">✕</button>
+      </div>
+
+      <!-- Store & Barcode Info -->
+      <div class="bg-gray-50 p-3 rounded-2xl border border-gray-200 space-y-1 text-xs">
+        <div class="flex justify-between">
+          <span class="text-gray-500">Điểm bán:</span>
+          <span class="font-bold text-gray-900" id="recallStoreName">Tạp Hóa Chị Lan</span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-gray-500">Mã Barcode POSM:</span>
+          <span class="font-extrabold text-blue-900" id="recallBarcode">TDO2603_0025</span>
+        </div>
+      </div>
+
+      <!-- Reason Selection -->
+      <div class="space-y-1.5 text-xs">
+        <label class="block font-bold text-gray-800">Lý do thu hồi thiết bị / tủ POSM: <span class="text-red-500">*</span></label>
+        <select id="recallReasonSelect" class="w-full border border-gray-300 rounded-xl p-2.5 bg-white font-medium outline-none focus:ring-2 focus:ring-blue-600 text-xs">
+          <option value="store_closed">Cửa hàng đóng cửa / Trả mặt bằng kinh doanh</option>
+          <option value="severe_damage">Thiết bị hư hỏng nặng, không thể sửa tại chỗ</option>
+          <option value="low_volume">Không đạt sản lượng bán cam kết tối thiểu</option>
+          <option value="owner_request">Chủ tiệm đề nghị thu hồi, không muốn tiếp tục đặt tủ</option>
+          <option value="policy_violation">Vi phạm quy định trưng bày / để hàng đối thủ</option>
+          <option value="other">Lý do khác</option>
+        </select>
+      </div>
+
+      <!-- Receiver -->
+      <div class="space-y-1.5 text-xs">
+        <label class="block font-bold text-gray-800">Đơn vị tiếp nhận vận chuyển về kho:</label>
+        <select id="recallReceiverSelect" class="w-full border border-gray-300 rounded-xl p-2.5 bg-white font-medium outline-none text-xs">
+          <option value="npp_logistics">Đội Kỹ Thuật & Vận Chuyển NPP phụ trách</option>
+          <option value="sales_rep">NVBH trực tiếp hỗ trợ thu hồi</option>
+          <option value="third_party">Đơn vị vận chuyển thứ ba</option>
+        </select>
+      </div>
+
+      <!-- Notes -->
+      <div class="space-y-1.5 text-xs">
+        <label class="block font-bold text-gray-800">Ghi chú chi tiết hiện trạng thiết bị:</label>
+        <textarea id="recallNotes" rows="2" class="w-full border border-gray-300 rounded-xl p-2.5 text-xs outline-none focus:ring-2 focus:ring-blue-600 placeholder-gray-400" placeholder="Số lượng sản phẩm còn trong tủ, ngày hẹn lấy tủ, liên hệ chủ tiệm..."></textarea>
+      </div>
+
+      <!-- Field: Ảnh hiện trạng tủ khi thu hồi (BẮT BUỘC 100%) -->
+      <div class="space-y-1.5 text-xs pt-1">
+        <div class="flex items-center justify-between">
+          <label class="block font-bold text-gray-800">Ảnh hiện trạng tủ khi thu hồi: <span class="text-red-500">*</span></label>
+          <span class="text-[10px] font-black text-red-600 bg-red-50 px-2 py-0.5 rounded border border-red-200">BẮT BUỘC 100%</span>
+        </div>
+        <div class="flex items-start gap-2.5 p-2.5 rounded-2xl border border-dashed border-red-300 bg-red-50/30">
+          <div class="relative">
+            <label class="w-24 h-24 rounded-xl border border-gray-300 bg-white hover:bg-blue-50/50 shadow-sm flex flex-col items-center justify-center cursor-pointer transition overflow-hidden">
+              <img id="preview_recall" class="hidden w-full h-full object-cover cursor-pointer" onclick="CJAudit.openPhotoModal('recall')" title="Bấm xem ảnh phóng to" />
+              <div id="placeholder_recall" class="flex flex-col items-center justify-center text-center p-1">
+                <span class="text-xl mb-0.5">📸</span>
+                <span class="text-[10px] font-bold text-gray-600 leading-tight">Chụp ảnh tủ thu hồi</span>
+              </div>
+              <input type="file" id="photo_input_recall" accept="image/*" capture="environment" class="hidden" onchange="CJAudit.handlePhotoUpload(event, 'recall')" />
+            </label>
+            <button type="button" id="btnRemoveRecallPhoto" onclick="CJAudit.removePhoto('recall')" class="hidden absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-red-600 text-white font-bold text-xs flex items-center justify-center shadow">✕</button>
+          </div>
+          <div class="flex-1 space-y-1.5 text-[11px] text-gray-600">
+            <p class="leading-tight">Chụp toàn cảnh mặt trước & thân tủ để xác nhận tình trạng trầy xước, móp méo và hàng hóa trước khi bàn giao cho NPP.</p>
+            <button type="button" onclick="CJAudit.generateMockPhoto('recall')" class="w-full bg-blue-50 hover:bg-blue-100 text-blue-800 font-bold py-1 px-2 rounded-lg border border-blue-200 text-[10px] transition flex items-center justify-center gap-1 active:scale-95 shadow-sm">
+              <span>⚡</span> <span>Tạo ảnh thu hồi mẫu (PC)</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="pt-2 flex justify-end gap-2 border-t">
+        <button type="button" onclick="CJAudit.closeRecallModal()" class="px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-xs font-bold transition">
+          Hủy bỏ
+        </button>
+        <button type="button" onclick="CJAudit.confirmRecallPosm()" class="px-5 py-2.5 bg-[#182d56] hover:bg-[#122242] text-white rounded-xl text-xs font-bold shadow-md transition flex items-center gap-1.5 active:scale-95">
+          <span>📦</span>
+          <span>Xác Nhận Lập Phiếu Thu Hồi</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL: QUY CHUẨN CÁC TRƯỜNG HỢP CHỤP ẢNH KÊNH GT ================= -->
+  <div id="modalPhotoGuidelines" class="hidden fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
+    <div class="bg-white rounded-3xl max-w-2xl w-full p-5 sm:p-6 space-y-4 shadow-2xl animate-fade-in border border-gray-200 max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between border-b pb-3">
+        <div class="flex items-center gap-2.5">
+          <div class="w-10 h-10 rounded-2xl bg-red-100 text-cj-red flex items-center justify-center font-black text-lg">
+            📸
+          </div>
+          <div>
+            <h3 class="font-black text-sm sm:text-base text-gray-900 leading-tight">
+              QUY ĐỊNH CÁC TRƯỜNG HỢP CHỤP ẢNH KÊNH GT
+            </h3>
+            <p class="text-[11px] text-gray-500">Tiêu chuẩn kiểm soát hình ảnh POSM & Thiết bị thị trường CJ Foods</p>
+          </div>
+        </div>
+        <button onclick="CJAudit.closePhotoPolicyModal()" class="text-gray-400 hover:text-gray-700 text-xl font-bold p-1">✕</button>
+      </div>
+
+      <!-- Overview Intro Badge -->
+      <div class="bg-blue-50 border border-blue-200 p-3 rounded-2xl text-xs text-blue-900 leading-relaxed">
+        💡 <b>Nguyên tắc cốt lõi:</b> Tất cả ảnh chụp thực địa đều được đóng dấu <b>Watermark GPS, mã barcode tủ, thời gian và mục đích kiểm tra</b> nhằm chống gian lận vị trí và làm căn cứ pháp lý để NPP & Hãng thanh quyết toán bảo hành hoặc thu hồi tài sản.
+      </div>
+
+      <!-- Policy Cases List -->
+      <div class="space-y-3 text-xs">
+        
+        <!-- Case 1: Tủ Hư Hỏng -->
+        <div class="p-3 bg-red-50/50 rounded-2xl border border-red-200 space-y-1.5">
+          <div class="flex items-center justify-between">
+            <span class="font-extrabold text-red-800 text-xs flex items-center gap-1.5">
+              <span>1. 🛠️</span>
+              <span>Thiết Bị Hư Hỏng (Kỹ thuật / Cơ học)</span>
+            </span>
+            <span class="text-[10px] font-black px-2 py-0.5 rounded-full bg-red-600 text-white">BẮT BUỘC 100%</span>
+          </div>
+          <div class="text-[11px] text-gray-700 space-y-1">
+            <p><b>Góc chụp:</b> Chụp cận cảnh chi tiết hỏng (máy nén/lốc kêu to, xì gas, dàn lạnh bám tuyết dày, nứt vỡ kính lùa, hỏng gioăng đệm cửa).</p>
+            <p><b>Yêu cầu bổ sung:</b> Bắt buộc nhập Ghi chú mô tả hiện tượng kỹ thuật.</p>
+            <p class="text-red-700 font-semibold"><b>Hậu kiểm DMS:</b> Hệ thống tự động tạo Ticket CRITICAL đẩy về Đội Kỹ Thuật Điện Lạnh NPP.</p>
+          </div>
+        </div>
+
+        <!-- Case 2: Tủ Không Hoạt Động -->
+        <div class="p-3 bg-amber-50/50 rounded-2xl border border-amber-200 space-y-1.5">
+        <!-- Case 2: Mất (Không có tại cửa hàng) -->
+        <div class="p-3 bg-red-50/50 rounded-2xl border border-red-200 space-y-1.5">
+          <div class="flex items-center justify-between">
+            <span class="font-extrabold text-red-900 text-xs flex items-center gap-1.5">
+              <span>2. 🏢</span>
+              <span>Mất (Không có tại cửa hàng)</span>
+            </span>
+            <span class="text-[10px] font-black px-2 py-0.5 rounded-full bg-red-600 text-white">BẮT BUỘC 100%</span>
+          </div>
+          <div class="text-[11px] text-gray-700 space-y-1">
+            <p><b>Góc chụp:</b> Chụp hiện trường vị trí trước đây đặt tủ hoặc toàn cảnh mặt tiền cửa hàng để xác nhận tủ không còn tại điểm bán.</p>
+            <p><b>Yêu cầu bổ sung:</b> Bắt buộc nhập Ghi chú lý do chủ tiệm phản hồi (đã chuyển đi, trả tủ, thất lạc...).</p>
+            <p class="text-red-800 font-semibold"><b>Hậu kiểm DMS:</b> Kích hoạt Ticket khẩn cấp chuyển Bộ phận Pháp lý & Quản trị tài sản CJ.</p>
+          </div>
+        </div>
+
+        <!-- Case 3: Mất Tem / Rách Mã QR -->
+        <div class="p-3 bg-purple-50/50 rounded-2xl border border-purple-200 space-y-1.5">
+          <div class="flex items-center justify-between">
+            <span class="font-extrabold text-purple-900 text-xs flex items-center gap-1.5">
+              <span>3. 🏷️</span>
+              <span>Mất Tem / Rách Mã QR / Mờ Barcode</span>
+            </span>
+            <span class="text-[10px] font-black px-2 py-0.5 rounded-full bg-red-600 text-white">BẮT BUỘC 100%</span>
+          </div>
+          <div class="text-[11px] text-gray-700 space-y-1">
+            <p><b>Góc chụp:</b> Chụp góc dán tem hoặc mã QR rách, trầy xước, mờ số không thể quét được bằng camera SFA.</p>
+            <p><b>Yêu cầu bổ sung:</b> Bắt buộc ghi chú số serial/barcode còn đọc được hoặc xác nhận mất hẳn tem.</p>
+            <p class="text-purple-800 font-semibold"><b>Hậu kiểm DMS:</b> Tạo yêu cầu chuyển Trade Marketing in cấp phát bộ tem định danh POSM mới.</p>
+          </div>
+        </div>
+
+        <!-- Case 4: Lý Do Khác -->
+        <div class="p-3 bg-orange-50/50 rounded-2xl border border-orange-200 space-y-1.5">
+          <div class="flex items-center justify-between">
+            <span class="font-extrabold text-orange-900 text-xs flex items-center gap-1.5">
+              <span>4. ⚠️</span>
+              <span>Lý Do Khác (Dời vị trí, sang nhượng tiệm, để hàng đối thủ)</span>
+            </span>
+            <span class="text-[10px] font-black px-2 py-0.5 rounded-full bg-red-600 text-white">BẮT BUỘC 100%</span>
+          </div>
+          <div class="text-[11px] text-gray-700 space-y-1">
+            <p><b>Góc chụp:</b> Chụp toàn cảnh hiện trường vị trí dời tủ, hàng đông lạnh đối thủ để lộn xộn trong tủ tài sản CJ, hoặc biển hiệu đổi chủ tiệm.</p>
+            <p><b>Yêu cầu bổ sung:</b> Bắt buộc ghi chú giải trình lý do cụ thể.</p>
+            <p class="text-orange-800 font-semibold"><b>Hậu kiểm DMS:</b> Gửi cảnh báo vi phạm hợp đồng trưng bày POSM cho GSBH & ASM.</p>
+          </div>
+        </div>
+
+        <!-- Case 5: Đề Xuất Thu Hồi POSM -->
+        <div class="p-3 bg-blue-50/50 rounded-2xl border border-blue-200 space-y-1.5">
+          <div class="flex items-center justify-between">
+            <span class="font-extrabold text-blue-900 text-xs flex items-center gap-1.5">
+              <span>5. 📦</span>
+              <span>Đề Xuất Thu Hồi POSM Về Kho NPP</span>
+            </span>
+            <span class="text-[10px] font-black px-2 py-0.5 rounded-full bg-red-600 text-white">BẮT BUỘC 100%</span>
+          </div>
+          <div class="text-[11px] text-gray-700 space-y-1">
+            <p><b>Góc chụp:</b> Chụp toàn cảnh 4 mặt tủ trước khi bàn giao cho đội xe tải/logistics của NPP.</p>
+            <p><b>Yêu cầu bổ sung:</b> Ghi rõ tình trạng móp méo, trầy xước và xác nhận lượng tồn hàng hóa trong tủ.</p>
+            <p class="text-blue-800 font-semibold"><b>Hậu kiểm DMS:</b> Căn cứ bàn giao trách nhiệm tài sản giữa Điểm bán, NVBH và Kho NPP.</p>
+          </div>
+        </div>
+
+        <!-- Case 6: Đăng Ký Điểm Bán Mới Kèm Tủ POSM -->
+        <div class="p-3 bg-slate-50 rounded-2xl border border-slate-200 space-y-1.5">
+          <div class="flex items-center justify-between">
+            <span class="font-extrabold text-slate-900 text-xs flex items-center gap-1.5">
+              <span>6. 🏪</span>
+              <span>Đăng Ký Điểm Bán Mới Kèm Tủ Đông POSM</span>
+            </span>
+            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-200">BẮT BUỘC KHI CẤP TỦ</span>
+          </div>
+          <div class="text-[11px] text-gray-700 space-y-1">
+            <p><b>Góc chụp:</b> Chụp mặt tiền/biển hiệu điểm bán mới và vị trí dự kiến đặt tủ POSM tại cửa hàng.</p>
+            <p class="text-slate-700 font-semibold"><b>Hậu kiểm DMS:</b> Hồ sơ gửi Trade Marketing & Sales Admin duyệt cấp tủ.</p>
+          </div>
+        </div>
+
+        <!-- Case 7: Tình Trạng Bình Thường (Sử Dụng Được) -->
+        <div class="p-3 bg-emerald-50/50 rounded-2xl border border-emerald-200 space-y-1.5">
+          <div class="flex items-center justify-between">
+            <span class="font-extrabold text-emerald-900 text-xs flex items-center gap-1.5">
+              <span>7. ✨</span>
+              <span>Tình Trạng Bình Thường (Sử Dụng Được)</span>
+            </span>
+            <span class="text-[10px] font-black px-2 py-0.5 rounded-full bg-red-600 text-white">BẮT BUỘC 100%</span>
+          </div>
+          <div class="text-[11px] text-gray-700 space-y-1">
+            <p><b>Góc chụp:</b> Bắt buộc chụp ảnh chính diện mặt trước tủ trưng bày sản phẩm Bibigo & Cầu Tre tại điểm bán có đóng dấu GPS Watermark.</p>
+            <p class="text-emerald-800 font-semibold"><b>Mục đích:</b> Kiểm tra tuân thủ trưng bày và chứng minh việc hoàn thành viếng thăm thực tế tại điểm bán.</p>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="pt-2 border-t text-right">
+        <button type="button" onclick="CJAudit.closePhotoPolicyModal()" class="w-full sm:w-auto px-5 py-2.5 bg-gray-800 hover:bg-gray-900 text-white rounded-xl text-xs font-bold transition">
+          Đã Hiểu Quy Chuẩn Chụp Ảnh
+        </button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ================= GOOGLE SHEETS POPUP DIRECT SCRIPT ================= -->
+  <script>
+    function openGoogleSheetConfigDirect() {
+      var m = document.getElementById("modalGoogleSheetConfig");
+      if (m) {
+        m.classList.remove("hidden");
+        m.style.display = "flex";
+        var cur = (window.CJCloudSync && window.CJCloudSync.getScriptUrl) 
+          ? window.CJCloudSync.getScriptUrl() 
+          : (localStorage.getItem("cj_google_sheet_url") || "");
+        var inp = document.getElementById("inputGoogleSheetUrl");
+        if (inp) inp.value = cur;
+        var badge = document.getElementById("googleSheetStatusBadge");
+        if (badge) {
+          if (cur) {
+            badge.innerHTML = '<span class="inline-flex items-center gap-1 text-emerald-700 bg-emerald-100 font-bold px-2.5 py-1 rounded-full text-xs">🟢 Đang hoạt động: Đã liên kết Google Apps Script</span>';
+          } else {
+            badge.innerHTML = '<span class="inline-flex items-center gap-1 text-amber-700 bg-amber-100 font-bold px-2.5 py-1 rounded-full text-xs">⚪ Chưa cấu hình: Dữ liệu hiện chỉ lưu trên trình duyệt cục bộ</span>';
+          }
+        }
+      } else {
+        var manualUrl = prompt("Nhập URL Google Apps Script Web App (dạng https://script.google.com/macros/s/.../exec):", localStorage.getItem("cj_google_sheet_url") || "");
+        if (manualUrl !== null) {
+          manualUrl = manualUrl.trim();
+          if (manualUrl) {
+            localStorage.setItem("cj_google_sheet_url", manualUrl);
+            alert("✅ Đã lưu URL Google Sheets thành công!");
+          } else {
+            localStorage.removeItem("cj_google_sheet_url");
+          }
+        }
+      }
+    }
+
+    function closeGoogleSheetConfigDirect() {
+      var m = document.getElementById("modalGoogleSheetConfig");
+      if (m) {
+        m.classList.add("hidden");
+        m.style.display = "none";
+      }
+    }
+
+    function saveGoogleSheetUrlDirect() {
+      var inp = document.getElementById("inputGoogleSheetUrl");
+      var url = inp ? inp.value.trim() : "";
+      if (url) {
+        localStorage.setItem("cj_google_sheet_url", url);
+        if (window.CJCloudSync && window.CJCloudSync.setScriptUrl) {
+          window.CJCloudSync.setScriptUrl(url);
+        }
+        alert("✅ Đã lưu URL Google Sheets thành công!\nHệ thống đã sẵn sàng đồng bộ dữ liệu & ảnh.");
+      } else {
+        localStorage.removeItem("cj_google_sheet_url");
+        alert("Đã xóa URL Google Sheets.");
+      }
+      openGoogleSheetConfigDirect();
+    }
+  </script>
+
+  <!-- ================= MODAL: CẤU HÌNH GOOGLE SHEETS & GOOGLE DRIVE ================= -->
+  <div id="modalGoogleSheetConfig" class="hidden fixed inset-0 bg-black/80 z-[110] flex items-center justify-center p-3 sm:p-4 overflow-y-auto font-sans">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-5 sm:p-6 space-y-4 shadow-2xl animate-fade-in border border-gray-200 max-h-[90vh] overflow-y-auto">
+      
+      <!-- Header -->
+      <div class="flex items-center justify-between border-b pb-3">
+        <div class="flex items-center gap-2.5">
+          <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-700 text-white flex items-center justify-center font-bold text-xl shadow">
+            📊
+          </div>
+          <div>
+            <h3 class="font-black text-base sm:text-lg text-gray-900 leading-tight">Cấu Hình Google Sheets & Drive</h3>
+            <p class="text-xs text-gray-500">Lưu dữ liệu kiểm tra & ảnh chụp tập trung về hệ thống của Admin</p>
+          </div>
+        </div>
+        <button type="button" onclick="closeGoogleSheetConfigDirect()" class="text-gray-400 hover:text-gray-700 text-2xl font-bold p-1">✕</button>
+      </div>
+
+      <!-- Current Status Badge -->
+      <div id="googleSheetStatusBadge" class="py-1">
+        <!-- Populated dynamically -->
+      </div>
+
+      <!-- URL Input Box -->
+      <div class="space-y-1.5">
+        <label class="block text-xs font-bold text-gray-800">
+          URL Web App Google Apps Script: <span class="text-red-500">*</span>
+        </label>
+        <input 
+          type="url" 
+          id="inputGoogleSheetUrl" 
+          placeholder="https://script.google.com/macros/s/AKfycbx.../exec" 
+          class="w-full text-xs font-mono border border-gray-300 rounded-xl p-3 outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100 bg-gray-50/60"
+        />
+        <p class="text-[11px] text-gray-500 leading-relaxed">
+          💡 Link Web App do Google tạo khi bạn chọn <b>Triển khai (Deploy) &gt; Tùy chọn triển khai mới &gt; Ứng dụng web (Web App)</b>.
+        </p>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex flex-wrap items-center gap-2 pt-1">
+        <button 
+          type="button" 
+          onclick="saveGoogleSheetUrlDirect()" 
+          class="flex-1 min-w-[120px] bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold py-2.5 px-4 rounded-xl shadow transition active:scale-95 text-center flex items-center justify-center gap-1.5 cursor-pointer">
+          <span>💾</span>
+          <span>Lưu Cấu Hình</span>
+        </button>
+
+        <button 
+          type="button" 
+          onclick="CJApp.testGoogleSheetConnection()" 
+          class="flex-1 min-w-[140px] bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold py-2.5 px-4 rounded-xl shadow transition active:scale-95 text-center flex items-center justify-center gap-1.5 cursor-pointer">
+          <span>🔍</span>
+          <span>Kiểm Tra Kết Nối</span>
+        </button>
+      </div>
+
+      <!-- Test Result Box -->
+      <div id="googleSheetTestResult" class="hidden text-xs p-3 rounded-xl font-semibold border transition"></div>
+
+      <!-- Step-by-step Quick Guide -->
+      <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-2 text-xs text-slate-700">
+        <div class="font-black text-slate-900 flex items-center gap-1.5 text-sm">
+          <span>📝</span>
+          <span>Các Bước Thiết Lập 3 Phút (Chỉ làm 1 lần):</span>
+        </div>
+        <ol class="list-decimal list-inside space-y-1.5 text-[11px] leading-relaxed text-slate-600">
+          <li>Mở <b>Google Sheet</b> mới trên Google Drive của bạn (đặt tên: <i>CJ_Audit_ThucDia_2026</i>).</li>
+          <li>Vào menu <b>Tiện ích mở rộng (Extensions) &gt; Apps Script</b>.</li>
+          <li>Mở file <b><code>google_apps_script.js</code></b> trong thư mục mã nguồn này, copy toàn bộ và dán vào <b><code>Code.gs</code></b>.</li>
+          <li>Bấm <b>Triển khai (Deploy) &gt; Tùy chọn triển khai mới (New deployment)</b>:
+            <ul class="list-disc list-inside ml-4 mt-0.5 space-y-0.5 text-slate-700 font-medium">
+              <li>Loại: <b>Ứng dụng web (Web App)</b></li>
+              <li>Thực thi dưới dạng: <b>Tôi (Me)</b></li>
+              <li>Ai có quyền truy cập: <b class="text-red-600">Bất kỳ ai (Anyone)</b> (Quan trọng để nhân viên gửi được không cần login Google)</li>
+            </ul>
+          </li>
+          <li>Cấp quyền truy cập và copy đường link URL (dạng <code>.../exec</code>) dán vào ô bên trên rồi bấm <b>Lưu Cấu Hình</b>!</li>
+        </ol>
+      </div>
+
+      <!-- Footer Button -->
+      <div class="pt-2 border-t flex justify-end">
+        <button 
+          type="button" 
+          onclick="closeGoogleSheetConfigDirect()" 
+          class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-xs font-bold transition">
+          Đóng
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Toast notification banner -->
+  <div id="appToast" class="fixed top-5 right-5 z-50 opacity-0 translate-y-[-20px] pointer-events-none transition-all duration-300"></div>
+
+  <!-- ================= APPLICATION SCRIPTS ================= -->
+  <script src="js/data.js?v=2.5"></script>
+  <script src="js/auth.js?v=2.5"></script>
+  <script src="js/storage.js?v=2.5"></script>
+  <script src="js/watermark.js?v=2.5"></script>
+  <script src="js/cloud_sync.js?v=2.5"></script>
+  <script src="js/audit.js?v=2.5"></script>
+  <script src="js/dashboard.js?v=2.5"></script>
+  <script src="js/excel.js?v=2.5"></script>
+  <script src="js/app.js?v=2.5"></script>
+</body>
+</html>
