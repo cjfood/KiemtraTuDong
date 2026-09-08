@@ -190,10 +190,67 @@ body {
   display: flex !important;
 }
 
-/* Mobile real phone media queries (< 768px) */
+/* ================= USER MODE (GSBH / NVBH THỰC ĐỊA) ================= */
+/* Khi user đăng nhập: Ẩn hoàn toàn header ngoài và chỉ hiển thị khung ứng dụng điện thoại */
+body.is-user #mainAppHeader,
+body.is-user #adminGoogleSheetDirectBar,
+body.is-user #adminUserControlBar,
+body.is-user #deviceModeIndicator,
+body.is-user .desktop-dash-header,
+body.is-user .desktop-toolbar-box {
+  display: none !important;
+}
+
+body.is-user main {
+  padding: 0 !important;
+  margin: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+body.is-user .app-phone-simulator {
+  max-width: 480px !important;
+  width: 100% !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  margin: 0 auto !important;
+  min-height: 100vh !important;
+  padding-bottom: 75px !important;
+  background-color: #F8FAFC !important;
+}
+
+body.is-user .phone-speaker-notch,
+body.is-user .phone-home-indicator {
+  display: none !important;
+}
+
+/* ================= MOBILE REAL PHONES (< 768px) ================= */
 @media (max-width: 767px) {
   body {
     background-color: #F8FAFC;
+  }
+  #mainAppHeader {
+    display: none !important;
+  }
+  #adminGoogleSheetDirectBar {
+    display: none !important;
+  }
+  #adminUserControlBar {
+    display: none !important;
+  }
+  #deviceModeIndicator {
+    display: none !important;
+  }
+  .desktop-dash-header,
+  .desktop-toolbar-box {
+    display: none !important;
+  }
+  main {
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
   }
   .app-phone-simulator {
     max-width: 100% !important;
@@ -203,13 +260,11 @@ body {
     box-shadow: none !important;
     margin: 0 !important;
     min-height: 100vh !important;
-    padding-bottom: 70px !important;
+    padding-bottom: 75px !important;
+    background-color: #F8FAFC !important;
   }
   .phone-speaker-notch,
   .phone-home-indicator {
-    display: none !important;
-  }
-  #deviceModeIndicator {
     display: none !important;
   }
 }

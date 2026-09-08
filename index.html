@@ -36,7 +36,7 @@
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
   <!-- Custom CSS -->
-  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/style.css?v=3.1" />
 </head>
 <body class="bg-gray-100 min-h-screen flex flex-col antialiased">
 
@@ -252,7 +252,7 @@
   </div>
 
   <!-- ================= TOP APPLICATION HEADER ================= -->
-  <header class="bg-[#002B49] text-white sticky top-0 z-40 shadow-md border-b-4 border-cj-red">
+  <header id="mainAppHeader" class="bg-[#002B49] text-white sticky top-0 z-40 shadow-md border-b-4 border-cj-red">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex items-center justify-between h-16">
         
@@ -358,7 +358,7 @@
   <main class="flex-1 w-full mx-auto p-2 sm:p-4 pb-24 lg:pb-8 flex flex-col items-center">
 
     <!-- Top Mode Indicator Banner (Phân biệt rõ ràng Điện Thoại vs Máy Tính) -->
-    <div id="deviceModeIndicator" class="w-full max-w-7xl mb-3.5 px-4 py-2.5 rounded-2xl flex flex-wrap items-center justify-between gap-3 text-xs shadow-sm border transition bg-gradient-to-r from-blue-900/90 to-indigo-950 text-white border-blue-700/60">
+    <div id="deviceModeIndicator" class="hidden w-full max-w-7xl mb-3.5 px-4 py-2.5 rounded-2xl flex flex-wrap items-center justify-between gap-3 text-xs shadow-sm border transition bg-gradient-to-r from-blue-900/90 to-indigo-950 text-white border-blue-700/60">
       <!-- Populated dynamically via CJApp.applyDeviceViewMode() -->
     </div>
 
@@ -417,7 +417,7 @@
     </div>
 
     <!-- DÒNG CẤU HÌNH GOOGLE SHEETS TRỰC TIẾP (DỄ NHẤT - HIỆN THẲNG TRÊN MÀN HÌNH ADMIN) -->
-    <div id="adminGoogleSheetDirectBar" class="w-full max-w-7xl mb-3.5 px-4 py-3 rounded-2xl bg-gradient-to-r from-[#0d2137] via-[#102a45] to-[#14365d] border-2 border-indigo-400/80 shadow-md text-white flex flex-wrap items-center justify-between gap-3 text-xs">
+    <div id="adminGoogleSheetDirectBar" class="hidden w-full max-w-7xl mb-3.5 px-4 py-3 rounded-2xl bg-gradient-to-r from-[#0d2137] via-[#102a45] to-[#14365d] border-2 border-indigo-400/80 shadow-md text-white flex flex-wrap items-center justify-between gap-3 text-xs">
       <div class="flex items-center gap-2.5">
         <div class="w-9 h-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-black text-base shadow shrink-0">
           📊
@@ -1553,6 +1553,20 @@
             <span>👑</span>
             <span>Quản Lý & Điều Khiển Tất Cả User Hệ Thống</span>
           </button>
+          <div class="grid grid-cols-2 gap-2 pt-1">
+            <button type="button" onclick="openGoogleSheetConfigDirect()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs py-2 px-2.5 rounded-xl transition flex items-center justify-center gap-1 shadow-sm active:scale-95">
+              <span>📊</span>
+              <span>Google Sheets Sync</span>
+            </button>
+            <button type="button" onclick="CJApp.clearTestAudits()" class="bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs py-2 px-2.5 rounded-xl transition flex items-center justify-center gap-1 shadow-sm active:scale-95">
+              <span>🧹</span>
+              <span>Xóa Lịch Sử Test</span>
+            </button>
+          </div>
+          <button type="button" onclick="CJApp.clearAllStoresAndReupload()" class="w-full bg-red-700 hover:bg-red-800 text-white font-black text-xs py-2 px-3 rounded-xl transition flex items-center justify-center gap-1.5 border border-red-400 shadow-sm active:scale-95 cursor-pointer mt-1">
+            <span>🗑️</span>
+            <span>Xóa Hết KH Để Upload Lại File Excel</span>
+          </button>
         </div>
 
         <!-- Action Buttons: Change Password & Logout -->
@@ -2477,14 +2491,14 @@
   <div id="appToast" class="fixed top-5 right-5 z-50 opacity-0 translate-y-[-20px] pointer-events-none transition-all duration-300"></div>
 
   <!-- ================= APPLICATION SCRIPTS ================= -->
-  <script src="js/data.js?v=3.0"></script>
-  <script src="js/auth.js?v=3.0"></script>
-  <script src="js/storage.js?v=3.0"></script>
-  <script src="js/watermark.js?v=3.0"></script>
-  <script src="js/cloud_sync.js?v=3.0"></script>
-  <script src="js/audit.js?v=3.0"></script>
-  <script src="js/dashboard.js?v=3.0"></script>
-  <script src="js/excel.js?v=3.0"></script>
-  <script src="js/app.js?v=3.0"></script>
+  <script src="js/data.js?v=3.1"></script>
+  <script src="js/auth.js?v=3.1"></script>
+  <script src="js/storage.js?v=3.1"></script>
+  <script src="js/watermark.js?v=3.1"></script>
+  <script src="js/cloud_sync.js?v=3.1"></script>
+  <script src="js/audit.js?v=3.1"></script>
+  <script src="js/dashboard.js?v=3.1"></script>
+  <script src="js/excel.js?v=3.1"></script>
+  <script src="js/app.js?v=3.1"></script>
 </body>
 </html>

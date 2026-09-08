@@ -81,7 +81,8 @@ const CJApp = {
 
   applyDeviceViewMode() {
     const isSmallScreen = window.innerWidth < 768;
-    const effectiveMode = isSmallScreen ? "mobile" : this.deviceViewMode;
+    const isUser = !CJAuth.isAdmin();
+    const effectiveMode = (isSmallScreen || isUser) ? "mobile" : this.deviceViewMode;
 
     const shell = document.getElementById("appDeviceShell");
     const btnMobile = document.getElementById("btnModeMobile");
@@ -103,20 +104,25 @@ const CJApp = {
       }
       if (toggleFrameLabel) toggleFrameLabel.textContent = "Bản Máy Tính 💻";
       if (indicator) {
-        indicator.className = "w-full max-w-7xl mb-3.5 px-4 py-2.5 rounded-2xl flex flex-wrap items-center justify-between gap-3 text-xs shadow-sm border transition bg-gradient-to-r from-blue-900/95 via-[#0d2b5c] to-indigo-950 text-white border-blue-700/60";
-        indicator.innerHTML = `
-          <div class="flex items-center gap-2.5">
-            <span class="text-xl">📱</span>
-            <div>
-              <span class="font-extrabold text-yellow-300 uppercase tracking-wide">ĐANG XEM BẢN ĐIỆN THOẠI (DMS MOBILE APP):</span>
-              <span class="text-blue-100 ml-1">Mô phỏng 100% ứng dụng di động thực địa cho GSBH & Sales GT. Toàn bộ màn hình nằm trong khung smartphone.</span>
+        if (isUser || isSmallScreen) {
+          indicator.classList.add("hidden");
+        } else {
+          indicator.classList.remove("hidden");
+          indicator.className = "w-full max-w-7xl mb-3.5 px-4 py-2.5 rounded-2xl flex flex-wrap items-center justify-between gap-3 text-xs shadow-sm border transition bg-gradient-to-r from-blue-900/95 via-[#0d2b5c] to-indigo-950 text-white border-blue-700/60";
+          indicator.innerHTML = `
+            <div class="flex items-center gap-2.5">
+              <span class="text-xl">📱</span>
+              <div>
+                <span class="font-extrabold text-yellow-300 uppercase tracking-wide">ĐANG XEM BẢN ĐIỆN THOẠI (DMS MOBILE APP):</span>
+                <span class="text-blue-100 ml-1">Mô phỏng 100% ứng dụng di động thực địa cho GSBH & Sales GT. Toàn bộ màn hình nằm trong khung smartphone.</span>
+              </div>
             </div>
-          </div>
-          <button type="button" onclick="CJApp.setDeviceViewMode('desktop')" class="px-3.5 py-1.5 rounded-xl bg-white/15 hover:bg-white/25 text-white font-bold text-xs border border-white/20 transition active:scale-95 flex items-center gap-1.5 shadow-sm">
-            <span>💻</span>
-            <span>Mở Bản Máy Tính ➔</span>
-          </button>
-        `;
+            <button type="button" onclick="CJApp.setDeviceViewMode('desktop')" class="px-3.5 py-1.5 rounded-xl bg-white/15 hover:bg-white/25 text-white font-bold text-xs border border-white/20 transition active:scale-95 flex items-center gap-1.5 shadow-sm">
+              <span>💻</span>
+              <span>Mở Bản Máy Tính ➔</span>
+            </button>
+          `;
+        }
       }
     } else {
       document.body.classList.add("view-mode-desktop");
@@ -132,20 +138,25 @@ const CJApp = {
       }
       if (toggleFrameLabel) toggleFrameLabel.textContent = "Bản Điện Thoại 📱";
       if (indicator) {
-        indicator.className = "w-full max-w-7xl mb-3.5 px-4 py-2.5 rounded-2xl flex flex-wrap items-center justify-between gap-3 text-xs shadow-sm border transition bg-gradient-to-r from-slate-900 via-[#002B49] to-slate-900 text-white border-slate-700";
-        indicator.innerHTML = `
-          <div class="flex items-center gap-2.5">
-            <span class="text-xl">💻</span>
-            <div>
-              <span class="font-extrabold text-emerald-400 uppercase tracking-wide">ĐANG XEM BẢN MÁY TÍNH (DMS WEB PORTAL):</span>
-              <span class="text-slate-200 ml-1">Bố cục màn hình rộng quản lý toàn diện điểm bán, tiến độ kiểm tra và bản đồ số cho Giám sát.</span>
+        if (isUser || isSmallScreen) {
+          indicator.classList.add("hidden");
+        } else {
+          indicator.classList.remove("hidden");
+          indicator.className = "w-full max-w-7xl mb-3.5 px-4 py-2.5 rounded-2xl flex flex-wrap items-center justify-between gap-3 text-xs shadow-sm border transition bg-gradient-to-r from-slate-900 via-[#002B49] to-slate-900 text-white border-slate-700";
+          indicator.innerHTML = `
+            <div class="flex items-center gap-2.5">
+              <span class="text-xl">💻</span>
+              <div>
+                <span class="font-extrabold text-emerald-400 uppercase tracking-wide">ĐANG XEM BẢN MÁY TÍNH (DMS WEB PORTAL):</span>
+                <span class="text-gray-300 ml-1">Giao diện quản lý toàn màn hình mở rộng cho ASM, Admin và Giám Đốc.</span>
+              </div>
             </div>
-          </div>
-          <button type="button" onclick="CJApp.setDeviceViewMode('mobile')" class="px-3.5 py-1.5 rounded-xl bg-white/15 hover:bg-white/25 text-white font-bold text-xs border border-white/20 transition active:scale-95 flex items-center gap-1.5 shadow-sm">
-            <span>📱</span>
-            <span>Xem Mô Phỏng Điện Thoại ➔</span>
-          </button>
-        `;
+            <button type="button" onclick="CJApp.setDeviceViewMode('mobile')" class="px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-black text-xs transition active:scale-95 flex items-center gap-1.5 shadow">
+              <span>📱</span>
+              <span>Chuyển Sang Bản Điện Thoại ➔</span>
+            </button>
+          `;
+        }
       }
 
       // Initialize map in desktop view
@@ -234,6 +245,7 @@ const CJApp = {
   logout() {
     CJAuth.logout();
     this.adminControlledUser = "ALL";
+    document.body.classList.remove("is-user", "is-admin");
     this.showLoginModal();
     const pInput = document.getElementById("loginPassword");
     if (pInput) pInput.value = "";
@@ -273,20 +285,52 @@ const CJApp = {
     const profileAdminSec = document.getElementById("profileAdminSection");
     const importAdminBox = document.getElementById("importAdminAssignBox");
     const adminControlBar = document.getElementById("adminUserControlBar");
+    const mainHeader = document.getElementById("mainAppHeader");
+    const adminGoogleBar = document.getElementById("adminGoogleSheetDirectBar");
+    const deviceIndicator = document.getElementById("deviceModeIndicator");
+    const mainTag = document.querySelector("main");
 
-    if (CJAuth.isAdmin()) {
+    const isAdmin = CJAuth.isAdmin();
+
+    if (isAdmin) {
+      document.body.classList.add("is-admin");
+      document.body.classList.remove("is-user");
       if (btnAdminExport) btnAdminExport.classList.remove("hidden");
       if (btnAdminImport) btnAdminImport.classList.remove("hidden");
       if (profileAdminSec) profileAdminSec.classList.remove("hidden");
       if (importAdminBox) importAdminBox.classList.remove("hidden");
-      if (adminControlBar) adminControlBar.classList.remove("hidden");
+      
+      // On desktop (screen >= 768px), show admin bars; on real phones keep clean
+      if (window.innerWidth >= 768) {
+        if (mainHeader) mainHeader.classList.remove("hidden");
+        if (adminControlBar) adminControlBar.classList.remove("hidden");
+        if (adminGoogleBar) adminGoogleBar.classList.remove("hidden");
+        if (deviceIndicator) deviceIndicator.classList.remove("hidden");
+      } else {
+        if (mainHeader) mainHeader.classList.add("hidden");
+        if (adminControlBar) adminControlBar.classList.add("hidden");
+        if (adminGoogleBar) adminGoogleBar.classList.add("hidden");
+        if (deviceIndicator) deviceIndicator.classList.add("hidden");
+      }
       this.populateAdminActiveUserFilter();
     } else {
+      // REGULAR FIELD USER (GSBH / NVBH): CHỈ HIỂN THỊ DUY NHẤT GIAO DIỆN APP ĐIỆN THOẠI (PHẦN KHOANH ĐỎ)
+      document.body.classList.add("is-user");
+      document.body.classList.remove("is-admin");
+      if (mainHeader) mainHeader.classList.add("hidden");
+      if (adminControlBar) adminControlBar.classList.add("hidden");
+      if (adminGoogleBar) adminGoogleBar.classList.add("hidden");
+      if (deviceIndicator) deviceIndicator.classList.add("hidden");
       if (btnAdminExport) btnAdminExport.classList.add("hidden");
       if (btnAdminImport) btnAdminImport.classList.add("hidden");
       if (profileAdminSec) profileAdminSec.classList.add("hidden");
       if (importAdminBox) importAdminBox.classList.add("hidden");
-      if (adminControlBar) adminControlBar.classList.add("hidden");
+
+      if (mainTag) {
+        mainTag.classList.remove("p-2", "sm:p-4");
+        mainTag.classList.add("p-0");
+      }
+      this.setDeviceViewMode("mobile");
     }
 
     // Populate NVBH dropdown in Add Store Modal & User selectors
