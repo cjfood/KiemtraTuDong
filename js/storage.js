@@ -14,23 +14,53 @@ const CJStorage = {
   },
 
   init() {
-    if (!localStorage.getItem(this.KEYS.USERS)) {
+    const DATA_VERSION = "2026.09.08_MASTER_V3";
+    const currentVer = localStorage.getItem("cj_market_audit_data_ver");
+    
+    // Auto-migrate to official master data if version changed or if stores/users are empty
+    const existingStores = localStorage.getItem(this.KEYS.STORES);
+    const existingUsers = localStorage.getItem(this.KEYS.USERS);
+    let needInit = false;
+
+    if (currentVer !== DATA_VERSION) {
+      needInit = true;
+    } else if (!existingStores || existingStores === "[]" || !existingUsers) {
+      needInit = true;
+    }
+
+    if (needInit) {
       localStorage.setItem(this.KEYS.USERS, JSON.stringify(GSBH_ACCOUNTS));
-    }
-    if (!localStorage.getItem(this.KEYS.STORES)) {
       localStorage.setItem(this.KEYS.STORES, JSON.stringify(INITIAL_STORES));
-    }
-    if (!localStorage.getItem(this.KEYS.FREEZERS)) {
       localStorage.setItem(this.KEYS.FREEZERS, JSON.stringify(INITIAL_FREEZERS));
-    }
-    if (!localStorage.getItem(this.KEYS.AUDITS)) {
-      localStorage.setItem(this.KEYS.AUDITS, JSON.stringify(INITIAL_AUDITS));
-    }
-    if (!localStorage.getItem(this.KEYS.ORDERS)) {
-      localStorage.setItem(this.KEYS.ORDERS, JSON.stringify([]));
-    }
-    if (!localStorage.getItem(this.KEYS.TICKETS)) {
-      localStorage.setItem(this.KEYS.TICKETS, JSON.stringify([]));
+      if (!localStorage.getItem(this.KEYS.AUDITS)) {
+        localStorage.setItem(this.KEYS.AUDITS, JSON.stringify(INITIAL_AUDITS));
+      }
+      if (!localStorage.getItem(this.KEYS.ORDERS)) {
+        localStorage.setItem(this.KEYS.ORDERS, JSON.stringify([]));
+      }
+      if (!localStorage.getItem(this.KEYS.TICKETS)) {
+        localStorage.setItem(this.KEYS.TICKETS, JSON.stringify([]));
+      }
+      localStorage.setItem("cj_market_audit_data_ver", DATA_VERSION);
+    } else {
+      if (!localStorage.getItem(this.KEYS.USERS)) {
+        localStorage.setItem(this.KEYS.USERS, JSON.stringify(GSBH_ACCOUNTS));
+      }
+      if (!localStorage.getItem(this.KEYS.STORES)) {
+        localStorage.setItem(this.KEYS.STORES, JSON.stringify(INITIAL_STORES));
+      }
+      if (!localStorage.getItem(this.KEYS.FREEZERS)) {
+        localStorage.setItem(this.KEYS.FREEZERS, JSON.stringify(INITIAL_FREEZERS));
+      }
+      if (!localStorage.getItem(this.KEYS.AUDITS)) {
+        localStorage.setItem(this.KEYS.AUDITS, JSON.stringify(INITIAL_AUDITS));
+      }
+      if (!localStorage.getItem(this.KEYS.ORDERS)) {
+        localStorage.setItem(this.KEYS.ORDERS, JSON.stringify([]));
+      }
+      if (!localStorage.getItem(this.KEYS.TICKETS)) {
+        localStorage.setItem(this.KEYS.TICKETS, JSON.stringify([]));
+      }
     }
 
     // Auto-reconcile stores & freezers: đảm bảo serialNumber và barcode luôn lấy đúng Cột L (So_Serial)
