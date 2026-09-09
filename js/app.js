@@ -830,12 +830,15 @@ const CJApp = {
       const users = CJStorage.getUsers();
       const stores = CJStorage.getAllStores();
       const freezers = CJStorage.getFreezers();
+      const savedGoogleSheetUrl = localStorage.getItem("cj_google_sheet_url") || (typeof CJ_SYSTEM_GOOGLE_SHEET_URL !== "undefined" ? CJ_SYSTEM_GOOGLE_SHEET_URL : "");
 
       const fileContent = `/**
  * CJ MarketAudit - Comprehensive FMCG Master Database for CJ Foods Vietnam
  * Official Master Data: ${users.length} Accounts, ${stores.length} Outlets, ${freezers.length} Freezers
  * Auto-embedded for GitHub Pages & Offline Field Audits
  */
+
+const CJ_SYSTEM_GOOGLE_SHEET_URL = ${JSON.stringify(savedGoogleSheetUrl || "")};
 
 const GSBH_ACCOUNTS = ${JSON.stringify(users, null, 2)};
 

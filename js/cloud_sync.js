@@ -8,12 +8,18 @@
 const CJCloudSync = (function () {
     const STORAGE_KEY = 'cj_google_sheet_url';
     const PENDING_SYNC_KEY = 'cj_pending_sync_queue';
+    const DEFAULT_SYSTEM_URL = 'https://script.google.com/macros/s/AKfycbw4n6lsTKqsVXlrtyu2qx5GNFTksMmtoAyCcvgPpXfXD71nTP-pga_B2a2uAoSKRxOdOw/exec';
 
     /**
-     * Lấy URL Google Apps Script đã lưu
+     * Lấy URL Google Apps Script đã lưu hoặc URL mặc định của hệ thống
      */
     function getScriptUrl() {
-        return localStorage.getItem(STORAGE_KEY) || '';
+        const customUrl = localStorage.getItem(STORAGE_KEY);
+        if (customUrl && customUrl.trim()) return customUrl.trim();
+        if (typeof CJ_SYSTEM_GOOGLE_SHEET_URL !== 'undefined' && CJ_SYSTEM_GOOGLE_SHEET_URL && CJ_SYSTEM_GOOGLE_SHEET_URL.trim()) {
+            return CJ_SYSTEM_GOOGLE_SHEET_URL.trim();
+        }
+        return DEFAULT_SYSTEM_URL;
     }
 
     /**
@@ -80,16 +86,21 @@ const CJCloudSync = (function () {
         const scriptUrl = getScriptUrl();
         if (!scriptUrl) {
             console.warn('[CJCloudSync] Chưa cấu hình URL Google Sheets. Bỏ qua đồng bộ đám mây.');
+            if (typeof CJAudit !== 'undefined' && CJAudit.showToast) {
+                CJAudit.showToast('⚠️ Chưa cấu hình link Google Sheets trong hệ thống! Dữ liệu đã lưu cục bộ trên máy.', 'warning');
+            }
             return { success: false, reason: 'no_url' };
         }
 
         // Chuẩn hóa payload
-        const user = (typeof CJAuth !== 'undefined' && CJAuth.currentUser) ? CJAuth.currentUser : {};
+        const user = (typeof CJAuth !== 'undefined' && typeof CJAuth.getCurrentUser === 'function') 
+            ? (CJAuth.getCurrentUser() || {}) 
+            : ((typeof CJAuth !== 'undefined' && CJAuth.currentUser) ? CJAuth.currentUser : {});
         const payload = {
             timestamp: auditData.timestamp || auditData.date || new Date().toISOString(),
-            userCode: auditData.userCode || user.userCode || '',
-            userName: auditData.userName || user.fullName || '',
-            region: auditData.region || user.region || '',
+            userCode: auditData.userCode || user.username || user.userCode || '',
+            userName: auditData.userName || user.name || user.fullName || '',
+            region: auditData.region || user.area || user.region || user.channel || '',
             customerCode: auditData.customerCode || auditData.outletCode || '',
             customerName: auditData.customerName || auditData.outletName || '',
             address: auditData.address || '',

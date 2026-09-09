@@ -4,6 +4,8 @@
  * Auto-embedded for GitHub Pages & Offline Field Audits
  */
 
+const CJ_SYSTEM_GOOGLE_SHEET_URL = "https://script.google.com/macros/s/AKfycbw4n6lsTKqsVXlrtyu2qx5GNFTksMmtoAyCcvgPpXfXD71nTP-pga_B2a2uAoSKRxOdOw/exec";
+
 const GSBH_ACCOUNTS = [
   {
     "username": "admin",

@@ -1416,6 +1416,8 @@ const CJAudit = {
       }).then(res => {
         if (res && res.success) {
           this.showToast("✅ Đã đồng bộ lên Google Sheets & Drive thành công!", "success");
+        } else if (res && res.reason === "no_url") {
+          alert("⚠️ CHÚ Ý: Kết quả kiểm tra đã lưu trên điện thoại thành công, nhưng CHƯA ĐƯỢC GỬI sang Google Sheets vì hệ thống chưa có URL Google Apps Script Web App!\n\n👉 Vui lòng gửi link Web App cho Admin cấu hình vào hệ thống.");
         }
       }).catch(errSync => {
         console.warn("Cloud sync warning:", errSync);

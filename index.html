@@ -465,14 +465,16 @@
       }
 
       function updateDirectSheetBadge() {
-        var url = localStorage.getItem("cj_google_sheet_url") || "";
+        var url = (window.CJCloudSync && window.CJCloudSync.getScriptUrl) 
+          ? window.CJCloudSync.getScriptUrl() 
+          : (localStorage.getItem("cj_google_sheet_url") || (typeof CJ_SYSTEM_GOOGLE_SHEET_URL !== "undefined" ? CJ_SYSTEM_GOOGLE_SHEET_URL : "") || "");
         var inp = document.getElementById("directGoogleSheetUrlInput");
         var badge = document.getElementById("directSheetStatusBadge");
         if (inp && url && !inp.value) inp.value = url;
         if (badge) {
           if (url) {
             badge.className = "text-[10px] px-2 py-0.5 rounded font-bold bg-emerald-500/30 text-emerald-300 border border-emerald-400/40";
-            badge.innerHTML = "🟢 Đã kết nối";
+            badge.innerHTML = "🟢 Đã kết nối tự động";
           } else {
             badge.className = "text-[10px] px-2 py-0.5 rounded font-bold bg-amber-500/30 text-amber-300 border border-amber-400/40";
             badge.innerHTML = "⚪ Chưa kết nối";
@@ -2565,14 +2567,14 @@
   <div id="appToast" class="fixed top-5 right-5 z-50 opacity-0 translate-y-[-20px] pointer-events-none transition-all duration-300"></div>
 
   <!-- ================= APPLICATION SCRIPTS ================= -->
-  <script src="js/data.js?v=3.7"></script>
-  <script src="js/auth.js?v=3.7"></script>
-  <script src="js/storage.js?v=3.7"></script>
-  <script src="js/watermark.js?v=3.7"></script>
-  <script src="js/cloud_sync.js?v=3.7"></script>
-  <script src="js/audit.js?v=3.7"></script>
-  <script src="js/dashboard.js?v=3.7"></script>
-  <script src="js/excel.js?v=3.7"></script>
-  <script src="js/app.js?v=3.7"></script>
+  <script src="js/data.js?v=3.9"></script>
+  <script src="js/auth.js?v=3.9"></script>
+  <script src="js/storage.js?v=3.9"></script>
+  <script src="js/watermark.js?v=3.9"></script>
+  <script src="js/cloud_sync.js?v=3.9"></script>
+  <script src="js/audit.js?v=3.9"></script>
+  <script src="js/dashboard.js?v=3.9"></script>
+  <script src="js/excel.js?v=3.9"></script>
+  <script src="js/app.js?v=3.9"></script>
 </body>
 </html>
