@@ -36,7 +36,7 @@
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
   <!-- Custom CSS -->
-  <link rel="stylesheet" href="css/style.css?v=3.1" />
+  <link rel="stylesheet" href="css/style.css?v=3.3" />
 </head>
 <body class="bg-gray-100 min-h-screen flex flex-col antialiased">
 
@@ -815,19 +815,19 @@
                   <input type="text" id="auditProposal" placeholder="Nhập đề nghị" class="w-full rounded-2xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-800 shadow-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 placeholder-gray-400 transition" />
                 </div>
 
-                <!-- Field 6: Hình ảnh POSM (Được đóng khung đỏ chú thích theo ảnh mẫu) -->
+                <!-- Field 6: Bắt buộc chụp tối thiểu 2 hình: 1 tấm hình tủ đông, 1 tấm tổng quan cửa hàng -->
                 <div class="pt-1" id="sectionPhotoEvidence">
                   <div id="photoEvidenceContainer" class="p-3.5 rounded-2xl border-2 border-red-400 bg-red-50/20 space-y-2.5 transition">
                     <div class="flex items-center justify-between">
                       <div class="flex items-center gap-1.5">
-                        <label class="block text-sm font-bold text-gray-900">Hình ảnh POSM</label>
+                        <label class="block text-sm font-bold text-gray-900">Hình ảnh kiểm tra</label>
                         <button type="button" onclick="CJAudit.openPhotoPolicyModal()" class="text-[10px] text-blue-700 bg-blue-50 hover:bg-blue-100 font-bold px-2 py-0.5 rounded-full border border-blue-200 inline-flex items-center gap-1 transition" title="Xem bảng quy định các trường hợp chụp ảnh Kênh GT">
                           <span>ℹ️</span>
                           <span>Quy định chụp ảnh</span>
                         </button>
                       </div>
                       <span id="photoRequiredBadge" class="text-[10px] font-black px-2 py-0.5 rounded-full border bg-red-100 text-red-700 border-red-300 animate-pulse">
-                        🔴 BẮT BUỘC CHỤP ẢNH
+                        🔴 BẮT BUỘC TỐI THIỂU 2 ẢNH
                       </span>
                     </div>
 
@@ -835,51 +835,106 @@
                     <div id="photoCaseGuideBanner" class="p-2.5 rounded-xl border text-xs leading-relaxed flex items-start gap-2 bg-blue-50/60 border-blue-200 text-blue-900 transition">
                       <span class="text-base shrink-0" id="photoGuideIcon">📸</span>
                       <div class="text-[11px] leading-relaxed" id="photoGuideText">
-                        <b>Chụp ảnh bắt buộc:</b> Chụp ảnh mặt trước tủ trưng bày đầy đủ sản phẩm Bibigo & Cầu Tre tại điểm bán có đóng dấu GPS Watermark.
+                        <b>Quy định bắt buộc:</b> Chụp tối thiểu <b>2 hình</b> có đóng Watermark GPS:
+                        <br/>1️⃣ <b>Hình ảnh tủ đông:</b> Cận cảnh tủ đông thực tế, sản phẩm Bibigo/Cầu Tre và barcode serial.
+                        <br/>2️⃣ <b>Hình tổng quan cửa hàng:</b> Toàn cảnh mặt tiền, biển hiệu và không gian điểm bán.
                       </div>
                     </div>
 
-                    <div class="flex items-start gap-3">
-                      <!-- Photo Upload Card (Giống hệt icon ảnh trong hình) -->
-                      <div class="relative">
-                        <label class="w-36 h-40 rounded-2xl border border-gray-200 bg-white hover:bg-blue-50/50 shadow-sm flex flex-col items-center justify-center cursor-pointer transition overflow-hidden group">
-                          
-                          <!-- Preview Image (If captured) -->
-                          <img id="preview_posm" class="hidden w-full h-full object-cover cursor-pointer" onclick="CJAudit.openPhotoModal('posm')" title="Bấm để xem ảnh phóng to" />
-                          
-                          <!-- Placeholder with Photo Icon + Plus circle (Khớp 100% ảnh mẫu) -->
-                          <div id="placeholder_posm" class="flex flex-col items-center justify-center p-2 text-center">
-                            <div class="w-14 h-14 rounded-full bg-blue-50/80 flex items-center justify-center mb-1 group-hover:scale-105 transition">
-                              <svg class="w-8 h-8 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                                <rect x="3" y="3" width="18" height="18" rx="3" ry="3"/>
-                                <circle cx="8.5" cy="8.5" r="1.5"/>
-                                <path d="M21 15l-5-5L5 21"/>
-                                <circle cx="16" cy="16" r="3" fill="#ffffff" stroke="#2563eb" stroke-width="2"/>
-                                <line x1="16" y1="14.5" x2="16" y2="17.5" stroke="#2563eb" stroke-width="2"/>
-                                <line x1="14.5" y1="16" x2="17.5" y2="16" stroke="#2563eb" stroke-width="2"/>
-                              </svg>
-                            </div>
-                            <span class="text-xs font-bold text-gray-700 mt-1">Thêm ảnh</span>
-                          </div>
-
-                          <input type="file" id="photo_input_posm" accept="image/*" capture="environment" class="hidden" onchange="CJAudit.handlePhotoUpload(event, 'posm')" />
-                        </label>
-
-                        <!-- Button to remove photo if already uploaded -->
-                        <button type="button" id="btnRemovePosmPhoto" onclick="CJAudit.removePhoto('posm')" class="hidden absolute -top-2 -right-2 w-6 h-6 rounded-full bg-red-600 text-white font-bold text-xs flex items-center justify-center shadow hover:bg-red-700">✕</button>
-                      </div>
-
-                      <!-- Helper Actions for Desktop & Watermark Note -->
-                      <div class="flex-1 space-y-2 text-xs">
-                        <div class="text-[11px] text-gray-600 leading-relaxed bg-white p-2.5 rounded-xl border border-gray-200">
-                          📸 <b>Quy chuẩn ảnh:</b> Tự động đóng Watermark GPS, mã barcode, thời gian viếng thăm và mục đích chụp chống gian lận.
+                    <!-- 2 Photo Cards Grid -->
+                    <div class="grid grid-cols-2 gap-2.5 pt-1">
+                      
+                      <!-- ẢNH 1: HÌNH ẢNH TỦ ĐÔNG -->
+                      <div class="space-y-1.5">
+                        <div class="flex items-center justify-between text-[11px]">
+                          <span class="font-extrabold text-blue-900 flex items-center gap-1">
+                            <span>❄️</span>
+                            <span>1. Tủ đông</span>
+                            <span class="text-red-500">*</span>
+                          </span>
                         </div>
-                        <button type="button" id="btn_mock_posm" onclick="CJAudit.generateMockPhoto('posm')" class="w-full bg-blue-50 hover:bg-blue-100 text-blue-800 font-bold py-2 px-3 rounded-xl border border-blue-200 transition text-center flex items-center justify-center gap-1.5 active:scale-95 shadow-sm">
+                        <div class="relative">
+                          <label class="w-full h-36 rounded-2xl border-2 border-dashed border-blue-300 bg-white hover:bg-blue-50/50 shadow-sm flex flex-col items-center justify-center cursor-pointer transition overflow-hidden group">
+                            <!-- Preview Image (If captured) -->
+                            <img id="preview_posm" class="hidden w-full h-full object-cover cursor-pointer" onclick="CJAudit.openPhotoModal('posm')" title="Bấm để xem ảnh phóng to" />
+                            
+                            <!-- Placeholder -->
+                            <div id="placeholder_posm" class="flex flex-col items-center justify-center p-2 text-center">
+                              <div class="w-11 h-11 rounded-full bg-blue-50/90 flex items-center justify-center mb-1 group-hover:scale-105 transition">
+                                <svg class="w-6 h-6 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                  <rect x="3" y="3" width="18" height="18" rx="3" ry="3"/>
+                                  <circle cx="8.5" cy="8.5" r="1.5"/>
+                                  <path d="M21 15l-5-5L5 21"/>
+                                  <circle cx="16" cy="16" r="3" fill="#ffffff" stroke="#2563eb" stroke-width="2"/>
+                                  <line x1="16" y1="14.5" x2="16" y2="17.5" stroke="#2563eb" stroke-width="2"/>
+                                  <line x1="14.5" y1="16" x2="17.5" y2="16" stroke="#2563eb" stroke-width="2"/>
+                                </svg>
+                              </div>
+                              <span class="text-[11px] font-bold text-gray-800">Chụp tủ đông</span>
+                              <span class="text-[9px] text-gray-400">Barcode & sản phẩm</span>
+                            </div>
+
+                            <input type="file" id="photo_input_posm" accept="image/*" capture="environment" class="hidden" onchange="CJAudit.handlePhotoUpload(event, 'posm')" />
+                          </label>
+
+                          <button type="button" id="btnRemovePosmPhoto" onclick="CJAudit.removePhoto('posm')" class="hidden absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-red-600 text-white font-bold text-[10px] flex items-center justify-center shadow hover:bg-red-700">✕</button>
+                        </div>
+
+                        <button type="button" id="btn_mock_posm" onclick="CJAudit.generateMockPhoto('posm')" class="w-full bg-blue-50 hover:bg-blue-100 text-blue-800 font-bold py-1 px-1.5 rounded-xl border border-blue-200 transition text-center text-[10px] flex items-center justify-center gap-1 active:scale-95 shadow-sm">
                           <span>⚡</span>
-                          <span>Tạo ảnh mẫu nhanh (PC)</span>
+                          <span>Ảnh mẫu tủ</span>
                         </button>
                       </div>
+
+                      <!-- ẢNH 2: HÌNH TỔNG QUAN CỬA HÀNG -->
+                      <div class="space-y-1.5">
+                        <div class="flex items-center justify-between text-[11px]">
+                          <span class="font-extrabold text-emerald-900 flex items-center gap-1">
+                            <span>🏪</span>
+                            <span>2. Tổng quan CH</span>
+                            <span class="text-red-500">*</span>
+                          </span>
+                        </div>
+                        <div class="relative">
+                          <label class="w-full h-36 rounded-2xl border-2 border-dashed border-emerald-300 bg-white hover:bg-emerald-50/50 shadow-sm flex flex-col items-center justify-center cursor-pointer transition overflow-hidden group">
+                            <!-- Preview Image (If captured) -->
+                            <img id="preview_overview" class="hidden w-full h-full object-cover cursor-pointer" onclick="CJAudit.openPhotoModal('overview')" title="Bấm để xem ảnh phóng to" />
+                            
+                            <!-- Placeholder -->
+                            <div id="placeholder_overview" class="flex flex-col items-center justify-center p-2 text-center">
+                              <div class="w-11 h-11 rounded-full bg-emerald-50/90 flex items-center justify-center mb-1 group-hover:scale-105 transition">
+                                <svg class="w-6 h-6 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                  <rect x="3" y="3" width="18" height="18" rx="3" ry="3"/>
+                                  <circle cx="8.5" cy="8.5" r="1.5"/>
+                                  <path d="M21 15l-5-5L5 21"/>
+                                  <circle cx="16" cy="16" r="3" fill="#ffffff" stroke="#059669" stroke-width="2"/>
+                                  <line x1="16" y1="14.5" x2="16" y2="17.5" stroke="#059669" stroke-width="2"/>
+                                  <line x1="14.5" y1="16" x2="17.5" y2="16" stroke="#059669" stroke-width="2"/>
+                                </svg>
+                              </div>
+                              <span class="text-[11px] font-bold text-gray-800">Chụp toàn cảnh</span>
+                              <span class="text-[9px] text-gray-400">Mặt tiền / Biển hiệu</span>
+                            </div>
+
+                            <input type="file" id="photo_input_overview" accept="image/*" capture="environment" class="hidden" onchange="CJAudit.handlePhotoUpload(event, 'overview')" />
+                          </label>
+
+                          <button type="button" id="btnRemoveOverviewPhoto" onclick="CJAudit.removePhoto('overview')" class="hidden absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-red-600 text-white font-bold text-[10px] flex items-center justify-center shadow hover:bg-red-700">✕</button>
+                        </div>
+
+                        <button type="button" id="btn_mock_overview" onclick="CJAudit.generateMockPhoto('overview')" class="w-full bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold py-1 px-1.5 rounded-xl border border-emerald-200 transition text-center text-[10px] flex items-center justify-center gap-1 active:scale-95 shadow-sm">
+                          <span>⚡</span>
+                          <span>Ảnh mẫu CH</span>
+                        </button>
+                      </div>
+
                     </div>
+
+                    <div class="text-[10px] text-gray-500 leading-tight bg-white p-2 rounded-xl border border-gray-200 flex items-center gap-1.5">
+                      <span>🛡️</span>
+                      <span>Hệ thống tự động đóng dấu Watermark GPS, Tên CH, Barcode và Thời gian thực lên cả 2 ảnh.</span>
+                    </div>
+
                   </div>
                 </div>
 
@@ -890,7 +945,7 @@
                     <span id="auditAbnormalAlertTitle">YÊU CẦU BẮT BUỘC KHI CÓ SỰ CỐ / LÝ DO KHÁC:</span>
                   </div>
                   <div class="text-[11px] text-red-900 leading-relaxed font-medium" id="auditAbnormalAlertDesc">
-                    Bạn đã ghi nhận tình trạng thiết bị có vấn đề. <b class="underline">Bắt buộc</b> phải nhập mục <b>Ghi chú</b> và chụp ít nhất <b>1 ảnh POSM</b> minh chứng trước khi bấm Lưu!
+                    Bạn đã ghi nhận tình trạng thiết bị có vấn đề. <b class="underline">Bắt buộc</b> phải nhập mục <b>Ghi chú</b> và chụp đủ <b>2 ảnh minh chứng</b> (Tủ đông & Tổng quan CH) trước khi bấm Lưu!
                   </div>
                 </div>
 
@@ -1036,10 +1091,10 @@
         <div class="space-y-1">
           <div class="flex justify-between text-[11px] font-bold text-gray-600">
             <span>Tiến độ thực hiện trên tuyến:</span>
-            <span id="dashOverallCompletedTasks" class="text-[#184594] font-black">3 / 13 Khách hàng</span>
+            <span id="dashOverallCompletedTasks" class="text-[#184594] font-black">0 / 522 Khách hàng (541 Tủ đông)</span>
           </div>
           <div class="w-full bg-gray-200/90 rounded-full h-3 overflow-hidden shadow-inner border border-gray-200">
-            <div id="dashOverallProgressBar" class="bg-gradient-to-r from-[#184594] via-blue-600 to-emerald-500 h-3 rounded-full transition-all duration-500" style="width: 23%"></div>
+            <div id="dashOverallProgressBar" class="bg-gradient-to-r from-[#184594] via-blue-600 to-emerald-500 h-3 rounded-full transition-all duration-500" style="width: 0%"></div>
           </div>
         </div>
 
@@ -1052,8 +1107,8 @@
           </div>
           <div class="bg-blue-50/80 p-2.5 rounded-2xl border border-blue-200 flex flex-col justify-between">
             <div class="text-[10px] text-blue-700 font-bold">🎯 Tổng Điểm Bán GT:</div>
-            <div class="text-base font-black text-blue-950 mt-0.5" id="dashMobileSummaryStores">13 Khách hàng</div>
-            <div class="text-[9px] text-blue-600" id="dashSummaryAssignedSub">Tạp hóa / Đại lý GT</div>
+            <div class="text-base font-black text-blue-950 mt-0.5" id="dashMobileSummaryStores">522 KH (541 Tủ)</div>
+            <div class="text-[9px] text-blue-600" id="dashSummaryAssignedSub">Toàn quốc • 541 Tủ đông</div>
           </div>
           <div class="bg-emerald-50/80 p-2.5 rounded-2xl border border-emerald-200 flex flex-col justify-between">
             <div class="text-[10px] text-emerald-700 font-bold">✅ Đã Hoàn Thành:</div>
@@ -1730,6 +1785,19 @@
         <div id="modalResultProposalRow" class="hidden pt-1 border-t border-gray-200">
           <span class="text-gray-500 block font-medium">Đề nghị:</span>
           <span class="font-semibold text-blue-900" id="modalResultProposal"></span>
+        </div>
+        <div id="modalResultPhotosRow" class="pt-2 border-t border-gray-200">
+          <span class="text-gray-500 block font-semibold mb-1 text-[11px]">📸 Ảnh minh chứng (Đã đóng Watermark GPS):</span>
+          <div class="grid grid-cols-2 gap-2">
+            <div class="space-y-0.5">
+              <span class="text-[10px] text-gray-500 block">1. Tủ đông</span>
+              <img id="modalResultPosmPhoto" class="w-full h-20 object-cover rounded-xl border border-gray-200 bg-gray-100" src="" />
+            </div>
+            <div class="space-y-0.5">
+              <span class="text-[10px] text-gray-500 block">2. Tổng quan CH</span>
+              <img id="modalResultOverviewPhoto" class="w-full h-20 object-cover rounded-xl border border-gray-200 bg-gray-100" src="" />
+            </div>
+          </div>
         </div>
       </div>
 
@@ -2491,14 +2559,14 @@
   <div id="appToast" class="fixed top-5 right-5 z-50 opacity-0 translate-y-[-20px] pointer-events-none transition-all duration-300"></div>
 
   <!-- ================= APPLICATION SCRIPTS ================= -->
-  <script src="js/data.js?v=3.2"></script>
-  <script src="js/auth.js?v=3.2"></script>
-  <script src="js/storage.js?v=3.2"></script>
-  <script src="js/watermark.js?v=3.2"></script>
-  <script src="js/cloud_sync.js?v=3.2"></script>
-  <script src="js/audit.js?v=3.2"></script>
-  <script src="js/dashboard.js?v=3.2"></script>
-  <script src="js/excel.js?v=3.2"></script>
-  <script src="js/app.js?v=3.2"></script>
+  <script src="js/data.js?v=3.5"></script>
+  <script src="js/auth.js?v=3.5"></script>
+  <script src="js/storage.js?v=3.5"></script>
+  <script src="js/watermark.js?v=3.5"></script>
+  <script src="js/cloud_sync.js?v=3.5"></script>
+  <script src="js/audit.js?v=3.5"></script>
+  <script src="js/dashboard.js?v=3.5"></script>
+  <script src="js/excel.js?v=3.5"></script>
+  <script src="js/app.js?v=3.5"></script>
 </body>
 </html>

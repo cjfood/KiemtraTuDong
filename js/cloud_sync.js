@@ -107,7 +107,9 @@ const CJCloudSync = (function () {
             latitude: auditData.latitude || (auditData.location ? auditData.location.lat : '') || '',
             longitude: auditData.longitude || (auditData.location ? auditData.location.lng : '') || '',
             distanceMeters: auditData.distanceMeters || '',
-            photo: auditData.photo || '' // base64 photo
+            photo: auditData.photo || auditData.photoPosm || '', // base64 photo 1 (fallback)
+            photoPosm: auditData.photoPosm || auditData.photo || '', // base64 photo 1 (Tủ đông)
+            photoOverview: auditData.photoOverview || '' // base64 photo 2 (Tổng quan cửa hàng)
         };
 
         if (typeof CJAudit !== 'undefined' && CJAudit.showToast) {

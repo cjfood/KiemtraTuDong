@@ -83,7 +83,15 @@ const CJAuth = {
     try {
       const session = sessionStorage.getItem(this.KEY_SESSION) || localStorage.getItem(this.KEY_SESSION);
       if (session) {
-        return JSON.parse(session);
+        const u = JSON.parse(session);
+        if (u && u.username === "admin" && u.name !== "Admin") {
+          u.name = "Admin";
+          try {
+            if (sessionStorage.getItem(this.KEY_SESSION)) sessionStorage.setItem(this.KEY_SESSION, JSON.stringify(u));
+            if (localStorage.getItem(this.KEY_SESSION)) localStorage.setItem(this.KEY_SESSION, JSON.stringify(u));
+          } catch (_) {}
+        }
+        return u;
       }
     } catch (e) {
       console.error(e);

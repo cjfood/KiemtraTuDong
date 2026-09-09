@@ -14,7 +14,7 @@ const CJStorage = {
   },
 
   init() {
-    const DATA_VERSION = "2026.09.08_MASTER_V3";
+    const DATA_VERSION = "2026.09.09_ADMIN_FIX_V5";
     const currentVer = localStorage.getItem("cj_market_audit_data_ver");
     
     // Auto-migrate to official master data if version changed or if stores/users are empty
@@ -153,7 +153,7 @@ const CJStorage = {
         username: "admin",
         empCode: "CJ9999999",
         password: "123",
-        name: "Trần Anh Tuấn",
+        name: "Admin",
         role: "admin",
         roleTitle: "Giám Đốc RTM & DMS Toàn Quốc",
         area: "Toàn Quốc (GT, MT, B2B)",
@@ -393,6 +393,19 @@ const CJStorage = {
   getFreezerById(id) {
     const freezers = this.getFreezers();
     return freezers.find(f => f.id === id) || null;
+  },
+
+  getFreezersForStore(storeId) {
+    if (!storeId) return [];
+    const freezers = this.getFreezers();
+    return freezers.filter(f => f.assignedStoreId === storeId);
+  },
+
+  getFreezersForCurrentGSBH(selectedSales = "ALL") {
+    const stores = this.getStoresForCurrentGSBH(selectedSales);
+    const storeIdSet = new Set(stores.map(s => s.id));
+    const allFreezers = this.getFreezers();
+    return allFreezers.filter(f => storeIdSet.has(f.assignedStoreId));
   },
 
   getAudits() {
@@ -695,7 +708,7 @@ const CJStorage = {
         }
 
         if (!gsbhObj) {
-          gsbhObj = allUsers[0] || { username: "admin", name: "Trần Anh Tuấn" };
+          gsbhObj = allUsers[0] || { username: "admin", name: "Admin" };
         }
         gsbhUsername = gsbhObj.username;
         gsbhName = getVal(row, ["Ten_user", "Ten_User", "Ten user", "Ten_GSBH", "Tên GSBH", "GSBH Name"], 1) || gsbhObj.name;

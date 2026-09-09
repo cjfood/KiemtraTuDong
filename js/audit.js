@@ -53,21 +53,29 @@ const CJAudit = {
     if (!filterEl) return;
 
     const teamReps = CJAuth.getCurrentTeamSalesReps();
-    if (teamReps.length > 0) {
-      filterEl.innerHTML = teamReps.map(rep => {
-        const shortName = rep.name.split(' ').pop();
-        return `<option value="${rep.username}">${shortName} ▼</option>`;
-      }).join("") + `<option value="ALL">Tất cả (${teamReps.length} NV)</option>`;
+    const countLabel = teamReps.length > 0 ? ` (${teamReps.length} NV)` : "";
+    let optionsHtml = `<option value="ALL">📋 Tất cả NVBH${countLabel}</option>`;
 
-      // Default to first direct rep (hung.nv for Bảo)
-      if (this.selectedSalesRep === "ALL" || !this.selectedSalesRep) {
-        this.selectedSalesRep = teamReps[0].username;
+    if (teamReps.length > 0) {
+      optionsHtml += teamReps.map(rep => {
+        const shortName = rep.name ? rep.name.split(' ').pop() : rep.username;
+        return `<option value="${rep.username}">👤 ${shortName} (${rep.empCode || rep.username})</option>`;
+      }).join("");
+    }
+
+    filterEl.innerHTML = optionsHtml;
+
+    // Check if previously selected rep is still valid in current team
+    if (this.selectedSalesRep && this.selectedSalesRep !== "ALL") {
+      const isValid = teamReps.some(r => r.username === this.selectedSalesRep);
+      if (!isValid) {
+        this.selectedSalesRep = "ALL";
       }
-      filterEl.value = this.selectedSalesRep;
     } else {
-      filterEl.innerHTML = `<option value="ALL">Tất cả NVBH</option>`;
       this.selectedSalesRep = "ALL";
     }
+
+    filterEl.value = this.selectedSalesRep;
 
     filterEl.onchange = (e) => {
       this.selectedSalesRep = e.target.value;
@@ -1003,25 +1011,55 @@ const CJAudit = {
         gmapsBtn.href = `https://www.google.com/maps/dir/?api=1&destination=${store.lat},${store.lng}`;
       }
 
-      // Barcode selection / populate - Lấy thông tin chính xác từ Cột L "So_Serial"
+      // Barcode selection / populate - Lấy đầy đủ tất cả tủ đông của điểm bán (hỗ trợ CH có nhiều tủ)
+      const storeFreezers = (typeof CJStorage !== "undefined" && CJStorage.getFreezersForStore) 
+        ? CJStorage.getFreezersForStore(store.id) 
+        : [];
+
       const barcodeSelect = document.getElementById("auditBarcodeSelect");
+      const freezerModelInput = document.getElementById("auditFreezerModel");
+
       if (barcodeSelect) {
         barcodeSelect.innerHTML = "";
-        const targetSerial = store.serialNumber || store.barcode || this.currentFreezer?.serialNumber || this.currentFreezer?.barcode || this.currentFreezer?.assetTag || store.freezerId || "TDO03097";
-        const newOpt = new Option(targetSerial, targetSerial, true, true);
-        barcodeSelect.add(newOpt);
+        if (storeFreezers.length > 0) {
+          storeFreezers.forEach((fz, idx) => {
+            const serial = fz.serialNumber || fz.barcode || fz.assetTag || fz.id;
+            const model = fz.modelTu || fz.model || fz.freezerModel || "Tủ đông SANAKY 330L";
+            const label = storeFreezers.length > 1 
+              ? `${serial} • ${model} (Tủ ${idx + 1}/${storeFreezers.length})` 
+              : serial;
+            const opt = new Option(label, serial, idx === 0, idx === 0);
+            opt.dataset.model = model;
+            barcodeSelect.add(opt);
+          });
+
+          // Set Model tủ theo tủ đầu tiên
+          if (freezerModelInput) {
+            freezerModelInput.value = storeFreezers[0].modelTu || storeFreezers[0].model || "Tủ đông SANAKY 330L";
+          }
+        } else {
+          const targetSerial = store.serialNumber || store.barcode || "TDO03097";
+          const opt = new Option(targetSerial, targetSerial, true, true);
+          opt.dataset.model = store.modelTu || "Tủ đông SANAKY 330L";
+          barcodeSelect.add(opt);
+          if (freezerModelInput) {
+            freezerModelInput.value = store.modelTu || "Tủ đông SANAKY 330L";
+          }
+        }
+
+        barcodeSelect.onchange = (e) => {
+          const selOpt = barcodeSelect.options[barcodeSelect.selectedIndex];
+          if (freezerModelInput && selOpt && selOpt.dataset && selOpt.dataset.model) {
+            freezerModelInput.value = selOpt.dataset.model;
+          }
+        };
       }
 
-      // Tên tủ (Model_Tu) - Lấy thông tin chính xác từ Cột J "Model_Tu"
-      const freezerModelInput = document.getElementById("auditFreezerModel");
-      if (freezerModelInput) {
-        const targetModel = store.modelTu || store.freezerModel || store.model || this.currentFreezer?.modelTu || this.currentFreezer?.model || "Tủ đông SANAKY 330L";
-        freezerModelInput.value = targetModel;
-      }
-
-      // Reset fields
+      // Số lượng POSM: mặc định bằng số tủ thực tế của điểm bán
       const qtyInput = document.getElementById("auditPosmQuantity");
-      if (qtyInput) qtyInput.value = "1";
+      if (qtyInput) {
+        qtyInput.value = storeFreezers.length > 0 ? storeFreezers.length : (store.posmQuantity || 1);
+      }
 
       const condSelect = document.getElementById("auditPosmCondition");
       if (condSelect) condSelect.value = "Sử Dụng Được";
@@ -1048,6 +1086,8 @@ const CJAudit = {
 
       const removeBtn = document.getElementById("btnRemovePosmPhoto");
       if (removeBtn) removeBtn.classList.add("hidden");
+      const removeOvBtn = document.getElementById("btnRemoveOverviewPhoto");
+      if (removeOvBtn) removeOvBtn.classList.add("hidden");
 
       this.onConditionChange();
 
@@ -1094,6 +1134,9 @@ const CJAudit = {
     if (photoType === "posm") {
       const removeBtn = document.getElementById("btnRemovePosmPhoto");
       if (removeBtn) removeBtn.classList.add("hidden");
+    } else if (photoType === "overview") {
+      const removeBtn = document.getElementById("btnRemoveOverviewPhoto");
+      if (removeBtn) removeBtn.classList.add("hidden");
     } else if (photoType === "recall") {
       const removeBtn = document.getElementById("btnRemoveRecallPhoto");
       if (removeBtn) removeBtn.classList.add("hidden");
@@ -1120,9 +1163,12 @@ const CJAudit = {
     const metadata = this.buildWatermarkMetadata(photoType);
     const cond = document.getElementById("auditPosmCondition")?.value || "Sử Dụng Được";
     let typeStatus = cond === "Sử Dụng Được" ? "good" : "danger";
-    let label = `Ảnh POSM (${metadata.assetTag})`;
+    let label = `Ảnh Tủ Đông (${metadata.assetTag})`;
 
-    if (photoType === "recall") {
+    if (photoType === "overview") {
+      typeStatus = "good";
+      label = `Ảnh Tổng Quan (${metadata.storeName || 'Cửa Hàng'})`;
+    } else if (photoType === "recall") {
       typeStatus = "warning";
       label = `Ảnh Thu Hồi (${metadata.assetTag})`;
     }
@@ -1130,16 +1176,21 @@ const CJAudit = {
     const placeholder = CJWatermark.generatePlaceholderImage(typeStatus, label);
     const watermarkedDataUrl = await CJWatermark.processImage(placeholder, metadata);
     this.setPhotoPreview(photoType, watermarkedDataUrl);
-    this.showToast(`Đã tạo ảnh ${photoType === 'recall' ? 'thu hồi ' : ''}"${metadata.assetTag}" có Watermark!`, "success");
+    const photoTypeName = photoType === 'posm' ? 'tủ đông' : (photoType === 'overview' ? 'tổng quan cửa hàng' : 'thu hồi');
+    this.showToast(`Đã tạo ảnh ${photoTypeName} có Watermark GPS!`, "success");
   },
 
   buildWatermarkMetadata(photoType = "posm") {
-    const user = CJAuth.getCurrentUser();
+    const user = CJAuth.getCurrentUser() || { name: "Admin" };
     const barcode = document.getElementById("auditBarcodeSelect")?.value || (this.currentFreezer ? this.currentFreezer.barcode || this.currentFreezer.assetTag : "TDO2603_0025");
     const condition = document.getElementById("auditPosmCondition")?.value || "Sử Dụng Được";
 
     let reasonStr = "KIỂM TRA ĐỊNH KỲ";
-    if (photoType === "recall") {
+    if (photoType === "posm") {
+      reasonStr = condition === "Sử Dụng Được" ? "HÌNH ẢNH TỦ ĐÔNG TRƯNG BÀY" : `SỰ CỐ TỦ ĐÔNG: ${condition.toUpperCase()}`;
+    } else if (photoType === "overview") {
+      reasonStr = "HÌNH ẢNH TỔNG QUAN CỬA HÀNG";
+    } else if (photoType === "recall") {
       reasonStr = "THU HỒI POSM VỀ KHO NPP";
     } else if (condition !== "Sử Dụng Được") {
       reasonStr = `SỰ CỐ: ${condition.toUpperCase()}`;
@@ -1173,6 +1224,9 @@ const CJAudit = {
     }
     if (photoType === "posm") {
       const removeBtn = document.getElementById("btnRemovePosmPhoto");
+      if (removeBtn) removeBtn.classList.remove("hidden");
+    } else if (photoType === "overview") {
+      const removeBtn = document.getElementById("btnRemoveOverviewPhoto");
       if (removeBtn) removeBtn.classList.remove("hidden");
     } else if (photoType === "recall") {
       const removeBtn = document.getElementById("btnRemoveRecallPhoto");
@@ -1237,23 +1291,27 @@ const CJAudit = {
       }
     }
 
-    // 2. Bắt buộc chụp hình ở TẤT CẢ các trạng thái (100% tuân thủ)
-    const hasPhoto = this.currentPhotos.posm || this.currentPhotos.overview || this.currentPhotos.tag;
-    if (!hasPhoto) {
-      let photoReasonGuide = "";
-      if (condition === "Hư hỏng") {
-        photoReasonGuide = "chụp cận cảnh vị trí hư hỏng (lốc lạnh/xì gas/vỡ kính/hỏng gioăng) để gửi Ticket bảo hành cho NPP & CJ";
-      } else if (condition === "Mất (ko có tại cửa hàng)" || condition === "Không hoạt động") {
-        photoReasonGuide = "chụp hiện trường vị trí trống hoặc mặt tiền cửa hàng để lập biên bản xác nhận mất tủ tài sản CJ";
-      } else if (condition === "Mất tem / Rách mã QR") {
-        photoReasonGuide = "chụp góc dán tem hoặc mã QR bị trầy xước/rách để Trade Marketing in cấp tem mới";
-      } else if (condition === "Lý do khác") {
-        photoReasonGuide = "chụp toàn cảnh hiện trường vị trí dời tủ hoặc hàng vi phạm trưng bày để giải trình";
+    // 2. Bắt buộc chụp tối thiểu 2 hình khi kiểm tra: 1 tấm hình tủ đông, 1 tấm tổng quan cửa hàng
+    const hasPosmPhoto = !!this.currentPhotos.posm;
+    const hasOverviewPhoto = !!this.currentPhotos.overview;
+
+    if (!hasPosmPhoto || !hasOverviewPhoto) {
+      let msg = "⚠️ YÊU CẦU BẮT BUỘC CHỤP TỐI THIỂU 2 HÌNH KHI KIỂM TRA:\n\n";
+      if (!hasPosmPhoto && !hasOverviewPhoto) {
+        msg += "❌ Chưa chụp: [1. Hình ảnh tủ đông]\n";
+        msg += "❌ Chưa chụp: [2. Hình tổng quan cửa hàng]\n\n";
+        msg += "👉 Quy định bắt buộc phải có đủ 2 ảnh (Tủ đông & Tổng quan điểm bán) có Watermark GPS trước khi bấm Lưu!";
+      } else if (!hasPosmPhoto) {
+        msg += "❌ Còn thiếu: [1. Hình ảnh tủ đông] (Cận cảnh tủ & sản phẩm/barcode)\n";
+        msg += "✅ Đã có: [2. Hình tổng quan cửa hàng]\n\n";
+        msg += "👉 Vui lòng chụp/tải thêm [Hình ảnh tủ đông] để hoàn tất biên bản kiểm tra!";
       } else {
-        photoReasonGuide = "chụp ảnh thực tế tủ đông trưng bày tại điểm bán có sản phẩm Bibigo & Cầu Tre";
+        msg += "✅ Đã có: [1. Hình ảnh tủ đông]\n";
+        msg += "❌ Còn thiếu: [2. Hình tổng quan cửa hàng] (Toàn cảnh mặt tiền/biển hiệu)\n\n";
+        msg += "👉 Vui lòng chụp/tải thêm [Hình tổng quan cửa hàng] để hoàn tất biên bản kiểm tra!";
       }
 
-      alert(`⚠️ BẮT BUỘC CHỤP ẢNH MINH CHỨNG (100%):\nTrường hợp [${condition}] bắt buộc phải ${photoReasonGuide} có đóng dấu Watermark GPS trước khi bấm Lưu!`);
+      alert(msg);
       const photoSection = document.getElementById("sectionPhotoEvidence");
       if (photoSection) photoSection.scrollIntoView({ behavior: "smooth" });
       return;
@@ -1333,9 +1391,8 @@ const CJAudit = {
 
     this.showAuditSuccessModal(auditData);
 
-    // Tự động đồng bộ lên Google Sheets & Google Drive
+    // Tự động đồng bộ lên Google Sheets & Google Drive (Gửi đủ 2 hình: Tủ đông & Tổng quan)
     if (typeof CJCloudSync !== "undefined") {
-      const photoBase64 = (this.currentPhotos && Object.values(this.currentPhotos).find(p => p && typeof p === 'string' && p.startsWith('data:image'))) || "";
       CJCloudSync.sendAuditToGoogleSheet({
         timestamp: new Date().toISOString(),
         userCode: user?.username || "",
@@ -1353,7 +1410,9 @@ const CJAudit = {
         latitude: this.currentStore.lat || "",
         longitude: this.currentStore.lng || "",
         distanceMeters: this.currentStore.distance || "",
-        photo: photoBase64
+        photo: this.currentPhotos.posm || "",
+        photoPosm: this.currentPhotos.posm || "",
+        photoOverview: this.currentPhotos.overview || ""
       }).then(res => {
         if (res && res.success) {
           this.showToast("✅ Đã đồng bộ lên Google Sheets & Drive thành công!", "success");
@@ -1503,6 +1562,15 @@ const CJAudit = {
       setTxt("modalResultTicketIssue", audit.ticketDetails.issueType);
     } else {
       if (ticketBox) ticketBox.classList.add("hidden");
+    }
+
+    const posmImg = document.getElementById("modalResultPosmPhoto");
+    const ovImg = document.getElementById("modalResultOverviewPhoto");
+    if (posmImg && audit.photos?.posm) {
+      posmImg.src = audit.photos.posm;
+    }
+    if (ovImg && audit.photos?.overview) {
+      ovImg.src = audit.photos.overview;
     }
 
     modal.classList.remove("hidden");

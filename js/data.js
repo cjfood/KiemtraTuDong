@@ -9,7 +9,7 @@ const GSBH_ACCOUNTS = [
     "username": "admin",
     "empCode": "CJ9999999",
     "password": "123",
-    "name": "Trần Anh Tuấn",
+    "name": "Admin",
     "role": "admin",
     "roleTitle": "Giám Đốc RTM & DMS Toàn Quốc",
     "area": "Toàn Quốc (GT, MT, B2B)",

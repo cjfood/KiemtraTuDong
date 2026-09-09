@@ -80,6 +80,14 @@ const CJDashboard = {
     const stores = CJStorage.getStoresForCurrentGSBH(selectedSales).filter(s => !s.channel || s.channel === "GT");
     const totalStores = stores.length;
 
+    // Lấy số lượng tủ đông thực tế (bao gồm cả các điểm bán có nhiều tủ)
+    const freezers = (typeof CJStorage !== "undefined" && CJStorage.getFreezersForCurrentGSBH) 
+      ? CJStorage.getFreezersForCurrentGSBH(selectedSales) 
+      : [];
+    const totalFreezers = freezers.length > 0 ? freezers.length : totalStores;
+    const freezerLabel = totalFreezers > totalStores ? ` (${totalFreezers} Tủ)` : "";
+    const freezerFullLabel = totalFreezers > totalStores ? ` (${totalFreezers} Tủ đông)` : "";
+
     const audits = CJStorage.getAuditsForCurrentGSBH();
     const auditedStoreIds = new Set(audits.map(a => a.storeId));
     const auditedStoresCount = stores.filter(s => auditedStoreIds.has(s.id)).length;
@@ -92,8 +100,8 @@ const CJDashboard = {
 
     // Update Overall Completion Card (Phía trên theo yêu cầu người dùng)
     this.setElText("dashOverallCompletionPercent", `${overallRate}%`);
-    this.setElText("dashOverallCompletedTasks", `${auditedStoresCount} / ${totalStores} Khách hàng`);
-    this.setElText("dashOverallTotalTasks", `${totalStores} Điểm`);
+    this.setElText("dashOverallCompletedTasks", `${auditedStoresCount} / ${totalStores} Khách hàng${freezerFullLabel}`);
+    this.setElText("dashOverallTotalTasks", `${totalStores} Điểm${freezerLabel}`);
     const overallBar = document.getElementById("dashOverallProgressBar");
     if (overallBar) {
       overallBar.style.width = `${overallRate}%`;
@@ -101,17 +109,18 @@ const CJDashboard = {
 
     // Update Top Summary Bar (Desktop Mode)
     this.setElText("dashSummaryProgramsCount", "Kiểm Tra Tủ Đông");
-    this.setElText("dashSummaryTotalStores", `${totalStores} Khách hàng`);
+    this.setElText("dashSummaryTotalStores", `${totalStores} Khách hàng${freezerFullLabel}`);
     this.setElText("dashSummaryCompletedTotal", `${auditedStoresCount} Điểm (${overallRate}%)`);
     this.setElText("dashSummaryDangerTotal", `${dangerStoresCount} Điểm (${dangerStoresCount > 0 ? 'Cần xử lý' : 'An toàn'})`);
     const subAssigned = document.getElementById("dashSummaryAssignedSub");
     if (subAssigned) {
-      subAssigned.textContent = selectedSales === "ALL" ? "Toàn bộ khu vực GSBH" : `NVBH: ${selectedSales}`;
+      const areaText = selectedSales === "ALL" ? "Toàn bộ khu vực GSBH" : `NVBH: ${selectedSales}`;
+      subAssigned.textContent = `${areaText} • ${totalFreezers} Tủ đông`;
     }
 
     // Update Quick KPI Summary (Mobile Mode)
     this.setElText("dashMobileSummaryPrograms", "Kiểm tra tủ đông");
-    this.setElText("dashMobileSummaryStores", `${totalStores} Khách hàng`);
+    this.setElText("dashMobileSummaryStores", `${totalStores} KH${freezerLabel}`);
     this.setElText("dashMobileSummaryCompleted", `${auditedStoresCount} Điểm (${overallRate}%)`);
     this.setElText("dashMobileSummaryDanger", `${dangerStoresCount} Điểm (${dangerStoresCount > 0 ? 'Cần xử lý' : 'An toàn'})`);
 
@@ -130,14 +139,14 @@ const CJDashboard = {
         rate: overallRate,
         barColor: "bg-red-600",
         stats: [
-          { label: "Tổng cần kiểm tra", value: `${totalStores} KH`, color: "text-gray-900 bg-gray-50 border-gray-200" },
-          { label: "Đã hoàn thành", value: `${auditedStoresCount} KH`, color: "text-emerald-800 bg-emerald-50 border-emerald-200" },
-          { label: "Chưa kiểm tra", value: `${Math.max(0, totalStores - auditedStoresCount)} KH`, color: "text-amber-800 bg-amber-50 border-amber-200" },
+          { label: "Tổng cần kiểm tra", value: `${totalStores} KH${freezerLabel}`, color: "text-gray-900 bg-gray-50 border-gray-200 font-bold" },
+          { label: "Đã hoàn thành", value: `${auditedStoresCount} KH`, color: "text-emerald-800 bg-emerald-50 border-emerald-200 font-bold" },
+          { label: "Chưa kiểm tra", value: `${Math.max(0, totalStores - auditedStoresCount)} KH`, color: "text-amber-800 bg-amber-50 border-amber-200 font-bold" },
           { label: "Tủ đạt chuẩn tốt", value: `${goodStoresCount} tủ tốt`, color: "text-emerald-700 bg-emerald-50 border-emerald-200" },
           { label: "Có sự cố / Tắt điện", value: `${dangerStoresCount} sự cố`, color: "text-red-700 bg-red-50 border-red-200 font-black" }
         ],
         badgeDetail: "Chụp ảnh & ghi chú bắt buộc khi hư hỏng/tắt điện/mất mã QR",
-        actionText: `🛵 Bấm Vào Để Mở Danh Sách Khách Hàng Kiểm Tra Tủ Đông (${totalStores} KH) ➔`
+        actionText: `🛵 Bấm Vào Để Mở Danh Sách Khách Hàng Kiểm Tra Tủ Đông (${totalStores} KH - ${totalFreezers} Tủ) ➔`
       }
     ];
 
@@ -544,9 +553,11 @@ const CJDashboard = {
       photoContainer.innerHTML = "";
       const photos = audit.photos || {};
       const labels = {
-        overview: "Toàn cảnh Tủ đông",
+        posm: "1. Hình ảnh Tủ đông POSM",
+        overview: "2. Hình Tổng quan Cửa hàng",
         inside: "Bên trong tủ & Hàng hóa",
-        tag: "Tem tài sản / Nhiệt kế"
+        tag: "Tem tài sản / Barcode",
+        recall: "Biên bản thu hồi POSM"
       };
 
       let photoCount = 0;

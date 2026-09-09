@@ -337,9 +337,8 @@ const CJApp = {
     this.populateSalesSelectorInAddStoreModal();
     this.populateUserSelectors();
 
-    // Initialize modules with the new GSBH context (default to first team rep like Hùng)
-    const teamReps = CJAuth.getCurrentTeamSalesReps();
-    CJAudit.selectedSalesRep = (teamReps && teamReps.length > 0) ? teamReps[0].username : "ALL";
+    // Initialize modules with the new GSBH context (default to ALL to view all stores)
+    CJAudit.selectedSalesRep = "ALL";
     CJAudit.init();
     CJDashboard.init();
 
@@ -679,6 +678,10 @@ const CJApp = {
 
     // Refresh context
     this.populateSalesSelectorInAddStoreModal();
+    if (typeof CJAudit !== "undefined") {
+      CJAudit.selectedSalesRep = "ALL";
+      CJAudit.populateSalesRepFilter();
+    }
     if (typeof CJDashboard !== "undefined") {
       CJDashboard.populateSalesFilterDropdown();
       CJDashboard.refresh();
