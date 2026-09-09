@@ -2112,6 +2112,12 @@
             <span>Import User Từ Excel</span>
             <input type="file" id="adminUserExcelFileInput" accept=".xlsx, .xls" class="hidden" onchange="CJApp.onUserExcelFileSelected(this)" />
           </label>
+
+          <!-- Export data.js for GitHub Pages Button -->
+          <button type="button" onclick="CJApp.exportDataJsForGitHub()" class="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs rounded-xl shadow transition active:scale-95 flex items-center gap-1.5 cursor-pointer" title="Xuất file js/data.js chứa toàn bộ User và Khách hàng hiện tại để cập nhật vĩnh viễn lên GitHub">
+            <span class="text-base">🚀</span>
+            <span>Xuất file data.js (Lên GitHub)</span>
+          </button>
         </div>
 
         <div class="flex items-center gap-2">
@@ -2559,14 +2565,14 @@
   <div id="appToast" class="fixed top-5 right-5 z-50 opacity-0 translate-y-[-20px] pointer-events-none transition-all duration-300"></div>
 
   <!-- ================= APPLICATION SCRIPTS ================= -->
-  <script src="js/data.js?v=3.5"></script>
-  <script src="js/auth.js?v=3.5"></script>
-  <script src="js/storage.js?v=3.5"></script>
-  <script src="js/watermark.js?v=3.5"></script>
-  <script src="js/cloud_sync.js?v=3.5"></script>
-  <script src="js/audit.js?v=3.5"></script>
-  <script src="js/dashboard.js?v=3.5"></script>
-  <script src="js/excel.js?v=3.5"></script>
-  <script src="js/app.js?v=3.5"></script>
+  <script src="js/data.js?v=3.7"></script>
+  <script src="js/auth.js?v=3.7"></script>
+  <script src="js/storage.js?v=3.7"></script>
+  <script src="js/watermark.js?v=3.7"></script>
+  <script src="js/cloud_sync.js?v=3.7"></script>
+  <script src="js/audit.js?v=3.7"></script>
+  <script src="js/dashboard.js?v=3.7"></script>
+  <script src="js/excel.js?v=3.7"></script>
+  <script src="js/app.js?v=3.7"></script>
 </body>
 </html>

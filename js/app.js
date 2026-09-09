@@ -825,6 +825,50 @@ const CJApp = {
     }
   },
 
+  exportDataJsForGitHub() {
+    try {
+      const users = CJStorage.getUsers();
+      const stores = CJStorage.getAllStores();
+      const freezers = CJStorage.getFreezers();
+
+      const fileContent = `/**
+ * CJ MarketAudit - Comprehensive FMCG Master Database for CJ Foods Vietnam
+ * Official Master Data: ${users.length} Accounts, ${stores.length} Outlets, ${freezers.length} Freezers
+ * Auto-embedded for GitHub Pages & Offline Field Audits
+ */
+
+const GSBH_ACCOUNTS = ${JSON.stringify(users, null, 2)};
+
+const INITIAL_STORES = ${JSON.stringify(stores, null, 2)};
+
+const INITIAL_FREEZERS = ${JSON.stringify(freezers, null, 2)};
+
+const INITIAL_AUDITS = [];
+
+${typeof CJ_PRODUCTS !== "undefined" ? "const CJ_PRODUCTS = " + JSON.stringify(CJ_PRODUCTS, null, 2) + ";" : ""}
+${typeof CJ_PROMOTIONS !== "undefined" ? "const CJ_PROMOTIONS = " + JSON.stringify(CJ_PROMOTIONS, null, 2) + ";" : ""}
+`;
+
+      const blob = new Blob([fileContent], { type: "application/javascript;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "data.js";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      if (typeof CJAudit !== "undefined" && CJAudit.showToast) {
+        CJAudit.showToast("Đã tải xuống file data.js! Hãy ghi đè vào thư mục js/data.js và commit lên GitHub.", "success");
+      } else {
+        alert("Đã tải xuống file data.js! Hãy copy vào thư mục js/ và commit lên GitHub.");
+      }
+    } catch (err) {
+      alert("Lỗi xuất file data.js: " + (err.message || err));
+    }
+  },
+
   renderAdminUserManagementTable() {
     const tbody = document.getElementById("adminUserTableBody");
     if (!tbody) return;

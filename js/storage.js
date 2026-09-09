@@ -14,7 +14,7 @@ const CJStorage = {
   },
 
   init() {
-    const DATA_VERSION = "2026.09.09_ADMIN_FIX_V5";
+    const DATA_VERSION = "2026.09.09_ALL_47_USERS_V7";
     const currentVer = localStorage.getItem("cj_market_audit_data_ver");
     
     // Auto-migrate to official master data if version changed or if stores/users are empty
