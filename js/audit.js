@@ -1169,7 +1169,10 @@ const CJAudit = {
     const input = document.getElementById(`photo_input_${photoType}`);
     if (input) {
       input.value = "";
-      input.classList.remove("hidden");
+    }
+    const galleryInput = document.getElementById(`gallery_input_${photoType}`);
+    if (galleryInput) {
+      galleryInput.value = "";
     }
     if (photoType === "posm") {
       const removeBtn = document.getElementById("btnRemovePosmPhoto");
@@ -1188,16 +1191,11 @@ const CJAudit = {
   currentFacingMode: "environment",
 
   triggerCapture(photoType = "posm") {
-    // If photo already exists, don't reopen camera unless removed
     if (this.currentPhotos[photoType]) return;
-
-    // Check WebRTC MediaDevices support
-    if (navigator.mediaDevices && typeof navigator.mediaDevices.getUserMedia === "function") {
-      this.openLiveCamera(photoType);
-    } else {
-      // Direct file input fallback
-      const input = document.getElementById(`photo_input_${photoType}`);
-      if (input) input.click();
+    const input = document.getElementById(`photo_input_${photoType}`);
+    if (input) {
+      input.value = "";
+      input.click();
     }
   },
 
