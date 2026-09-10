@@ -873,9 +873,9 @@
                             <span class="text-red-500">*</span>
                           </span>
                         </div>
-                        <div class="relative w-full h-36 rounded-2xl border-2 border-dashed border-blue-300 bg-white hover:bg-blue-50/50 shadow-sm flex flex-col items-center justify-center transition overflow-hidden group">
+                        <div onclick="CJAudit.triggerCapture('posm')" class="relative w-full h-36 rounded-2xl border-2 border-dashed border-blue-300 bg-white hover:bg-blue-50/50 shadow-sm flex flex-col items-center justify-center cursor-pointer transition overflow-hidden group">
                           <!-- Preview Image (If captured) -->
-                          <img id="preview_posm" class="hidden w-full h-full object-cover cursor-pointer z-20" onclick="CJAudit.openPhotoModal('posm')" title="Bấm để xem ảnh phóng to" />
+                          <img id="preview_posm" class="hidden w-full h-full object-cover cursor-pointer z-20" onclick="event.stopPropagation(); CJAudit.openPhotoModal('posm')" title="Bấm để xem ảnh phóng to" />
                           
                           <!-- Placeholder -->
                           <div id="placeholder_posm" class="flex flex-col items-center justify-center p-2 text-center pointer-events-none z-0">
@@ -889,14 +889,14 @@
                                 <line x1="14.5" y1="16" x2="17.5" y2="16" stroke="#2563eb" stroke-width="2"/>
                               </svg>
                             </div>
-                            <span class="text-[11px] font-bold text-gray-800">Chụp tủ đông</span>
+                            <span class="text-[11px] font-bold text-gray-800">📸 Bật Camera Chụp Tủ Đông</span>
                             <span class="text-[9px] text-gray-400">Barcode & sản phẩm</span>
                           </div>
 
-                          <!-- Direct Native Camera Input overlay for Android & iOS -->
-                          <input type="file" id="photo_input_posm" accept="image/*" capture="camera" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" onchange="CJAudit.handlePhotoUpload(event, 'posm')" />
+                          <!-- Fallback file input -->
+                          <input type="file" id="photo_input_posm" accept="image/*" capture="camera" class="hidden" onchange="CJAudit.handlePhotoUpload(event, 'posm')" />
 
-                          <button type="button" id="btnRemovePosmPhoto" onclick="CJAudit.removePhoto('posm')" class="hidden absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-red-600 text-white font-bold text-[10px] flex items-center justify-center shadow hover:bg-red-700 z-30">✕</button>
+                          <button type="button" id="btnRemovePosmPhoto" onclick="event.stopPropagation(); CJAudit.removePhoto('posm')" class="hidden absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-red-600 text-white font-bold text-[10px] flex items-center justify-center shadow hover:bg-red-700 z-30">✕</button>
                         </div>
                       </div>
 
@@ -909,9 +909,9 @@
                             <span class="text-red-500">*</span>
                           </span>
                         </div>
-                        <div class="relative w-full h-36 rounded-2xl border-2 border-dashed border-emerald-300 bg-white hover:bg-emerald-50/50 shadow-sm flex flex-col items-center justify-center transition overflow-hidden group">
+                        <div onclick="CJAudit.triggerCapture('overview')" class="relative w-full h-36 rounded-2xl border-2 border-dashed border-emerald-300 bg-white hover:bg-emerald-50/50 shadow-sm flex flex-col items-center justify-center cursor-pointer transition overflow-hidden group">
                           <!-- Preview Image (If captured) -->
-                          <img id="preview_overview" class="hidden w-full h-full object-cover cursor-pointer z-20" onclick="CJAudit.openPhotoModal('overview')" title="Bấm để xem ảnh phóng to" />
+                          <img id="preview_overview" class="hidden w-full h-full object-cover cursor-pointer z-20" onclick="event.stopPropagation(); CJAudit.openPhotoModal('overview')" title="Bấm để xem ảnh phóng to" />
                           
                           <!-- Placeholder -->
                           <div id="placeholder_overview" class="flex flex-col items-center justify-center p-2 text-center pointer-events-none z-0">
@@ -925,14 +925,14 @@
                                 <line x1="14.5" y1="16" x2="17.5" y2="16" stroke="#059669" stroke-width="2"/>
                               </svg>
                             </div>
-                            <span class="text-[11px] font-bold text-gray-800">Chụp toàn cảnh</span>
+                            <span class="text-[11px] font-bold text-gray-800">📸 Bật Camera Chụp Toàn Cảnh</span>
                             <span class="text-[9px] text-gray-400">Mặt tiền / Biển hiệu</span>
                           </div>
 
-                          <!-- Direct Native Camera Input overlay for Android & iOS -->
-                          <input type="file" id="photo_input_overview" accept="image/*" capture="camera" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" onchange="CJAudit.handlePhotoUpload(event, 'overview')" />
+                          <!-- Fallback file input -->
+                          <input type="file" id="photo_input_overview" accept="image/*" capture="camera" class="hidden" onchange="CJAudit.handlePhotoUpload(event, 'overview')" />
 
-                          <button type="button" id="btnRemoveOverviewPhoto" onclick="CJAudit.removePhoto('overview')" class="hidden absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-red-600 text-white font-bold text-[10px] flex items-center justify-center shadow hover:bg-red-700 z-30">✕</button>
+                          <button type="button" id="btnRemoveOverviewPhoto" onclick="event.stopPropagation(); CJAudit.removePhoto('overview')" class="hidden absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-red-600 text-white font-bold text-[10px] flex items-center justify-center shadow hover:bg-red-700 z-30">✕</button>
                         </div>
                       </div>
 
@@ -1806,6 +1806,67 @@
         </button>
       </div>
     </div>
+  <!-- ================= MODAL: LIVE CAMERA VIEWFINDER (DIRECT ANDROID/IOS CAMERA) ================= -->
+  <div id="liveCameraModal" class="hidden fixed inset-0 bg-black z-50 flex flex-col justify-between" style="z-index: 9999;">
+    <!-- Top Bar: Title & Camera Switcher & Close -->
+    <div class="p-4 flex items-center justify-between bg-black/60 text-white z-10 backdrop-blur-xs">
+      <div class="flex items-center gap-2">
+        <span class="w-2.5 h-2.5 rounded-full bg-red-500 animate-ping"></span>
+        <span id="liveCameraTitle" class="font-extrabold text-sm text-white">📸 Chụp ảnh tủ đông</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <button type="button" onclick="CJAudit.switchCameraFacing()" class="px-3 py-1.5 bg-white/20 hover:bg-white/30 rounded-full text-white text-xs font-bold transition flex items-center gap-1 active:scale-95">
+          <span>🔄</span> <span>Đổi cam</span>
+        </button>
+        <button type="button" onclick="CJAudit.closeLiveCamera()" class="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 text-white font-black text-sm flex items-center justify-center transition active:scale-95">
+          ✕
+        </button>
+      </div>
+    </div>
+
+    <!-- Video Viewfinder Stream -->
+    <div class="relative flex-1 flex items-center justify-center overflow-hidden bg-black">
+      <video id="liveCameraVideo" autoplay playsinline muted class="w-full h-full object-cover"></video>
+      
+      <!-- Reticle / Viewfinder Frame -->
+      <div class="pointer-events-none absolute inset-6 sm:inset-12 border-2 border-white/30 rounded-3xl flex flex-col justify-between p-4 shadow-[0_0_0_9999px_rgba(0,0,0,0.3)]">
+        <div class="flex justify-between">
+          <div class="w-7 h-7 border-t-4 border-l-4 border-emerald-400 rounded-tl-xl"></div>
+          <div class="w-7 h-7 border-t-4 border-r-4 border-emerald-400 rounded-tr-xl"></div>
+        </div>
+        <!-- Helper banner -->
+        <div class="text-center text-white text-xs bg-black/60 py-1.5 px-4 rounded-full mx-auto backdrop-blur-xs border border-white/20 font-medium">
+          Hướng camera vào: <b class="text-emerald-300" id="liveCameraHelper">tủ đông & barcode</b>
+        </div>
+        <div class="flex justify-between">
+          <div class="w-7 h-7 border-b-4 border-l-4 border-emerald-400 rounded-bl-xl"></div>
+          <div class="w-7 h-7 border-b-4 border-r-4 border-emerald-400 rounded-br-xl"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom Controls -->
+    <div class="p-6 bg-black/70 flex items-center justify-around z-10 backdrop-blur-xs">
+      <!-- Fallback gallery picker option -->
+      <label class="cursor-pointer text-white/70 hover:text-white flex flex-col items-center gap-1 text-[11px] font-medium active:scale-95 transition">
+        <span class="text-2xl">📁</span>
+        <span>Thư viện</span>
+        <input type="file" id="fallbackFileInput" accept="image/*" class="hidden" onchange="CJAudit.handleFallbackFile(event)" />
+      </label>
+
+      <!-- Big Capture Shutter Button -->
+      <button type="button" onclick="CJAudit.captureFromLiveCamera()" class="w-20 h-20 rounded-full border-4 border-white bg-[#E31837] active:scale-90 shadow-2xl flex items-center justify-center transition-all group">
+        <div class="w-14 h-14 rounded-full bg-white flex items-center justify-center text-2xl shadow group-hover:scale-105 transition">
+          📸
+        </div>
+      </button>
+
+      <!-- Watermark Badge preview icon -->
+      <div class="flex flex-col items-center gap-1 text-white/50 text-[10px]">
+        <span class="text-xl">📍</span>
+        <span>Watermark GPS</span>
+      </div>
+    </div>
   </div>
 
   <!-- ================= MODAL: PHOTO WATERMARK LIGHTBOX ================= -->
@@ -2353,14 +2414,14 @@
           <span class="text-[10px] font-black text-red-600 bg-red-50 px-2 py-0.5 rounded border border-red-200">BẮT BUỘC 100%</span>
         </div>
         <div class="flex items-start gap-2.5 p-2.5 rounded-2xl border border-dashed border-red-300 bg-red-50/30">
-          <div class="relative w-24 h-24 rounded-xl border border-gray-300 bg-white hover:bg-blue-50/50 shadow-sm flex flex-col items-center justify-center transition overflow-hidden">
-            <img id="preview_recall" class="hidden w-full h-full object-cover cursor-pointer z-20" onclick="CJAudit.openPhotoModal('recall')" title="Bấm xem ảnh phóng to" />
+          <div onclick="CJAudit.triggerCapture('recall')" class="relative w-24 h-24 rounded-xl border border-gray-300 bg-white hover:bg-blue-50/50 shadow-sm flex flex-col items-center justify-center cursor-pointer transition overflow-hidden">
+            <img id="preview_recall" class="hidden w-full h-full object-cover cursor-pointer z-20" onclick="event.stopPropagation(); CJAudit.openPhotoModal('recall')" title="Bấm xem ảnh phóng to" />
             <div id="placeholder_recall" class="flex flex-col items-center justify-center text-center p-1 pointer-events-none z-0">
               <span class="text-xl mb-0.5">📸</span>
-              <span class="text-[10px] font-bold text-gray-600 leading-tight">Chụp ảnh tủ thu hồi</span>
+              <span class="text-[10px] font-bold text-gray-600 leading-tight">Bật Camera</span>
             </div>
-            <input type="file" id="photo_input_recall" accept="image/*" capture="camera" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" onchange="CJAudit.handlePhotoUpload(event, 'recall')" />
-            <button type="button" id="btnRemoveRecallPhoto" onclick="CJAudit.removePhoto('recall')" class="hidden absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-red-600 text-white font-bold text-xs flex items-center justify-center shadow z-30">✕</button>
+            <input type="file" id="photo_input_recall" accept="image/*" capture="camera" class="hidden" onchange="CJAudit.handlePhotoUpload(event, 'recall')" />
+            <button type="button" id="btnRemoveRecallPhoto" onclick="event.stopPropagation(); CJAudit.removePhoto('recall')" class="hidden absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-red-600 text-white font-bold text-xs flex items-center justify-center shadow z-30">✕</button>
           </div>
           <div class="flex-1 space-y-1.5 text-[11px] text-gray-600">
             <p class="leading-tight">Chụp toàn cảnh mặt trước & thân tủ để xác nhận tình trạng trầy xước, móp méo và hàng hóa trước khi bàn giao cho NPP.</p>
@@ -2691,14 +2752,14 @@
   <div id="appToast" class="fixed top-5 right-5 z-50 opacity-0 translate-y-[-20px] pointer-events-none transition-all duration-300"></div>
 
   <!-- ================= APPLICATION SCRIPTS ================= -->
-  <script src="js/data.js?v=5.1"></script>
-  <script src="js/auth.js?v=5.1"></script>
-  <script src="js/storage.js?v=5.1"></script>
-  <script src="js/watermark.js?v=5.1"></script>
-  <script src="js/cloud_sync.js?v=5.1"></script>
-  <script src="js/audit.js?v=5.1"></script>
-  <script src="js/dashboard.js?v=5.1"></script>
-  <script src="js/excel.js?v=5.1"></script>
-  <script src="js/app.js?v=5.1"></script>
+  <script src="js/data.js?v=5.2"></script>
+  <script src="js/auth.js?v=5.2"></script>
+  <script src="js/storage.js?v=5.2"></script>
+  <script src="js/watermark.js?v=5.2"></script>
+  <script src="js/cloud_sync.js?v=5.2"></script>
+  <script src="js/audit.js?v=5.2"></script>
+  <script src="js/dashboard.js?v=5.2"></script>
+  <script src="js/excel.js?v=5.2"></script>
+  <script src="js/app.js?v=5.2"></script>
 </body>
 </html>
