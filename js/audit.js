@@ -1416,55 +1416,59 @@ const CJAudit = {
       console.warn("Audit save error:", errAudit);
     }
 
-    // Hiển thị toast bắt đầu đồng bộ
-    this.showToast("⏳ Đang lưu & tải 2 hình ảnh lên Google Sheets & Drive...", "info");
-
-    // Tự động đồng bộ lên Google Sheets & Google Drive (Gửi đủ 2 hình: Tủ đông & Tổng quan)
-    let cloudResult = { success: false };
-    if (typeof CJCloudSync !== "undefined") {
-      try {
-        cloudResult = await CJCloudSync.sendAuditToGoogleSheet({
-          timestamp: new Date().toISOString(),
-          userCode: user?.username || "",
-          userName: user?.name || "",
-          region: user?.area || user?.region || "",
-          customerCode: this.currentStore.storeCode || this.currentStore.id || "",
-          customerName: this.currentStore.originalStoreName || this.currentStore.name || "",
-          address: this.currentStore.address || "",
-          phone: this.currentStore.phone || "",
-          freezerBarcode: barcode,
-          freezerModel: modelTu,
-          freezerQuantity: quantity,
-          workingCondition: condition,
-          conditionNote: notes,
-          latitude: this.currentStore.lat || "",
-          longitude: this.currentStore.lng || "",
-          distanceMeters: this.currentStore.distance || "",
-          photo: this.currentPhotos.posm || "",
-          photoPosm: this.currentPhotos.posm || "",
-          photoOverview: this.currentPhotos.overview || ""
-        });
-      } catch (errSync) {
-        console.warn("Cloud sync error:", errSync);
-        cloudResult = { success: false, error: errSync.message || errSync.toString() };
-      }
-    }
-
-    if (cloudResult && cloudResult.success) {
-      alert(`🎉 ĐÃ ĐỒNG BỘ THÀNH CÔNG VỀ GOOGLE SHEETS!\n\n🏪 Điểm bán: ${this.currentStore.name}\n❄️ Trạng thái: ${condition}\n🔢 Barcode: ${barcode}\n\n✅ Đã lưu đầy đủ 2 ảnh vào Google Drive và ghi vào bảng tính Google Sheets!`);
-    } else {
-      const reason = cloudResult?.reason === "no_url" 
-        ? "Chưa có URL Web App Google Sheets trong hệ thống" 
-        : (cloudResult?.error || "Mạng 4G/Wifi bị gián đoạn hoặc chưa phản hồi");
-      alert(`⚠️ ĐÃ LƯU BẢN GHI TRÊN ĐIỆN THOẠI!\n\nTuy nhiên chưa gửi được sang Google Sheets do: ${reason}\n\nDữ liệu và ảnh đã được bảo toàn trong bộ nhớ máy của bạn.`);
-    }
-
-    this.showAuditSuccessModal(auditData);
-
+    // Cập nhật giao diện & KPI Dashboard tức thì (< 0.1 giây)
     if (typeof CJDashboard !== "undefined") {
       CJDashboard.refresh();
     }
     this.renderStoreList();
+
+    // Hiển thị ngay màn hình biên lai thành công (Không chờ mạng, không đóng băng ứng dụng)
+    this.showAuditSuccessModal(auditData);
+
+    // Đồng bộ ngầm (Background Sync) lên Google Sheets & Google Drive
+    if (typeof CJCloudSync !== "undefined") {
+      const syncPayload = {
+        timestamp: new Date().toISOString(),
+        userCode: user?.username || "",
+        userName: user?.name || "",
+        region: user?.area || user?.region || "",
+        customerCode: this.currentStore.storeCode || this.currentStore.id || "",
+        customerName: this.currentStore.originalStoreName || this.currentStore.name || "",
+        address: this.currentStore.address || "",
+        phone: this.currentStore.phone || "",
+        freezerBarcode: barcode,
+        freezerModel: modelTu,
+        freezerQuantity: quantity,
+        workingCondition: condition,
+        conditionNote: notes,
+        latitude: this.currentStore.lat || "",
+        longitude: this.currentStore.lng || "",
+        distanceMeters: this.currentStore.distance || "",
+        photo: this.currentPhotos.posm || "",
+        photoPosm: this.currentPhotos.posm || "",
+        photoOverview: this.currentPhotos.overview || ""
+      };
+
+      CJCloudSync.sendAuditToGoogleSheet(syncPayload).then((cloudResult) => {
+        const syncStatusEl = document.getElementById("modalResultSyncStatus");
+        if (syncStatusEl) {
+          if (cloudResult && cloudResult.success) {
+            syncStatusEl.className = "flex items-center justify-center gap-2 text-xs font-semibold text-emerald-700 bg-emerald-50 py-2 px-3 rounded-xl border border-emerald-200";
+            syncStatusEl.innerHTML = `<span>✅ Đã đồng bộ Google Sheets & Drive thành công!</span>`;
+          } else {
+            syncStatusEl.className = "flex items-center justify-center gap-2 text-xs font-semibold text-amber-700 bg-amber-50 py-2 px-3 rounded-xl border border-amber-200";
+            syncStatusEl.innerHTML = `<span>💾 Đã lưu an toàn trên máy (tự động gửi lại khi có mạng)</span>`;
+          }
+        }
+      }).catch((errSync) => {
+        console.warn("Cloud sync error:", errSync);
+        const syncStatusEl = document.getElementById("modalResultSyncStatus");
+        if (syncStatusEl) {
+          syncStatusEl.className = "flex items-center justify-center gap-2 text-xs font-semibold text-amber-700 bg-amber-50 py-2 px-3 rounded-xl border border-amber-200";
+          syncStatusEl.innerHTML = `<span>💾 Đã lưu an toàn trên máy (tự động gửi lại khi có mạng)</span>`;
+        }
+      });
+    }
   },
 
   // ================= MODAL THU HỒI POSM =================
@@ -1567,6 +1571,18 @@ const CJAudit = {
     setTxt("modalResultStore", audit.storeName);
     setTxt("modalResultBarcode", audit.barcode || "TDO2603_0025");
     setTxt("modalResultQty", audit.posmQuantity || 1);
+
+    const syncStatusEl = document.getElementById("modalResultSyncStatus");
+    if (syncStatusEl) {
+      syncStatusEl.className = "flex items-center justify-center gap-2 text-xs font-semibold text-blue-700 bg-blue-50 py-2 px-3 rounded-xl border border-blue-200";
+      syncStatusEl.innerHTML = `
+        <svg class="animate-spin h-3.5 w-3.5 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        <span>Đang đồng bộ dữ liệu & ảnh ngầm lên Google Sheets...</span>
+      `;
+    }
 
     const condEl = document.getElementById("modalResultCondition");
     if (condEl) {
