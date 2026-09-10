@@ -1183,6 +1183,134 @@ const CJAudit = {
     }
   },
 
+  currentCameraPhotoType: "posm",
+  currentCameraStream: null,
+  currentFacingMode: "environment",
+
+  triggerCapture(photoType = "posm") {
+    // If photo already exists, don't reopen camera unless removed
+    if (this.currentPhotos[photoType]) return;
+
+    // Check WebRTC MediaDevices support
+    if (navigator.mediaDevices && typeof navigator.mediaDevices.getUserMedia === "function") {
+      this.openLiveCamera(photoType);
+    } else {
+      // Direct file input fallback
+      const input = document.getElementById(`photo_input_${photoType}`);
+      if (input) input.click();
+    }
+  },
+
+  async openLiveCamera(photoType = "posm") {
+    this.currentCameraPhotoType = photoType;
+    const modal = document.getElementById("liveCameraModal");
+    const title = document.getElementById("liveCameraTitle");
+    const helper = document.getElementById("liveCameraHelper");
+
+    const titles = {
+      posm: "📸 Chụp hình 1: Tủ đông & Barcode",
+      overview: "📸 Chụp hình 2: Tổng quan cửa hàng",
+      recall: "📸 Chụp hình: Hiện trạng tủ thu hồi"
+    };
+    const helpers = {
+      posm: "tủ đông, tem barcode & sản phẩm Bibigo",
+      overview: "toàn cảnh mặt tiền & biển hiệu cửa hàng",
+      recall: "hiện trạng trầy xước/móp méo và bàn giao"
+    };
+
+    if (title) title.textContent = titles[photoType] || "Chụp ảnh kiểm tra thực địa";
+    if (helper) helper.textContent = helpers[photoType] || "thiết bị điểm bán";
+
+    if (modal) {
+      modal.classList.remove("hidden");
+      modal.style.display = "flex";
+    }
+
+    await this.startCameraStream();
+  },
+
+  async startCameraStream() {
+    const video = document.getElementById("liveCameraVideo");
+    if (!video) return;
+
+    if (this.currentCameraStream) {
+      this.currentCameraStream.getTracks().forEach(t => t.stop());
+      this.currentCameraStream = null;
+    }
+
+    try {
+      const constraints = {
+        video: {
+          facingMode: { ideal: this.currentFacingMode },
+          width: { ideal: 1920 },
+          height: { ideal: 1080 }
+        },
+        audio: false
+      };
+
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      this.currentCameraStream = stream;
+      video.srcObject = stream;
+      await video.play();
+    } catch (err) {
+      console.warn("Lỗi mở camera WebRTC:", err);
+      this.closeLiveCamera();
+      this.showToast("Không thể mở máy ảnh trực tiếp (" + err.message + "). Chuyển sang máy ảnh hệ thống...", "warning");
+      const fallbackInput = document.getElementById(`photo_input_${this.currentCameraPhotoType}`);
+      if (fallbackInput) fallbackInput.click();
+    }
+  },
+
+  async switchCameraFacing() {
+    this.currentFacingMode = (this.currentFacingMode === "environment") ? "user" : "environment";
+    await this.startCameraStream();
+  },
+
+  closeLiveCamera() {
+    const modal = document.getElementById("liveCameraModal");
+    if (modal) {
+      modal.classList.add("hidden");
+      modal.style.display = "none";
+    }
+    if (this.currentCameraStream) {
+      this.currentCameraStream.getTracks().forEach(t => t.stop());
+      this.currentCameraStream = null;
+    }
+  },
+
+  async captureFromLiveCamera() {
+    const video = document.getElementById("liveCameraVideo");
+    if (!video) return;
+
+    try {
+      this.showToast("Đang xử lý ảnh & đóng dấu Watermark GPS...", "info");
+
+      const canvas = document.createElement("canvas");
+      canvas.width = video.videoWidth || 1280;
+      canvas.height = video.videoHeight || 720;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      const rawDataUrl = canvas.toDataURL("image/jpeg", 0.9);
+
+      this.closeLiveCamera();
+
+      const metadata = this.buildWatermarkMetadata(this.currentCameraPhotoType);
+      const watermarkedDataUrl = await CJWatermark.processImage(rawDataUrl, metadata);
+      this.setPhotoPreview(this.currentCameraPhotoType, watermarkedDataUrl);
+      this.showToast("Đã chụp và đóng dấu Watermark thành công!", "success");
+    } catch (err) {
+      console.error("Lỗi chụp ảnh từ live camera:", err);
+      this.showToast("Lỗi xử lý ảnh: " + err.message, "error");
+    }
+  },
+
+  handleFallbackFile(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    this.closeLiveCamera();
+    this.handlePhotoUpload(event, this.currentCameraPhotoType);
+  },
+
   async handlePhotoUpload(event, photoType) {
     const file = event.target.files[0];
     if (!file) return;
