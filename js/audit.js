@@ -615,11 +615,12 @@ const CJAudit = {
     const bannerBadge = document.getElementById("customerBannerBadge");
     const assignedBadge = document.getElementById("assignedStoreCountBadge");
 
+    const uniqueStoresCount = new Set(rawStores.map(s => s.storeCode || s.id)).size;
     if (pAll) pAll.textContent = allCount;
     if (pActive) pActive.textContent = activeCount;
     if (pInactive) pInactive.textContent = inactiveCount;
-    if (bannerBadge) bannerBadge.textContent = `GT: ${allCount} KH`;
-    if (assignedBadge) assignedBadge.textContent = `${allCount} điểm bán`;
+    if (bannerBadge) bannerBadge.textContent = `GT: ${allCount} Tủ (${uniqueStoresCount} KH)`;
+    if (assignedBadge) assignedBadge.textContent = `${allCount} tủ đông (${uniqueStoresCount} KH)`;
 
     const gsbhTitleEl = document.getElementById("currentGsbhTitle");
     if (gsbhTitleEl) {
@@ -638,6 +639,12 @@ const CJAudit = {
       stores = stores.filter(s =>
         (s.name && s.name.toLowerCase().includes(q)) ||
         (s.id && s.id.toLowerCase().includes(q)) ||
+        (s.storeCode && s.storeCode.toLowerCase().includes(q)) ||
+        (s.serialNumber && s.serialNumber.toLowerCase().includes(q)) ||
+        (s.barcode && s.barcode.toLowerCase().includes(q)) ||
+        (s.model && s.model.toLowerCase().includes(q)) ||
+        (s.modelTu && s.modelTu.toLowerCase().includes(q)) ||
+        (s.freezerModel && s.freezerModel.toLowerCase().includes(q)) ||
         (s.address && s.address.toLowerCase().includes(q)) ||
         (s.phone && s.phone.includes(q)) ||
         (s.salesRep && s.salesRep.toLowerCase().includes(q)) ||
@@ -694,7 +701,12 @@ const CJAudit = {
                 <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${store.isActive !== false ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-600'}">
                   ${store.isActive !== false ? 'Hoạt động' : 'Ngừng'}
                 </span>
-                <span class="text-[10px] text-gray-400 font-bold">${store.id}</span>
+                <span class="text-[10px] text-gray-500 font-bold">${store.storeCode || store.id}</span>
+                ${store.freezerTotal > 1 ? `
+                <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-blue-100 text-blue-900 border border-blue-200">
+                  ❄️ Tủ ${store.freezerIndex}/${store.freezerTotal}
+                </span>
+                ` : ''}
                 ${isAudited ? `
                 <span class="text-[10px] font-black px-2 py-0.5 rounded-full bg-emerald-600 text-white shadow-xs flex items-center gap-1 ml-auto">
                   <span>✓</span>
@@ -729,15 +741,25 @@ const CJAudit = {
             </div>
           </div>
 
-          <!-- POSM Freezer snippet: Hiển thị Barcode lấy từ Cột L (So_Serial) -->
-          <div class="bg-blue-50/50 p-2 rounded-xl border border-blue-100 flex items-center justify-between text-[11px]">
-            <div class="flex items-center gap-1.5 text-blue-950 font-medium">
-              <span>❄️ Barcode (Serial):</span>
-              <b class="font-extrabold text-blue-900">${store.serialNumber || store.barcode || (freezer && (freezer.serialNumber || freezer.barcode || freezer.assetTag)) || store.freezerId || 'Chưa có barcode'}</b>
+          <!-- POSM Freezer snippet: Hiển thị Model tủ & Barcode Serial -->
+          <div class="bg-blue-50/60 p-2.5 rounded-xl border border-blue-100 space-y-1.5 text-xs">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-1.5 text-blue-950 font-bold">
+                <span class="text-sm">❄️</span>
+                <span>Loại tủ:</span>
+                <b class="font-extrabold text-blue-900">${store.model || store.modelTu || (freezer && freezer.model) || 'Tủ đông tiêu chuẩn'}</b>
+              </div>
+              <span class="font-bold px-2 py-0.5 rounded border text-[10px] ${statusColor}">
+                ${statusText}
+              </span>
             </div>
-            <span class="font-bold px-2 py-0.5 rounded border text-[10px] ${statusColor}">
-              ${statusText}
-            </span>
+            <div class="flex flex-wrap items-center justify-between gap-1 text-[11px] text-gray-700 pt-0.5 border-t border-blue-100/60">
+              <div class="flex items-center gap-1">
+                <span>🏷️ Barcode (Serial):</span>
+                <b class="font-mono text-gray-900 bg-white px-1.5 py-0.5 rounded border border-blue-200 font-extrabold">${store.serialNumber || store.barcode || (freezer && (freezer.serialNumber || freezer.barcode || freezer.assetTag)) || store.freezerId || 'Chưa có barcode'}</b>
+              </div>
+              ${store.capacity ? `<span class="text-gray-500 font-medium">Dung tích: <b class="text-gray-700">${store.capacity}</b></span>` : ''}
+            </div>
           </div>
 
           <!-- DÒNG THỂ HIỆN RÕ RÀNG TRẠNG THÁI ĐÃ KIỂM TRA (YÊU CẦU NGƯỜI DÙNG) -->
@@ -1003,7 +1025,7 @@ const CJAudit = {
       };
 
       setTxt("selectedStoreName", store.name);
-      setTxt("selectedStoreCode", store.id);
+      setTxt("selectedStoreCode", store.storeCode || store.id);
       setTxt("selectedStoreSalesRep", `NV: ${store.salesRep || 'NVBH'}`);
 
       const gmapsBtn = document.getElementById("formGmapsDirectLink");
@@ -1016,34 +1038,42 @@ const CJAudit = {
         ? CJStorage.getFreezersForStore(store.id) 
         : [];
 
+      const targetSerial = store.serialNumber || store.barcode || store.freezerId || "TDO03097";
+      const targetModel = store.modelTu || store.model || store.freezerModel || "Tủ đông SANAKY 330L";
+
       const barcodeSelect = document.getElementById("auditBarcodeSelect");
       const freezerModelInput = document.getElementById("auditFreezerModel");
 
       if (barcodeSelect) {
         barcodeSelect.innerHTML = "";
         if (storeFreezers.length > 0) {
+          let hasSelected = false;
           storeFreezers.forEach((fz, idx) => {
             const serial = fz.serialNumber || fz.barcode || fz.assetTag || fz.id;
             const model = fz.modelTu || fz.model || fz.freezerModel || "Tủ đông SANAKY 330L";
+            const isMatch = (serial === targetSerial);
+            if (isMatch) hasSelected = true;
             const label = storeFreezers.length > 1 
-              ? `${serial} • ${model} (Tủ ${idx + 1}/${storeFreezers.length})` 
-              : serial;
-            const opt = new Option(label, serial, idx === 0, idx === 0);
+              ? `${serial} • ${model} (Tủ ${fz.freezerIndex || idx + 1}/${fz.freezerTotal || storeFreezers.length})` 
+              : `${serial} • ${model}`;
+            const opt = new Option(label, serial, isMatch, isMatch);
             opt.dataset.model = model;
             barcodeSelect.add(opt);
           });
 
-          // Set Model tủ theo tủ đầu tiên
+          if (!hasSelected && barcodeSelect.options.length > 0) {
+            barcodeSelect.options[0].selected = true;
+          }
+
           if (freezerModelInput) {
-            freezerModelInput.value = storeFreezers[0].modelTu || storeFreezers[0].model || "Tủ đông SANAKY 330L";
+            freezerModelInput.value = targetModel || (storeFreezers[0].modelTu || storeFreezers[0].model || "Tủ đông SANAKY 330L");
           }
         } else {
-          const targetSerial = store.serialNumber || store.barcode || "TDO03097";
-          const opt = new Option(targetSerial, targetSerial, true, true);
-          opt.dataset.model = store.modelTu || "Tủ đông SANAKY 330L";
+          const opt = new Option(`${targetSerial} • ${targetModel}`, targetSerial, true, true);
+          opt.dataset.model = targetModel;
           barcodeSelect.add(opt);
           if (freezerModelInput) {
-            freezerModelInput.value = store.modelTu || "Tủ đông SANAKY 330L";
+            freezerModelInput.value = targetModel;
           }
         }
 
@@ -1055,10 +1085,10 @@ const CJAudit = {
         };
       }
 
-      // Số lượng POSM: mặc định bằng số tủ thực tế của điểm bán
+      // Số lượng POSM: mặc định bằng 1 (kiểm tra cho tủ hiện tại)
       const qtyInput = document.getElementById("auditPosmQuantity");
       if (qtyInput) {
-        qtyInput.value = storeFreezers.length > 0 ? storeFreezers.length : (store.posmQuantity || 1);
+        qtyInput.value = 1;
       }
 
       const condSelect = document.getElementById("auditPosmCondition");
@@ -1260,7 +1290,7 @@ const CJAudit = {
    * 5. Đề nghị
    * 6. Hình ảnh POSM (Bắt buộc khi có sự cố/lý do khác)
    */
-  submitAudit() {
+  async submitAudit() {
     if (!this.currentStore) {
       alert("Vui lòng chọn điểm bán trước khi lưu!");
       return;
@@ -1386,43 +1416,50 @@ const CJAudit = {
       console.warn("Audit save error:", errAudit);
     }
 
-    // Hiển thị thông báo xác nhận ngay lập tức cho người dùng
-    alert(`✅ ĐÃ LƯU KẾT QUẢ KIỂM TRA THÀNH CÔNG!\n\n🏪 Điểm bán: ${this.currentStore.name}\n❄️ Trạng thái tủ: ${condition}\n🔢 Mã barcode/Serial: ${barcode}\n\nĐang đồng bộ dữ liệu & hình ảnh lên Google Sheets & Drive...`);
-
-    this.showAuditSuccessModal(auditData);
+    // Hiển thị toast bắt đầu đồng bộ
+    this.showToast("⏳ Đang lưu & tải 2 hình ảnh lên Google Sheets & Drive...", "info");
 
     // Tự động đồng bộ lên Google Sheets & Google Drive (Gửi đủ 2 hình: Tủ đông & Tổng quan)
+    let cloudResult = { success: false };
     if (typeof CJCloudSync !== "undefined") {
-      CJCloudSync.sendAuditToGoogleSheet({
-        timestamp: new Date().toISOString(),
-        userCode: user?.username || "",
-        userName: user?.name || "",
-        region: user?.region || user?.area || "",
-        customerCode: this.currentStore.id || "",
-        customerName: this.currentStore.name || "",
-        address: this.currentStore.address || "",
-        phone: this.currentStore.phone || "",
-        freezerBarcode: barcode,
-        freezerModel: modelTu,
-        freezerQuantity: quantity,
-        workingCondition: condition,
-        conditionNote: notes,
-        latitude: this.currentStore.lat || "",
-        longitude: this.currentStore.lng || "",
-        distanceMeters: this.currentStore.distance || "",
-        photo: this.currentPhotos.posm || "",
-        photoPosm: this.currentPhotos.posm || "",
-        photoOverview: this.currentPhotos.overview || ""
-      }).then(res => {
-        if (res && res.success) {
-          this.showToast("✅ Đã đồng bộ lên Google Sheets & Drive thành công!", "success");
-        } else if (res && res.reason === "no_url") {
-          alert("⚠️ CHÚ Ý: Kết quả kiểm tra đã lưu trên điện thoại thành công, nhưng CHƯA ĐƯỢC GỬI sang Google Sheets vì hệ thống chưa có URL Google Apps Script Web App!\n\n👉 Vui lòng gửi link Web App cho Admin cấu hình vào hệ thống.");
-        }
-      }).catch(errSync => {
-        console.warn("Cloud sync warning:", errSync);
-      });
+      try {
+        cloudResult = await CJCloudSync.sendAuditToGoogleSheet({
+          timestamp: new Date().toISOString(),
+          userCode: user?.username || "",
+          userName: user?.name || "",
+          region: user?.area || user?.region || "",
+          customerCode: this.currentStore.storeCode || this.currentStore.id || "",
+          customerName: this.currentStore.originalStoreName || this.currentStore.name || "",
+          address: this.currentStore.address || "",
+          phone: this.currentStore.phone || "",
+          freezerBarcode: barcode,
+          freezerModel: modelTu,
+          freezerQuantity: quantity,
+          workingCondition: condition,
+          conditionNote: notes,
+          latitude: this.currentStore.lat || "",
+          longitude: this.currentStore.lng || "",
+          distanceMeters: this.currentStore.distance || "",
+          photo: this.currentPhotos.posm || "",
+          photoPosm: this.currentPhotos.posm || "",
+          photoOverview: this.currentPhotos.overview || ""
+        });
+      } catch (errSync) {
+        console.warn("Cloud sync error:", errSync);
+        cloudResult = { success: false, error: errSync.message || errSync.toString() };
+      }
     }
+
+    if (cloudResult && cloudResult.success) {
+      alert(`🎉 ĐÃ ĐỒNG BỘ THÀNH CÔNG VỀ GOOGLE SHEETS!\n\n🏪 Điểm bán: ${this.currentStore.name}\n❄️ Trạng thái: ${condition}\n🔢 Barcode: ${barcode}\n\n✅ Đã lưu đầy đủ 2 ảnh vào Google Drive và ghi vào bảng tính Google Sheets!`);
+    } else {
+      const reason = cloudResult?.reason === "no_url" 
+        ? "Chưa có URL Web App Google Sheets trong hệ thống" 
+        : (cloudResult?.error || "Mạng 4G/Wifi bị gián đoạn hoặc chưa phản hồi");
+      alert(`⚠️ ĐÃ LƯU BẢN GHI TRÊN ĐIỆN THOẠI!\n\nTuy nhiên chưa gửi được sang Google Sheets do: ${reason}\n\nDữ liệu và ảnh đã được bảo toàn trong bộ nhớ máy của bạn.`);
+    }
+
+    this.showAuditSuccessModal(auditData);
 
     if (typeof CJDashboard !== "undefined") {
       CJDashboard.refresh();

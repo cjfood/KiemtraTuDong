@@ -14,15 +14,19 @@ const CJStorage = {
   },
 
   init() {
-    const DATA_VERSION = "2026.09.09_ALL_47_USERS_V7";
+    const DATA_VERSION = "2026.09.10_USER_NORMALIZED_V3";
     const currentVer = localStorage.getItem("cj_market_audit_data_ver");
+    const dataTimestamp = (typeof CJ_DATA_TIMESTAMP !== "undefined") ? CJ_DATA_TIMESTAMP : "";
+    const lastSyncTs = localStorage.getItem("cj_market_audit_sync_timestamp");
     
-    // Auto-migrate to official master data if version changed or if stores/users are empty
+    // Auto-migrate to official master data if version changed, sync timestamp changed, or if stores/users are empty
     const existingStores = localStorage.getItem(this.KEYS.STORES);
     const existingUsers = localStorage.getItem(this.KEYS.USERS);
     let needInit = false;
 
-    if (currentVer !== DATA_VERSION) {
+    if (dataTimestamp && lastSyncTs !== dataTimestamp) {
+      needInit = true;
+    } else if (currentVer !== DATA_VERSION) {
       needInit = true;
     } else if (!existingStores || existingStores === "[]" || !existingUsers) {
       needInit = true;
@@ -42,6 +46,9 @@ const CJStorage = {
         localStorage.setItem(this.KEYS.TICKETS, JSON.stringify([]));
       }
       localStorage.setItem("cj_market_audit_data_ver", DATA_VERSION);
+      if (dataTimestamp) {
+        localStorage.setItem("cj_market_audit_sync_timestamp", dataTimestamp);
+      }
     } else {
       if (!localStorage.getItem(this.KEYS.USERS)) {
         localStorage.setItem(this.KEYS.USERS, JSON.stringify(GSBH_ACCOUNTS));
@@ -175,6 +182,124 @@ const CJStorage = {
     const filtered = current.filter(u => u.username.toLowerCase() !== username.toLowerCase());
     this.saveUsers(filtered);
     return { success: true, message: `Đã xóa tài khoản "${username}" thành công!` };
+  },
+
+  updateUser(originalUsername, updatedData) {
+    if (!originalUsername) {
+      return { success: false, message: "Không xác định được tài khoản cần sửa!" };
+    }
+    const current = this.getUsers();
+    const index = current.findIndex(u => u.username.toLowerCase() === originalUsername.toLowerCase());
+    if (index === -1) {
+      return { success: false, message: `Không tìm thấy tài khoản "${originalUsername}"!` };
+    }
+
+    const target = current[index];
+    const newUsername = (updatedData.username || originalUsername).trim();
+
+    // Check duplicate username if changed
+    if (newUsername.toLowerCase() !== originalUsername.toLowerCase()) {
+      if (current.some(u => u.username.toLowerCase() === newUsername.toLowerCase())) {
+        return { success: false, message: `Tên tài khoản "${newUsername}" đã được sử dụng bởi người khác!` };
+      }
+    }
+
+    // Role mapping
+    const rawRole = (updatedData.role || target.role || "gsbh_gt").toLowerCase();
+    let role = rawRole;
+    let roleTitle = updatedData.roleTitle || target.roleTitle;
+    let avatar = updatedData.avatar || target.avatar;
+
+    if (role === "admin") {
+      roleTitle = "Quản Trị Viên (Admin RTM)";
+      avatar = "👑";
+    } else if (role === "sales_rep" || role === "nvbh") {
+      role = "sales_rep";
+      roleTitle = `NVBH Kênh ${updatedData.channel || target.channel || "GT"}`;
+      avatar = "👤";
+    } else if (role === "asm") {
+      role = "asm";
+      roleTitle = `Quản Lý Vùng (${updatedData.channel || target.channel || "GT"})`;
+      avatar = "👔";
+    } else {
+      role = "gsbh_gt";
+      roleTitle = `GSBH Kênh ${updatedData.channel || target.channel || "GT"}`;
+      avatar = "👮‍♂️";
+    }
+
+    const updatedUser = {
+      ...target,
+      username: newUsername,
+      empCode: updatedData.empCode !== undefined ? updatedData.empCode.trim() : target.empCode,
+      name: updatedData.name !== undefined ? updatedData.name.trim() : target.name,
+      password: updatedData.password !== undefined && updatedData.password.trim() ? updatedData.password.trim() : target.password,
+      role: role,
+      roleTitle: roleTitle,
+      channel: (updatedData.channel || target.channel || "GT").toUpperCase(),
+      area: updatedData.area !== undefined ? updatedData.area.trim() : target.area,
+      phone: updatedData.phone !== undefined ? updatedData.phone.trim() : target.phone,
+      email: updatedData.email !== undefined ? updatedData.email.trim() : target.email,
+      manager: updatedData.manager !== undefined ? updatedData.manager.trim() : target.manager,
+      route: updatedData.route !== undefined ? updatedData.route.trim() : target.route,
+      avatar: avatar
+    };
+
+    current[index] = updatedUser;
+
+    // If username changed, update custom password store and stores assigned to this user
+    if (newUsername.toLowerCase() !== originalUsername.toLowerCase()) {
+      const customPasswords = (typeof CJAuth !== "undefined" && CJAuth.getCustomPasswords) ? CJAuth.getCustomPasswords() : {};
+      if (customPasswords[originalUsername]) {
+        customPasswords[newUsername] = customPasswords[originalUsername];
+        delete customPasswords[originalUsername];
+        localStorage.setItem(CJAuth.KEY_CUSTOM_PASSWORDS, JSON.stringify(customPasswords));
+      }
+
+      const allStores = this.getAllStores();
+      let storesUpdated = false;
+      allStores.forEach(s => {
+        if (s.assignedGsbh && s.assignedGsbh.toLowerCase() === originalUsername.toLowerCase()) {
+          s.assignedGsbh = newUsername;
+          storesUpdated = true;
+        }
+        if (s.salesRepUsername && s.salesRepUsername.toLowerCase() === originalUsername.toLowerCase()) {
+          s.salesRepUsername = newUsername;
+          storesUpdated = true;
+        }
+      });
+      if (storesUpdated) {
+        this.saveStores(allStores);
+      }
+    }
+
+    // If password was updated, update custom passwords store as well
+    if (updatedData.password && updatedData.password.trim()) {
+      if (typeof CJAuth !== "undefined" && CJAuth.KEY_CUSTOM_PASSWORDS) {
+        const customPasswords = CJAuth.getCustomPasswords();
+        customPasswords[newUsername] = updatedData.password.trim();
+        localStorage.setItem(CJAuth.KEY_CUSTOM_PASSWORDS, JSON.stringify(customPasswords));
+      }
+    }
+
+    this.saveUsers(current);
+
+    // If the currently logged in user is this user, update session
+    if (typeof CJAuth !== "undefined") {
+      const activeUser = CJAuth.getCurrentUser();
+      if (activeUser && activeUser.username.toLowerCase() === originalUsername.toLowerCase()) {
+        const mergedSession = { ...activeUser, ...updatedUser };
+        try {
+          if (sessionStorage.getItem(CJAuth.KEY_SESSION)) {
+            sessionStorage.setItem(CJAuth.KEY_SESSION, JSON.stringify(mergedSession));
+          }
+          if (localStorage.getItem(CJAuth.KEY_SESSION)) {
+            localStorage.setItem(CJAuth.KEY_SESSION, JSON.stringify(mergedSession));
+          }
+        } catch (_) {}
+      }
+    }
+
+    return { success: true, message: `Đã cập nhật thông tin user "${updatedUser.name}" thành công!`, user: updatedUser };
   },
 
   importBulkUsers(rows) {
@@ -335,7 +460,21 @@ const CJStorage = {
   },
 
   /**
+   * Helper: Normalize user codes to match variants with/without leading zero or letter O (e.g. 5319 <-> 05319)
+   */
+  normalizeUserCode(code) {
+    if (!code) return "";
+    let s = String(code).trim().toLowerCase();
+    if (s.startsWith("o") && /^\d+$/.test(s.slice(1))) {
+      s = "0" + s.slice(1);
+    }
+    const stripped = s.replace(/^0+/, "");
+    return stripped || s;
+  },
+
+  /**
    * Universal Store lookup supporting user object or username string (Admin / GSBH / SR)
+   * With robust leading zero normalization (e.g. 05319 <-> 5319)
    */
   getStoresForUser(userOrUsername) {
     const all = this.getAllStores();
@@ -345,17 +484,37 @@ const CJStorage = {
     if (!username || username === "ALL" || username.toLowerCase() === "admin") return all;
 
     const lower = username.toLowerCase();
-    return all.filter(s => 
-      (s.gsbhUsername && s.gsbhUsername.toLowerCase() === lower) ||
-      (s.assignedUser && s.assignedUser.toLowerCase() === lower) ||
-      (s.salesRepCode && s.salesRepCode.toLowerCase() === lower) ||
-      (s.salesRep && s.salesRep.toLowerCase() === lower)
-    );
+    const normUser = this.normalizeUserCode(username);
+
+    return all.filter(s => {
+      const gsbh = s.gsbhUsername ? s.gsbhUsername.toLowerCase() : "";
+      const assigned = s.assignedUser ? s.assignedUser.toLowerCase() : "";
+      const repCode = s.salesRepCode ? s.salesRepCode.toLowerCase() : "";
+      const repName = s.salesRep ? s.salesRep.toLowerCase() : "";
+
+      // 1. Direct match
+      if (gsbh === lower || assigned === lower || repCode === lower || repName === lower) {
+        return true;
+      }
+
+      // 2. Normalized match (handles 05319 vs 5319, O1093 vs 01093)
+      if (normUser) {
+        if (gsbh && this.normalizeUserCode(gsbh) === normUser) return true;
+        if (assigned && this.normalizeUserCode(assigned) === normUser) return true;
+        if (repCode && this.normalizeUserCode(repCode) === normUser) return true;
+      }
+
+      return false;
+    });
   },
 
   getStoreById(id) {
+    if (!id) return null;
     const stores = this.getAllStores();
-    return stores.find(s => s.id === id) || null;
+    return stores.find(s => s.id === id) || 
+           stores.find(s => s.storeCode === id) || 
+           stores.find(s => s.freezerId === id || s.serialNumber === id || s.barcode === id) || 
+           null;
   },
 
   addStore(store) {
@@ -391,14 +550,16 @@ const CJStorage = {
   },
 
   getFreezerById(id) {
+    if (!id) return null;
     const freezers = this.getFreezers();
-    return freezers.find(f => f.id === id) || null;
+    return freezers.find(f => f.id === id || f.serialNumber === id || f.barcode === id) || null;
   },
 
   getFreezersForStore(storeId) {
     if (!storeId) return [];
     const freezers = this.getFreezers();
-    return freezers.filter(f => f.assignedStoreId === storeId);
+    const baseId = storeId.includes("#") ? storeId.split("#")[0] : storeId;
+    return freezers.filter(f => f.assignedStoreId === storeId || f.storeCode === storeId || f.assignedStoreId === baseId);
   },
 
   getFreezersForCurrentGSBH(selectedSales = "ALL") {
@@ -653,6 +814,14 @@ const CJStorage = {
       return "";
     };
 
+    // First pass: count total freezers per store ID to identify multi-freezer outlets
+    const storeCounts = {};
+    rows.forEach((row, idx) => {
+      const sId = getVal(row, ["Ma_KH", "Mã KH", "Mã Khách Hàng", "MaKH", "Mã Điểm Bán", "ID"], 2) || `STR-IMP-${100 + idx}`;
+      storeCounts[sId] = (storeCounts[sId] || 0) + 1;
+    });
+    const storeTracker = {};
+
     rows.forEach((row, idx) => {
       // Extract fields with multiple possible column headers
       const storeId = getVal(row, ["Ma_KH", "Mã KH", "Mã Khách Hàng", "MaKH", "Mã Điểm Bán", "ID"], 2) || `STR-IMP-${100 + idx}`;
@@ -662,6 +831,13 @@ const CJStorage = {
       const address = getVal(row, ["Dia_Chi", "Địa Chỉ", "DiaChi", "Address"], 4) || "TP. Hồ Chí Minh";
       const owner = getVal(row, ["Chu_Cua_Hang", "Chủ Cửa Hàng", "ChuTiem", "Chủ Tiệm", "Owner"]) || "Chủ cửa hàng";
       const phone = getVal(row, ["So_Dien_Thoai", "Số Điện Thoại", "SDT", "Phone", "Điện Thoại", "SoDienThoai", "SĐT"], 5) || "";
+
+      // Multi-freezer store index tracking
+      const totalFz = storeCounts[storeId] || 1;
+      storeTracker[storeId] = (storeTracker[storeId] || 0) + 1;
+      const fzIdx = storeTracker[storeId];
+      const uniqueStoreId = totalFz > 1 ? `${storeId}#${fzIdx}` : storeId;
+      const displayStoreName = totalFz > 1 ? `${storeName} (Tủ ${fzIdx}/${totalFz})` : storeName;
 
       // GSBH & Sales Rep Mapping (Apply targetUserOverride if specified by Admin)
       let gsbhUsername = "";
@@ -689,15 +865,25 @@ const CJStorage = {
       } else {
         // GSBH auto mapping from file (supports "User", "Ten_user" from user's 14-column template)
         const rawUser = (getVal(row, ["User", "user", "Tai_Khoan_GSBH", "Tài Khoản GSBH", "GSBH_Username", "GSBH", "GSBH Phụ Trách"], 0) || "admin").toLowerCase();
+        const normRaw = this.normalizeUserCode(rawUser);
         
-        let gsbhObj = allUsers.find(g => g.username.toLowerCase() === rawUser);
+        let gsbhObj = allUsers.find(g => 
+          g.username.toLowerCase() === rawUser || 
+          (normRaw && this.normalizeUserCode(g.username) === normRaw) ||
+          (g.empCode && this.normalizeUserCode(g.empCode) === normRaw)
+        );
         let matchedRep = null;
 
         // If rawUser is a Sales Rep instead of GSBH
         if (!gsbhObj) {
           for (const g of allUsers) {
             if (g.teamSalesReps) {
-              const r = g.teamSalesReps.find(rep => rep.username.toLowerCase() === rawUser || rep.code.toLowerCase() === rawUser);
+              const r = g.teamSalesReps.find(rep => 
+                rep.username.toLowerCase() === rawUser || 
+                rep.code.toLowerCase() === rawUser ||
+                (normRaw && this.normalizeUserCode(rep.username) === normRaw) ||
+                (normRaw && this.normalizeUserCode(rep.code) === normRaw)
+              );
               if (r) {
                 gsbhObj = g;
                 matchedRep = r;
@@ -760,7 +946,7 @@ const CJStorage = {
 
       // Upsert freezer: Barcode và Serial Number lấy 100% từ Cột L (So_Serial), Tên tủ lấy từ Cột J (Model_Tu)
       const freezerId = serial || `FZ-CJ-${100 + idx}`;
-      const existingFzIdx = freezers.findIndex(f => f.id === freezerId || f.serialNumber === serial || f.barcode === serial);
+      const existingFzIdx = freezers.findIndex(f => f.id === freezerId && f.assignedStoreId === uniqueStoreId);
       const freezerData = {
         id: freezerId,
         assetTag: serial,
@@ -772,8 +958,11 @@ const CJStorage = {
         modelTu: model,
         freezerModel: model,
         capacity: capacity,
-        assignedStoreId: storeId,
-        assignedStoreName: storeName,
+        assignedStoreId: uniqueStoreId,
+        storeCode: storeId,
+        assignedStoreName: displayStoreName,
+        freezerIndex: fzIdx,
+        freezerTotal: totalFz,
         status: "good",
         lastTemperature: -18
       };
@@ -783,11 +972,16 @@ const CJStorage = {
         freezers.push(freezerData);
       }
 
-      // Upsert store: gán trực tiếp serialNumber và barcode từ Cột L (So_Serial), tên tủ từ Cột J (Model_Tu)
-      const existingStoreIdx = stores.findIndex(s => s.id === storeId);
+      // Upsert store: 1 dòng cho mỗi tủ đông
+      const existingStoreIdx = stores.findIndex(s => s.id === uniqueStoreId);
       const storeData = {
-        id: storeId,
-        name: storeName,
+        id: uniqueStoreId,
+        storeCode: storeId,
+        customerCode: storeId,
+        name: displayStoreName,
+        originalStoreName: storeName,
+        freezerIndex: fzIdx,
+        freezerTotal: totalFz,
         channel: channel,
         route: route,
         address: address,
@@ -808,6 +1002,7 @@ const CJStorage = {
         model: model,
         modelTu: model,
         freezerModel: model,
+        capacity: capacity,
         status: "good",
         lastAuditDate: "Chưa kiểm tra",
         lastTemp: -18,

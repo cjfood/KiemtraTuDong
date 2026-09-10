@@ -38,13 +38,25 @@ const CJAuth = {
       return { success: false, message: "Mật khẩu mới phải có ít nhất 3 ký tự!" };
     }
 
+    let normInput = cleanUser;
+    if (normInput.startsWith("o") && /^\d+$/.test(normInput.slice(1))) {
+      normInput = "0" + normInput.slice(1);
+    }
+    const strippedInput = normInput.replace(/^0+/, "");
+
     const allUsers = this.getUsersList();
-    const matched = allUsers.find(u => 
-      u.username.toLowerCase() === cleanUser || 
-      (u.empCode && u.empCode.toLowerCase() === cleanUser) ||
-      u.name.toLowerCase() === cleanUser ||
-      u.name.toLowerCase().includes(cleanUser)
-    );
+    const matched = allUsers.find(u => {
+      const uName = u.username.toLowerCase();
+      const uEmp = (u.empCode || "").toLowerCase();
+      const normU = (uName.startsWith("o") && /^\d+$/.test(uName.slice(1))) ? ("0" + uName.slice(1)).replace(/^0+/, "") : uName.replace(/^0+/, "");
+      const normE = (uEmp.startsWith("o") && /^\d+$/.test(uEmp.slice(1))) ? ("0" + uEmp.slice(1)).replace(/^0+/, "") : uEmp.replace(/^0+/, "");
+
+      return uName === cleanUser || 
+             uEmp === cleanUser ||
+             (strippedInput && (normU === strippedInput || normE === strippedInput)) ||
+             u.name.toLowerCase() === cleanUser ||
+             u.name.toLowerCase().includes(cleanUser);
+    });
 
     if (!matched) {
       return { success: false, message: `Không tìm thấy tài khoản "${usernameOrEmpCode}" trong hệ thống!` };
@@ -204,13 +216,25 @@ const CJAuth = {
     const cleanUser = (username || "").trim().toLowerCase();
     const cleanPass = (password || "").trim();
 
+    let normInput = cleanUser;
+    if (normInput.startsWith("o") && /^\d+$/.test(normInput.slice(1))) {
+      normInput = "0" + normInput.slice(1);
+    }
+    const strippedInput = normInput.replace(/^0+/, "");
+
     const allUsers = this.getUsersList();
-    const matched = allUsers.find(u => 
-      u.username.toLowerCase() === cleanUser || 
-      (u.empCode && u.empCode.toLowerCase() === cleanUser) ||
-      u.name.toLowerCase() === cleanUser ||
-      u.name.toLowerCase().includes(cleanUser)
-    );
+    const matched = allUsers.find(u => {
+      const uName = u.username.toLowerCase();
+      const uEmp = (u.empCode || "").toLowerCase();
+      const normU = (uName.startsWith("o") && /^\d+$/.test(uName.slice(1))) ? ("0" + uName.slice(1)).replace(/^0+/, "") : uName.replace(/^0+/, "");
+      const normE = (uEmp.startsWith("o") && /^\d+$/.test(uEmp.slice(1))) ? ("0" + uEmp.slice(1)).replace(/^0+/, "") : uEmp.replace(/^0+/, "");
+
+      return uName === cleanUser || 
+             uEmp === cleanUser ||
+             (strippedInput && (normU === strippedInput || normE === strippedInput)) ||
+             u.name.toLowerCase() === cleanUser ||
+             u.name.toLowerCase().includes(cleanUser);
+    });
 
     if (!matched) {
       return { success: false, message: "Sai tên đăng nhập hoặc mã NV! Vui lòng thử lại (vd: admin, CJ9999999...)" };

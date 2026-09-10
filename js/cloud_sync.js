@@ -128,15 +128,20 @@ const CJCloudSync = (function () {
         }
 
         try {
-            // Google Apps Script nhận POST qua text/plain để tránh CORS preflight phức tạp
+            // Google Apps Script nhận POST qua text/plain chuẩn (không thêm charset để không vi phạm CORS safelist trên mobile)
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 45000); // 45 giây cho 2 ảnh tải qua mạng 4G
+
             const response = await fetch(scriptUrl, {
                 method: 'POST',
-                mode: 'no-cors', // Rất quan trọng với Apps Script Web App để không bị block CORS trên mobile
+                mode: 'no-cors',
                 headers: {
-                    'Content-Type': 'text/plain;charset=utf-8'
+                    'Content-Type': 'text/plain'
                 },
-                body: JSON.stringify(payload)
+                body: JSON.stringify(payload),
+                signal: controller.signal
             });
+            clearTimeout(timeoutId);
 
             console.log('[CJCloudSync] Đã gửi dữ liệu thành công đến Google Apps Script');
             if (typeof CJAudit !== 'undefined' && CJAudit.showToast) {
@@ -147,10 +152,11 @@ const CJCloudSync = (function () {
             console.error('[CJCloudSync] Lỗi khi gửi dữ liệu lên Google Sheets:', err);
             // Lưu vào hàng đợi offline để đồng bộ lại sau nếu cần
             enqueuePendingSync(payload);
+            const errStr = err.name === 'AbortError' ? 'Hết thời gian chờ (mạng yếu)' : (err.message || err.toString());
             if (typeof CJAudit !== 'undefined' && CJAudit.showToast) {
-                CJAudit.showToast('⚠️ Chưa đồng bộ được lên Google Sheets (Đã lưu máy cục bộ)', 'warning');
+                CJAudit.showToast('⚠️ Lỗi gửi Google Sheets: ' + errStr, 'warning');
             }
-            return { success: false, error: err };
+            return { success: false, error: errStr };
         }
     }
 
@@ -189,7 +195,7 @@ const CJCloudSync = (function () {
                     await fetch(scriptUrl, {
                         method: 'POST',
                         mode: 'no-cors',
-                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                        headers: { 'Content-Type': 'text/plain' },
                         body: JSON.stringify(item.data)
                     });
                 } catch (e) {
@@ -213,12 +219,22 @@ const CJCloudSync = (function () {
         });
     }
 
+    function getPendingQueueCount() {
+        try {
+            const queue = JSON.parse(localStorage.getItem(PENDING_SYNC_KEY) || '[]');
+            return Array.isArray(queue) ? queue.length : 0;
+        } catch(e) {
+            return 0;
+        }
+    }
+
     return {
         getScriptUrl: getScriptUrl,
         setScriptUrl: setScriptUrl,
         testConnection: testConnection,
         sendAuditToGoogleSheet: sendAuditToGoogleSheet,
-        syncPendingQueue: syncPendingQueue
+        syncPendingQueue: syncPendingQueue,
+        getPendingQueueCount: getPendingQueueCount
     };
 })();
 

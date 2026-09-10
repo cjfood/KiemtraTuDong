@@ -122,6 +122,103 @@ const CJExcel = {
   },
 
   /**
+   * Export complete Customers / Outlets list to Excel (.xlsx) file
+   */
+  exportStoresToExcel(targetUser = null) {
+    if (typeof XLSX === "undefined") {
+      alert("Thư viện SheetJS chưa được tải!");
+      return;
+    }
+
+    const currentUser = (typeof CJAuth !== "undefined" && CJAuth.getCurrentUser) ? CJAuth.getCurrentUser() : null;
+    let effectiveUser = targetUser;
+    if (!effectiveUser) {
+      if (typeof CJAuth !== "undefined" && CJAuth.isAdmin()) {
+        effectiveUser = (typeof CJApp !== "undefined" && CJApp.adminControlledUser) ? CJApp.adminControlledUser : "ALL";
+      } else {
+        effectiveUser = currentUser ? currentUser.username : "ALL";
+      }
+    }
+
+    // Retrieve stores for effectiveUser
+    const stores = (typeof CJStorage !== "undefined" && CJStorage.getStoresForUser) 
+      ? CJStorage.getStoresForUser(effectiveUser) 
+      : [];
+
+    if (!stores || stores.length === 0) {
+      alert("Không có dữ liệu điểm bán nào để xuất!");
+      return;
+    }
+
+    const freezers = (typeof CJStorage !== "undefined" && CJStorage.getFreezers) 
+      ? CJStorage.getFreezers() 
+      : [];
+    const freezerMap = new Map();
+    freezers.forEach(f => {
+      if (f.assignedStoreId) freezerMap.set(f.assignedStoreId, f);
+      if (f.assetTag) freezerMap.set(f.assetTag, f);
+      if (f.serialNumber) freezerMap.set(f.serialNumber, f);
+    });
+
+    const exportRows = stores.map((s, idx) => {
+      const f = freezerMap.get(s.id) || freezerMap.get(s.freezerId) || freezerMap.get(s.barcode) || {};
+      
+      const freezerCode = s.freezerId || s.barcode || f.assetTag || "";
+      const model = s.model || s.modelTu || s.freezerModel || f.model || "";
+      const capacity = s.capacity || f.capacity || "";
+      const serial = s.serialNumber || f.serialNumber || "";
+
+      return {
+        "STT": idx + 1,
+        "User": s.gsbhUsername || s.assignedGsbh || (effectiveUser !== "ALL" ? effectiveUser : "admin"),
+        "Ten_user": s.gsbhName || "",
+        "Ma_KH": s.storeCode || s.id || "",
+        "Ten_KH": s.originalStoreName || s.name || "",
+        "Dia_Chi": s.address || "",
+        "So_Dien_Thoai": s.phone || "",
+        "Kenh": s.channel || "GT",
+        "Tuyen_Ban_Hang": s.route || "",
+        "Ma_NVBH": s.salesRepCode || "",
+        "Ten_NVBH": s.salesRep || "",
+        "Ma_Tu_Dong": freezerCode,
+        "Model_Tu": model,
+        "Dung_Tich": capacity,
+        "So_Serial": serial,
+        "Vi_Do_Lat": s.lat || "",
+        "Kinh_Do_Lon": s.lng || "",
+        "Trang_Thai_Kiem_Tra": s.lastAuditDate ? "Đã kiểm tra" : "Chưa kiểm tra",
+        "Nhiet_Do_Gan_Nhat": s.lastTemp !== undefined && s.lastTemp !== null ? (s.lastTemp + "°C") : "",
+        "Ngay_Kiem_Tra_Gan_Nhat": s.lastAuditDate || ""
+      };
+    });
+
+    const wb = XLSX.utils.book_new();
+    const wsStores = XLSX.utils.json_to_sheet(exportRows);
+
+    // Auto widths
+    const keys = Object.keys(exportRows[0]);
+    wsStores["!cols"] = keys.map(k => ({ wch: Math.max(k.length + 4, 15) }));
+
+    const sheetName = effectiveUser === "ALL" ? "DS_KhachHang_ToanQuoc" : `DS_KH_${effectiveUser}`;
+    XLSX.utils.book_append_sheet(wb, wsStores, sheetName.substring(0, 31));
+
+    const now = new Date();
+    const yyyy = now.getFullYear();
+    const mm = String(now.getMonth() + 1).padStart(2, '0');
+    const dd = String(now.getDate()).padStart(2, '0');
+    const scopeLabel = effectiveUser === "ALL" ? "ToanQuoc" : effectiveUser;
+    const filename = `CJFoods_DanhSach_KhachHang_${scopeLabel}_${yyyy}${mm}${dd}.xlsx`;
+
+    XLSX.writeFile(wb, filename);
+
+    if (typeof CJAudit !== "undefined" && CJAudit.showToast) {
+      CJAudit.showToast(`✅ Đã xuất thành công ${exportRows.length} khách hàng ra file Excel: ${filename}`, "success");
+    } else {
+      alert(`✅ Đã xuất thành công ${exportRows.length} khách hàng ra file Excel!`);
+    }
+  },
+
+  /**
    * Download Excel Template for importing Stores and Freezers
    */
   downloadImportTemplate() {
@@ -386,5 +483,75 @@ const CJExcel = {
       reader.onerror = (err) => reject(err);
       reader.readAsArrayBuffer(file);
     });
+  },
+
+  /**
+   * Export complete active users list to Excel (.xlsx) file
+   */
+  exportUsersToExcel() {
+    if (typeof XLSX === "undefined") {
+      alert("Thư viện SheetJS chưa sẵn sàng!");
+      return;
+    }
+
+    const users = (typeof CJStorage !== "undefined" && CJStorage.getUsers) 
+      ? CJStorage.getUsers() 
+      : (typeof GSBH_ACCOUNTS !== "undefined" ? GSBH_ACCOUNTS : []);
+
+    if (!users || users.length === 0) {
+      alert("Không có dữ liệu người dùng để xuất!");
+      return;
+    }
+
+    const customPasswords = (typeof CJAuth !== "undefined" && CJAuth.getCustomPasswords) 
+      ? CJAuth.getCustomPasswords() 
+      : {};
+
+    const exportRows = users.map((u, idx) => {
+      const roleStr = u.role === "admin" ? "ADMIN" : (u.role === "sales_rep" ? "NVBH" : (u.role === "asm" ? "ASM" : "GSBH"));
+      const pass = customPasswords[u.username] || u.password || "123";
+      const storeCount = (typeof CJStorage !== "undefined" && CJStorage.getStoresForUser) 
+        ? CJStorage.getStoresForUser(u.username).length 
+        : 0;
+
+      return {
+        "STT": idx + 1,
+        "Tai_Khoan": u.username,
+        "Ma_NV": u.empCode || "",
+        "Ho_Va_Ten": u.name || "",
+        "Mat_Khau": pass,
+        "Vai_Tro": roleStr,
+        "Kenh": u.channel || "GT",
+        "Khu_Vuc": u.area || "",
+        "So_Dien_Thoai": u.phone || "",
+        "Email": u.email || "",
+        "Nguoi_Quan_Ly": u.manager || "",
+        "Tuyen_Ban_Hang": u.route || "",
+        "So_KH_Phan_Cong": storeCount
+      };
+    });
+
+    const wb = XLSX.utils.book_new();
+    const wsUsers = XLSX.utils.json_to_sheet(exportRows);
+
+    // Auto-fit column widths
+    const keys = Object.keys(exportRows[0]);
+    wsUsers["!cols"] = keys.map(k => ({ wch: Math.max(k.length + 4, 15) }));
+
+    XLSX.utils.book_append_sheet(wb, wsUsers, "DanhSach_User");
+
+    const now = new Date();
+    const yyyy = now.getFullYear();
+    const mm = String(now.getMonth() + 1).padStart(2, '0');
+    const dd = String(now.getDate()).padStart(2, '0');
+    const filename = `CJFoods_DanhSach_User_HeThong_${yyyy}${mm}${dd}.xlsx`;
+
+    XLSX.writeFile(wb, filename);
+
+    if (typeof CJAudit !== "undefined" && CJAudit.showToast) {
+      CJAudit.showToast(`✅ Đã xuất thành công ${exportRows.length} user ra file Excel: ${filename}`, "success");
+    } else {
+      alert(`Đã xuất thành công ${exportRows.length} user ra file Excel!`);
+    }
   }
 };

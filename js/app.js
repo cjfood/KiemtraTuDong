@@ -282,6 +282,7 @@ const CJApp = {
     // Toggle Admin-exclusive buttons & sections
     const btnAdminExport = document.getElementById("btnAdminExportModal");
     const btnAdminImport = document.getElementById("btnAdminImportModal") || document.getElementById("btnAdminImportHeader");
+    const btnAdminExportStores = document.getElementById("btnAdminExportStores");
     const profileAdminSec = document.getElementById("profileAdminSection");
     const importAdminBox = document.getElementById("importAdminAssignBox");
     const adminControlBar = document.getElementById("adminUserControlBar");
@@ -297,6 +298,7 @@ const CJApp = {
       document.body.classList.remove("is-user");
       if (btnAdminExport) btnAdminExport.classList.remove("hidden");
       if (btnAdminImport) btnAdminImport.classList.remove("hidden");
+      if (btnAdminExportStores) btnAdminExportStores.classList.remove("hidden");
       if (profileAdminSec) profileAdminSec.classList.remove("hidden");
       if (importAdminBox) importAdminBox.classList.remove("hidden");
       
@@ -312,6 +314,7 @@ const CJApp = {
         if (adminGoogleBar) adminGoogleBar.classList.add("hidden");
         if (deviceIndicator) deviceIndicator.classList.add("hidden");
       }
+
       this.populateAdminActiveUserFilter();
     } else {
       // REGULAR FIELD USER (GSBH / NVBH): CHỈ HIỂN THỊ DUY NHẤT GIAO DIỆN APP ĐIỆN THOẠI (PHẦN KHOANH ĐỎ)
@@ -323,6 +326,7 @@ const CJApp = {
       if (deviceIndicator) deviceIndicator.classList.add("hidden");
       if (btnAdminExport) btnAdminExport.classList.add("hidden");
       if (btnAdminImport) btnAdminImport.classList.add("hidden");
+      if (btnAdminExportStores) btnAdminExportStores.classList.add("hidden");
       if (profileAdminSec) profileAdminSec.classList.add("hidden");
       if (importAdminBox) importAdminBox.classList.add("hidden");
 
@@ -825,6 +829,58 @@ const CJApp = {
     }
   },
 
+  async syncFromMasterFolder() {
+    try {
+      if (typeof CJAudit !== "undefined" && CJAudit.showToast) {
+        CJAudit.showToast("Đang đồng bộ dữ liệu từ thư mục Master/...", "info");
+      }
+
+      const [resUsers, resStores] = await Promise.all([
+        fetch("./Master/DS%20User.xlsx"),
+        fetch("./Master/DSKH%20c%E1%BA%A7n%20check.xlsx")
+      ]);
+
+      if (!resUsers.ok || !resStores.ok) {
+        throw new Error("Trình duyệt không thể đọc trực tiếp thư mục Master. Hãy nhấp đúp vào file 'dong_bo_master.bat' trong thư mục để tự động đồng bộ ngay!");
+      }
+
+      const [bufUsers, bufStores] = await Promise.all([
+        resUsers.arrayBuffer(),
+        resStores.arrayBuffer()
+      ]);
+
+      if (typeof XLSX === "undefined") {
+        throw new Error("Thư viện SheetJS chưa sẵn sàng!");
+      }
+
+      // Read and import users
+      const wbU = XLSX.read(new Uint8Array(bufUsers), { type: "array" });
+      const rowsU = XLSX.utils.sheet_to_json(wbU.Sheets[wbU.SheetNames[0]]);
+      CJStorage.importBulkUsers(rowsU);
+
+      // Read and import stores & freezers
+      const wbS = XLSX.read(new Uint8Array(bufStores), { type: "array" });
+      const rowsS = XLSX.utils.sheet_to_json(wbS.Sheets[wbS.SheetNames[0]]);
+      const resS = CJStorage.importBulkStoresAndFreezers(rowsS, "AUTO", true);
+
+      // Refresh UI components
+      this.renderAdminUserManagementTable();
+      this.populateUserSelectors();
+      this.populateAdminActiveUserFilter();
+      if (typeof CJDashboard !== "undefined" && CJDashboard.render) {
+        CJDashboard.render();
+      }
+
+      if (typeof CJAudit !== "undefined" && CJAudit.showToast) {
+        CJAudit.showToast(`✅ Đã đồng bộ thành công: ${rowsU.length} User, ${resS.totalStores} KH (${resS.totalFreezers} Tủ đông)!`, "success");
+      } else {
+        alert(`✅ Đã đồng bộ thành công từ thư mục Master!\n- User: ${rowsU.length} tài khoản\n- Khách hàng: ${resS.totalStores} điểm bán (${resS.totalFreezers} tủ đông)`);
+      }
+    } catch (err) {
+      alert("Thông báo đồng bộ:\n" + (err.message || err));
+    }
+  },
+
   exportDataJsForGitHub() {
     try {
       const users = CJStorage.getUsers();
@@ -922,6 +978,10 @@ ${typeof CJ_PROMOTIONS !== "undefined" ? "const CJ_PROMOTIONS = " + JSON.stringi
           </td>
           <td class="p-3 text-right">
             <div class="flex items-center justify-end gap-1.5">
+              <button type="button" onclick="CJApp.openEditUserModal('${u.username}')" class="px-2.5 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 font-bold text-xs transition cursor-pointer flex items-center gap-1 active:scale-95" title="Chỉnh sửa thông tin user này">
+                <span>✏️</span>
+                <span>Sửa</span>
+              </button>
               <button type="button" onclick="CJApp.openImportModal('${isAdmin ? 'AUTO' : u.username}'); CJApp.closeAdminUserManagementModal();" class="px-2.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs shadow-sm transition active:scale-95 flex items-center gap-1 cursor-pointer" title="Upload file Excel danh sách khách hàng gán cho user này">
                 <span>📂</span>
                 <span>Nạp KH</span>
@@ -943,6 +1003,133 @@ ${typeof CJ_PROMOTIONS !== "undefined" ? "const CJ_PROMOTIONS = " + JSON.stringi
         </tr>
       `;
     }).join("");
+  },
+
+  openEditUserModal(username) {
+    if (!username) return;
+    const allUsers = (typeof CJStorage !== "undefined" && CJStorage.getUsers) ? CJStorage.getUsers() : (typeof GSBH_ACCOUNTS !== "undefined" ? GSBH_ACCOUNTS : []);
+    const user = allUsers.find(u => u.username.toLowerCase() === username.toLowerCase());
+    if (!user) {
+      alert(`Không tìm thấy người dùng "${username}"!`);
+      return;
+    }
+
+    const modal = document.getElementById("modalEditUser");
+    if (!modal) return;
+
+    // Populate Manager dropdown
+    const mgrSelect = document.getElementById("editUserManager");
+    if (mgrSelect) {
+      let mgrHtml = `<option value="">-- Cấp cao nhất / Không có --</option>`;
+      mgrHtml += `<option value="admin" ${user.manager === 'admin' ? 'selected' : ''}>👑 Quản Trị Viên (admin)</option>`;
+      allUsers.filter(u => u.username !== user.username && (u.role === "gsbh_gt" || u.role === "sup" || u.role === "asm" || u.role === "admin")).forEach(m => {
+        if (m.username !== "admin") {
+          mgrHtml += `<option value="${m.username}" ${user.manager === m.username ? 'selected' : ''}>${m.avatar || '👮‍♂️'} ${m.name} (${m.username})</option>`;
+        }
+      });
+      mgrSelect.innerHTML = mgrHtml;
+    }
+
+    // Custom password if any
+    const customPasswords = (typeof CJAuth !== "undefined" && CJAuth.getCustomPasswords) ? CJAuth.getCustomPasswords() : {};
+    const pass = customPasswords[user.username] || user.password || "123";
+
+    // Fill inputs
+    const origInput = document.getElementById("editUserOriginalUsername");
+    if (origInput) origInput.value = user.username;
+    const nameInput = document.getElementById("editUserName");
+    if (nameInput) nameInput.value = user.name || "";
+    const userInput = document.getElementById("editUserUsername");
+    if (userInput) userInput.value = user.username || "";
+    const codeInput = document.getElementById("editUserEmpCode");
+    if (codeInput) codeInput.value = user.empCode || "";
+    const passInput = document.getElementById("editUserPassword");
+    if (passInput) passInput.value = pass;
+    const roleSelect = document.getElementById("editUserRole");
+    if (roleSelect) roleSelect.value = user.role || "gsbh_gt";
+    const chanSelect = document.getElementById("editUserChannel");
+    if (chanSelect) chanSelect.value = user.channel || "GT";
+    const areaInput = document.getElementById("editUserArea");
+    if (areaInput) areaInput.value = user.area || "";
+    const routeInput = document.getElementById("editUserRoute");
+    if (routeInput) routeInput.value = user.route || "";
+    const phoneInput = document.getElementById("editUserPhone");
+    if (phoneInput) phoneInput.value = user.phone || "";
+    const emailInput = document.getElementById("editUserEmail");
+    if (emailInput) emailInput.value = user.email || "";
+
+    // Show/hide admin note if user is admin
+    const adminNote = document.getElementById("editUserAdminNote");
+    if (user.role === "admin") {
+      if (adminNote) adminNote.classList.remove("hidden");
+      if (roleSelect) roleSelect.disabled = true;
+    } else {
+      if (adminNote) adminNote.classList.add("hidden");
+      if (roleSelect) roleSelect.disabled = false;
+    }
+
+    modal.classList.remove("hidden");
+  },
+
+  closeEditUserModal() {
+    const modal = document.getElementById("modalEditUser");
+    if (modal) modal.classList.add("hidden");
+  },
+
+  submitEditUser(e) {
+    e.preventDefault();
+    const origUsername = document.getElementById("editUserOriginalUsername")?.value;
+    const name = document.getElementById("editUserName")?.value?.trim();
+    const newUsername = document.getElementById("editUserUsername")?.value?.trim();
+    const empCode = document.getElementById("editUserEmpCode")?.value?.trim();
+    const password = document.getElementById("editUserPassword")?.value?.trim();
+    const roleSelect = document.getElementById("editUserRole");
+    const role = roleSelect ? roleSelect.value : "gsbh_gt";
+    const channel = document.getElementById("editUserChannel")?.value || "GT";
+    const area = document.getElementById("editUserArea")?.value?.trim() || "";
+    const route = document.getElementById("editUserRoute")?.value?.trim() || "";
+    const phone = document.getElementById("editUserPhone")?.value?.trim() || "";
+    const email = document.getElementById("editUserEmail")?.value?.trim() || "";
+    const manager = document.getElementById("editUserManager")?.value?.trim() || "";
+
+    if (!name) {
+      alert("Vui lòng nhập Họ và tên!");
+      return;
+    }
+    if (!newUsername) {
+      alert("Vui lòng nhập Tên đăng nhập (Tài khoản)!");
+      return;
+    }
+
+    const res = CJStorage.updateUser(origUsername, {
+      name,
+      username: newUsername,
+      empCode,
+      password,
+      role,
+      channel,
+      area,
+      route,
+      phone,
+      email,
+      manager
+    });
+
+    if (res.success) {
+      this.closeEditUserModal();
+      this.renderAdminUserManagementTable();
+      this.populateUserSelectors();
+      this.populateAdminActiveUserFilter();
+      this.populateSalesSelectorInAddStoreModal();
+
+      if (typeof CJAudit !== "undefined" && CJAudit.showToast) {
+        CJAudit.showToast(res.message, "success");
+      } else {
+        alert(res.message);
+      }
+    } else {
+      alert(res.message);
+    }
   },
 
   resetUserPassword(username) {

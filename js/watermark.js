@@ -17,8 +17,8 @@ const CJWatermark = {
 
       img.onload = () => {
         try {
-          // Normalize dimension: max 1280px width for fast mobile performance & sharp text
-          const maxWidth = 1280;
+          // Normalize dimension: max 1080px width for ultra-fast mobile 4G upload & sharp watermark
+          const maxWidth = 1080;
           let width = img.width;
           let height = img.height;
 
@@ -110,8 +110,8 @@ const CJWatermark = {
           const hash = `CJF-SEC-${Math.abs((metadata.storeId || "").split("").reduce((a, b) => (a << 5) - a + b.charCodeAt(0), 0)).toString(16).toUpperCase()}-${Date.now().toString().slice(-6)}`;
           ctx.fillText(`VERIFIED SECURE: ${hash}`, width - paddingX - 170, height - 10);
 
-          // Export as JPEG
-          const resultDataUrl = canvas.toDataURL("image/jpeg", 0.85);
+          // Export as JPEG (quality 0.78 balances crystal clarity with ultra-light ~180KB payload)
+          const resultDataUrl = canvas.toDataURL("image/jpeg", 0.78);
           resolve(resultDataUrl);
         } catch (err) {
           reject(err);
