@@ -1107,11 +1107,16 @@ const CJAudit = {
       ["posm", "overview", "tag", "recall"].forEach(type => {
         const preview = document.getElementById(`preview_${type}`);
         const placeholder = document.getElementById(`placeholder_${type}`);
+        const input = document.getElementById(`photo_input_${type}`);
         if (preview) {
           preview.src = "";
           preview.classList.add("hidden");
         }
         if (placeholder) placeholder.classList.remove("hidden");
+        if (input) {
+          input.value = "";
+          input.classList.remove("hidden");
+        }
       });
 
       const removeBtn = document.getElementById("btnRemovePosmPhoto");
@@ -1161,6 +1166,11 @@ const CJAudit = {
       preview.classList.add("hidden");
     }
     if (placeholder) placeholder.classList.remove("hidden");
+    const input = document.getElementById(`photo_input_${photoType}`);
+    if (input) {
+      input.value = "";
+      input.classList.remove("hidden");
+    }
     if (photoType === "posm") {
       const removeBtn = document.getElementById("btnRemovePosmPhoto");
       if (removeBtn) removeBtn.classList.add("hidden");
@@ -1251,6 +1261,10 @@ const CJAudit = {
     }
     if (placeholder) {
       placeholder.classList.add("hidden");
+    }
+    const input = document.getElementById(`photo_input_${photoType}`);
+    if (input) {
+      input.classList.add("hidden");
     }
     if (photoType === "posm") {
       const removeBtn = document.getElementById("btnRemovePosmPhoto");
