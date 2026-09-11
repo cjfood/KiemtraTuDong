@@ -724,3 +724,8 @@ const CJExcel = {
     reader.readAsArrayBuffer(file);
   }
 };
+
+if (typeof window !== "undefined") {
+  window.CJExcel = CJExcel;
+}
+
