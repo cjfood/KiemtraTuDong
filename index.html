@@ -402,6 +402,12 @@
           <span>Tiến Độ Từng Người</span>
         </button>
 
+        <!-- Nút Đồng Bộ Kết Quả Kiểm Tra Từ Google Sheet -->
+        <button type="button" onclick="CJApp.syncAuditsFromGoogleSheetManual()" class="px-3.5 py-2 rounded-xl bg-gradient-to-r from-emerald-500 via-teal-600 to-emerald-700 hover:from-emerald-400 hover:to-teal-500 text-white font-black text-xs shadow-md transition active:scale-95 flex items-center gap-1.5 cursor-pointer border border-emerald-300 shadow-emerald-900/40" title="Tải toàn bộ kết quả kiểm tra từ Google Sheet về máy Admin để tổng hợp tiến độ">
+          <span class="sync-sheet-spinner text-base">🔄</span>
+          <span>Đồng Bộ Từ Google Sheet</span>
+        </button>
+
         <!-- Nút Upload Danh Sách KH Theo User dành riêng cho Admin -->
         <button type="button" onclick="CJApp.openImportModal()" class="px-3.5 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-500 hover:to-teal-600 text-white font-black text-xs shadow-md transition active:scale-95 flex items-center gap-1.5 cursor-pointer border border-emerald-400/50">
           <span>📂</span>
@@ -469,6 +475,19 @@
           <span>💾</span>
           <span>Lưu Kết Nối</span>
         </button>
+        <button 
+          type="button" 
+          onclick="CJApp.syncAuditsFromGoogleSheetManual()" 
+          class="bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs px-4 py-2.5 rounded-xl shadow-lg transition active:scale-95 flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
+          title="Kéo toàn bộ kết quả kiểm tra mới nhất từ Google Sheet về máy Admin">
+          <span class="sync-sheet-spinner">🔄</span>
+          <span>Đồng Bộ Ngay</span>
+        </button>
+        <label class="bg-blue-600 hover:bg-blue-500 text-white font-black text-xs px-3.5 py-2.5 rounded-xl shadow-lg transition active:scale-95 flex items-center gap-1.5 cursor-pointer whitespace-nowrap" title="Nạp trực tiếp file Excel hoặc CSV tải về từ Google Sheet">
+          <span>📂</span>
+          <span>Nạp File Sheet</span>
+          <input type="file" accept=".xlsx, .xls, .csv" class="hidden" onchange="CJApp.onGoogleSheetAuditFileSelected(this)" />
+        </label>
       </div>
     </div>
 
@@ -2213,6 +2232,12 @@
             <span class="text-base">🚀</span>
             <span>Xuất file data.js (Lên GitHub)</span>
           </button>
+
+          <!-- Nút Đồng Bộ Kết Quả Từ Google Sheet -->
+          <button type="button" onclick="CJApp.syncAuditsFromGoogleSheetManual()" class="px-3 py-2 bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-500 hover:to-teal-600 text-white font-black text-xs rounded-xl shadow transition active:scale-95 flex items-center gap-1.5 cursor-pointer border border-emerald-400/50" title="Tải toàn bộ kết quả kiểm tra từ Google Sheet về máy Admin để cập nhật tiến độ">
+            <span class="sync-sheet-spinner text-base">🔄</span>
+            <span>Đồng Bộ Google Sheet</span>
+          </button>
         </div>
 
         <div class="flex items-center gap-2">
@@ -2347,6 +2372,25 @@
         </div>
 
         <div class="flex items-center gap-2">
+          <!-- Nút Đồng Bộ Từ Google Sheet -->
+          <button 
+            type="button" 
+            onclick="CJApp.syncAuditsFromGoogleSheetManual()" 
+            class="px-3.5 py-2 bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-500 hover:to-teal-600 text-white font-black text-xs rounded-xl shadow transition active:scale-95 flex items-center gap-1.5 cursor-pointer border border-emerald-400/50" 
+            title="Lấy dữ liệu kiểm tra mới nhất từ Google Sheet để tính toán tiến độ">
+            <span class="sync-sheet-spinner text-base">🔄</span>
+            <span>Đồng Bộ Google Sheet</span>
+          </button>
+
+          <!-- Nút Nạp File Excel Kiểm Tra -->
+          <label 
+            class="px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-black text-xs rounded-xl shadow transition active:scale-95 flex items-center gap-1.5 cursor-pointer" 
+            title="Nạp trực tiếp file Excel tải về từ Google Sheets">
+            <span class="text-base">📂</span>
+            <span>Nạp File Sheet</span>
+            <input type="file" accept=".xlsx, .xls, .csv" class="hidden" onchange="CJApp.onGoogleSheetAuditFileSelected(this)" />
+          </label>
+
           <!-- Export to Excel Button -->
           <button 
             type="button" 
@@ -2937,14 +2981,14 @@
   <div id="appToast" class="fixed top-5 right-5 z-50 opacity-0 translate-y-[-20px] pointer-events-none transition-all duration-300"></div>
 
   <!-- ================= APPLICATION SCRIPTS ================= -->
-  <script src="js/data.js?v=6.1"></script>
-  <script src="js/auth.js?v=6.1"></script>
-  <script src="js/storage.js?v=6.1"></script>
-  <script src="js/watermark.js?v=6.1"></script>
-  <script src="js/cloud_sync.js?v=6.1"></script>
-  <script src="js/audit.js?v=6.1"></script>
-  <script src="js/dashboard.js?v=6.1"></script>
-  <script src="js/excel.js?v=6.1"></script>
-  <script src="js/app.js?v=6.1"></script>
+  <script src="js/data.js?v=6.2"></script>
+  <script src="js/auth.js?v=6.2"></script>
+  <script src="js/storage.js?v=6.2"></script>
+  <script src="js/watermark.js?v=6.2"></script>
+  <script src="js/cloud_sync.js?v=6.2"></script>
+  <script src="js/audit.js?v=6.2"></script>
+  <script src="js/dashboard.js?v=6.2"></script>
+  <script src="js/excel.js?v=6.2"></script>
+  <script src="js/app.js?v=6.2"></script>
 </body>
 </html>
