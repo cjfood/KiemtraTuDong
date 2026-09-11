@@ -622,5 +622,105 @@ const CJExcel = {
     } else {
       alert(`Đã xuất báo cáo tiến độ ${exportRows.length} nhân sự ra file Excel!`);
     }
+  },
+
+  /**
+   * Nạp file Excel xuất từ Google Sheets hoặc báo cáo kiểm tra thực địa
+   */
+  importAuditsFromExcel(file) {
+    if (!file) return;
+    if (typeof XLSX === "undefined") {
+      alert("Thư viện SheetJS chưa được nạp!");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: "array" });
+        const sheetName = workbook.SheetNames.find(n => n.toLowerCase().includes("dulieu") || n.toLowerCase().includes("kiemtra")) || workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+        const jsonRows = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: "" });
+
+        if (jsonRows.length <= 1) {
+          alert("File Excel không có dữ liệu kiểm tra!");
+          return;
+        }
+
+        // Header mapping
+        const headers = jsonRows[0].map(h => String(h || "").trim());
+        const findCol = (terms) => {
+          for (let i = 0; i < headers.length; i++) {
+            const h = headers[i].toLowerCase();
+            if (terms.some(t => h.includes(t.toLowerCase()))) return i;
+          }
+          return -1;
+        };
+
+        const colTime = findCol(["thời gian", "thoigian", "time", "date"]);
+        const colUser = findCol(["mã nv", "manv", "tài khoản", "username", "user"]);
+        const colName = findCol(["tên nhân viên", "ten nv", "họ và tên", "fullname"]);
+        const colRegion = findCol(["khu vực", "khuvuc", "vùng", "region"]);
+        const colCustCode = findCol(["mã cửa hàng", "mã khách hàng", "makh", "mach", "storecode", "customer"]);
+        const colCustName = findCol(["tên cửa hàng", "tên khách hàng", "tenkh", "tench", "storename"]);
+        const colBarcode = findCol(["mã tủ", "barcode", "serial", "matudo"]);
+        const colModel = findCol(["tên tủ", "model", "tentu"]);
+        const colCondition = findCol(["tình trạng tủ", "tinhtrang", "condition"]);
+        const colNote = findCol(["ghi chú tình trạng", "ghichu", "note"]);
+        const colPhoto1 = findCol(["ảnh 1", "ảnh tủ", "photo 1", "posm"]);
+        const colPhoto2 = findCol(["ảnh 2", "tổng quan", "photo 2", "overview"]);
+
+        const audits = [];
+        for (let r = 1; r < jsonRows.length; r++) {
+          const row = jsonRows[r];
+          if (!row || row.length === 0) continue;
+          const custCode = colCustCode !== -1 ? String(row[colCustCode] || "").trim() : "";
+          const barcode = colBarcode !== -1 ? String(row[colBarcode] || "").trim() : "";
+          const custName = colCustName !== -1 ? String(row[colCustName] || "").trim() : "";
+          if (!custCode && !barcode && !custName) continue;
+
+          audits.push({
+            timestamp: colTime !== -1 ? row[colTime] : "",
+            userCode: colUser !== -1 ? String(row[colUser] || "").trim() : "",
+            userName: colName !== -1 ? String(row[colName] || "").trim() : "",
+            region: colRegion !== -1 ? String(row[colRegion] || "").trim() : "",
+            customerCode: custCode,
+            customerName: custName,
+            freezerBarcode: barcode,
+            freezerModel: colModel !== -1 ? String(row[colModel] || "").trim() : "",
+            workingCondition: colCondition !== -1 ? String(row[colCondition] || "").trim() : "Sử Dụng Được",
+            conditionNote: colNote !== -1 ? String(row[colNote] || "").trim() : "",
+            photoPosmUrl: colPhoto1 !== -1 ? String(row[colPhoto1] || "").trim() : "",
+            photoOverviewUrl: colPhoto2 !== -1 ? String(row[colPhoto2] || "").trim() : ""
+          });
+        }
+
+        if (audits.length === 0) {
+          alert("Không tìm thấy dòng dữ liệu kiểm tra hợp lệ trong file!");
+          return;
+        }
+
+        const syncRes = CJStorage.syncAuditsFromCloud(audits);
+
+        // Refresh UI
+        if (typeof CJDashboard !== "undefined" && CJDashboard.refresh) CJDashboard.refresh();
+        if (typeof CJAudit !== "undefined" && CJAudit.renderStoreList) CJAudit.renderStoreList();
+        if (typeof CJApp !== "undefined") {
+          if (CJApp.renderAdminProgressReportTable) CJApp.renderAdminProgressReportTable();
+          if (CJApp.renderAdminUserManagementTable) CJApp.renderAdminUserManagementTable();
+        }
+
+        if (typeof CJAudit !== "undefined" && CJAudit.showToast) {
+          CJAudit.showToast(`✅ ${syncRes.message}`, "success");
+        } else {
+          alert(`Thành công: ${syncRes.message}`);
+        }
+      } catch (err) {
+        console.error("Lỗi đọc file Excel kiểm tra:", err);
+        alert("Lỗi khi đọc file Excel: " + err.message);
+      }
+    };
+    reader.readAsArrayBuffer(file);
   }
 };
