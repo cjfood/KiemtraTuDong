@@ -240,6 +240,23 @@ const CJApp = {
         }
       });
     }
+
+    // Admin Modal Buttons
+    const btnUserMgmt = document.getElementById("btnAdminUserManagement");
+    if (btnUserMgmt) {
+      btnUserMgmt.addEventListener("click", (e) => {
+        e.preventDefault();
+        this.openAdminUserManagementModal();
+      });
+    }
+
+    const btnProgReport = document.getElementById("btnAdminProgressReport");
+    if (btnProgReport) {
+      btnProgReport.addEventListener("click", (e) => {
+        e.preventDefault();
+        this.openAdminProgressReportModal();
+      });
+    }
   },
 
   logout() {
@@ -766,14 +783,24 @@ const CJApp = {
   },
 
   openAdminUserManagementModal() {
-    this.renderAdminUserManagementTable();
     const modal = document.getElementById("modalAdminUserManagement");
-    if (modal) modal.classList.remove("hidden");
+    if (modal) {
+      modal.classList.remove("hidden");
+      modal.style.display = "flex";
+    }
+    try {
+      this.renderAdminUserManagementTable();
+    } catch (e) {
+      console.error("Error rendering user management table:", e);
+    }
   },
 
   closeAdminUserManagementModal() {
     const modal = document.getElementById("modalAdminUserManagement");
-    if (modal) modal.classList.add("hidden");
+    if (modal) {
+      modal.classList.add("hidden");
+      modal.style.display = "none";
+    }
   },
 
   adminProgressSearchQuery: "",
@@ -781,25 +808,36 @@ const CJApp = {
   adminProgressRoleFilter: "ALL",
 
   openAdminProgressReportModal() {
-    this.adminProgressSearchQuery = "";
-    this.adminProgressStatusFilter = "ALL";
-    this.adminProgressRoleFilter = "ALL";
-
-    const searchInput = document.getElementById("adminProgressSearchInput");
-    if (searchInput) searchInput.value = "";
-    const statusSelect = document.getElementById("adminProgressStatusFilter");
-    if (statusSelect) statusSelect.value = "ALL";
-    const roleSelect = document.getElementById("adminProgressRoleFilter");
-    if (roleSelect) roleSelect.value = "ALL";
-
-    this.renderAdminProgressReportTable();
     const modal = document.getElementById("modalAdminProgressReport");
-    if (modal) modal.classList.remove("hidden");
+    if (modal) {
+      modal.classList.remove("hidden");
+      modal.style.display = "flex";
+    }
+
+    try {
+      this.adminProgressSearchQuery = "";
+      this.adminProgressStatusFilter = "ALL";
+      this.adminProgressRoleFilter = "ALL";
+
+      const searchInput = document.getElementById("adminProgressSearchInput");
+      if (searchInput) searchInput.value = "";
+      const statusSelect = document.getElementById("adminProgressStatusFilter");
+      if (statusSelect) statusSelect.value = "ALL";
+      const roleSelect = document.getElementById("adminProgressRoleFilter");
+      if (roleSelect) roleSelect.value = "ALL";
+
+      this.renderAdminProgressReportTable();
+    } catch (e) {
+      console.error("Error rendering admin progress report table:", e);
+    }
   },
 
   closeAdminProgressReportModal() {
     const modal = document.getElementById("modalAdminProgressReport");
-    if (modal) modal.classList.add("hidden");
+    if (modal) {
+      modal.classList.add("hidden");
+      modal.style.display = "none";
+    }
   },
 
   onAdminProgressSearch(query) {
@@ -965,8 +1003,8 @@ const CJApp = {
           </td>
           <td class="p-3 text-center text-[11px] text-gray-600">
             ${s.lastAuditTime ? `
-              <div class="font-semibold text-slate-800">${s.lastAuditTime.split(' ')[0] || s.lastAuditTime}</div>
-              <div class="text-[9px] text-gray-400">${s.lastAuditTime.split(' ')[1] || ''}</div>
+              <div class="font-semibold text-slate-800">${String(s.lastAuditTime).split(' ')[0] || s.lastAuditTime}</div>
+              <div class="text-[9px] text-gray-400">${String(s.lastAuditTime).split(' ')[1] || ''}</div>
             ` : `<span class="text-gray-400">Chưa kiểm tra</span>`}
           </td>
           <td class="p-3 text-right">
@@ -1289,7 +1327,7 @@ ${typeof CJ_PROMOTIONS !== "undefined" ? "const CJ_PROMOTIONS = " + JSON.stringi
                 <div class="h-1.5 rounded-full ${stats.completionRate === 100 ? 'bg-emerald-500' : (stats.completionRate > 0 ? 'bg-blue-600' : 'bg-gray-300')}" style="width: ${stats.completionRate}%"></div>
               </div>
               <div class="text-[9px] text-gray-400 mt-0.5">
-                ${stats.auditsCount} lượt audit ${stats.lastAuditTime ? `• ${stats.lastAuditTime.split(' ')[0] || ''}` : ''}
+                ${stats.auditsCount} lượt audit ${stats.lastAuditTime ? `• ${String(stats.lastAuditTime).split(' ')[0] || ''}` : ''}
               </div>
             </div>
           </td>
