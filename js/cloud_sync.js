@@ -228,11 +228,100 @@ const CJCloudSync = (function () {
         }
     }
 
+    /**
+     * Kéo toàn bộ dữ liệu kiểm tra từ Google Sheet (GET ?action=getAudits)
+     */
+    async function pullAuditsFromGoogleSheet(url) {
+        const targetUrl = (url || getScriptUrl()).trim();
+        if (!targetUrl) {
+            throw new Error('Chưa cấu hình URL Google Apps Script!');
+        }
+
+        const fetchUrl = targetUrl + (targetUrl.includes('?') ? '&' : '?') + 'action=getAudits&t=' + Date.now();
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 20000); // 20s timeout
+
+        try {
+            const response = await fetch(fetchUrl, {
+                method: 'GET',
+                signal: controller.signal
+            });
+            clearTimeout(timeoutId);
+
+            if (!response.ok) {
+                throw new Error(`HTTP Error: ${response.status}`);
+            }
+
+            const data = await response.json();
+            if (data.status === 'error') {
+                throw new Error(data.message || 'Lỗi từ Google Apps Script');
+            }
+
+            return {
+                success: true,
+                total: data.total || (data.audits ? data.audits.length : 0),
+                audits: data.audits || []
+            };
+        } catch (err) {
+            clearTimeout(timeoutId);
+            const msg = err.name === 'AbortError' ? 'Hết thời gian chờ phản hồi từ Google Sheets' : (err.message || err.toString());
+            throw new Error(msg);
+        }
+    }
+
+    /**
+     * Tự động kéo từ Google Sheet và nạp thẳng vào Storage + cập nhật toàn bộ UI
+     */
+    async function syncAllFromCloud(silent = false) {
+        try {
+            if (!silent && typeof CJAudit !== 'undefined' && CJAudit.showToast) {
+                CJAudit.showToast('🔄 Đang đồng bộ dữ liệu kiểm tra từ Google Sheet...', 'info');
+            }
+
+            const res = await pullAuditsFromGoogleSheet();
+            if (!res.success || !Array.isArray(res.audits)) {
+                throw new Error('Dữ liệu trả về không đúng định dạng!');
+            }
+
+            if (typeof CJStorage === 'undefined' || !CJStorage.syncAuditsFromCloud) {
+                throw new Error('Mô-đun CJStorage chưa sẵn sàng!');
+            }
+
+            const syncRes = CJStorage.syncAuditsFromCloud(res.audits);
+
+            // Cập nhật toàn bộ giao diện
+            if (typeof CJDashboard !== 'undefined' && CJDashboard.refresh) {
+                CJDashboard.refresh();
+            }
+            if (typeof CJAudit !== 'undefined' && CJAudit.renderStoreList) {
+                CJAudit.renderStoreList();
+            }
+            if (typeof CJApp !== 'undefined') {
+                if (CJApp.renderAdminProgressReportTable) CJApp.renderAdminProgressReportTable();
+                if (CJApp.renderAdminUserManagementTable) CJApp.renderAdminUserManagementTable();
+            }
+
+            if (!silent && typeof CJAudit !== 'undefined' && CJAudit.showToast) {
+                CJAudit.showToast(`✅ Đã đồng bộ thành công ${syncRes.updatedStores} điểm bán từ Google Sheet!`, 'success');
+            }
+
+            return { success: true, ...syncRes };
+        } catch (err) {
+            console.warn('[CJCloudSync] Đồng bộ Google Sheet thất bại:', err);
+            if (!silent && typeof CJAudit !== 'undefined' && CJAudit.showToast) {
+                CJAudit.showToast(`⚠️ Không thể đồng bộ từ Google Sheet: ${err.message}`, 'warning');
+            }
+            return { success: false, error: err.message };
+        }
+    }
+
     return {
         getScriptUrl: getScriptUrl,
         setScriptUrl: setScriptUrl,
         testConnection: testConnection,
         sendAuditToGoogleSheet: sendAuditToGoogleSheet,
+        pullAuditsFromGoogleSheet: pullAuditsFromGoogleSheet,
+        syncAllFromCloud: syncAllFromCloud,
         syncPendingQueue: syncPendingQueue,
         getPendingQueueCount: getPendingQueueCount
     };
