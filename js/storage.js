@@ -1085,6 +1085,151 @@ const CJStorage = {
     return true;
   },
 
+  /**
+   * Thống kê số lượng và tiến độ kiểm tra của từng người dùng (Admin, GSBH, NVBH)
+   */
+  getUserAuditStats(userOrUsername) {
+    const username = typeof userOrUsername === "object" ? userOrUsername.username : String(userOrUsername);
+    if (!username) {
+      return { totalStores: 0, auditedStores: 0, unauditedStores: 0, completionRate: 0, goodCount: 0, abnormalCount: 0, auditsCount: 0, lastAuditTime: null };
+    }
+
+    const stores = this.getStoresForUser(username);
+    const totalStores = stores.length;
+    const auditedStoresList = stores.filter(s => s.isAudited || (s.lastAuditDate && s.lastAuditDate !== "Chưa kiểm tra"));
+    const auditedStores = auditedStoresList.length;
+    const unauditedStores = Math.max(0, totalStores - auditedStores);
+    const completionRate = totalStores > 0 ? Math.round((auditedStores / totalStores) * 100) : 0;
+
+    const goodCount = auditedStoresList.filter(s => s.status === "good").length;
+    const abnormalCount = auditedStoresList.filter(s => s.status === "danger" || s.status === "warning").length;
+
+    const audits = this.getAuditsForUser(username);
+    const auditsCount = audits.length;
+
+    let lastAuditTime = null;
+    if (audits.length > 0 && (audits[0].auditTime || audits[0].createdAt)) {
+      lastAuditTime = audits[0].auditTime || audits[0].createdAt;
+    } else {
+      const auditedWithTime = auditedStoresList.find(s => s.lastAuditFull || s.lastAuditDate);
+      if (auditedWithTime && auditedWithTime.lastAuditDate !== "Chưa kiểm tra") {
+        lastAuditTime = auditedWithTime.lastAuditFull || auditedWithTime.lastAuditDate;
+      }
+    }
+
+    return {
+      totalStores,
+      auditedStores,
+      unauditedStores,
+      completionRate,
+      goodCount,
+      abnormalCount,
+      auditsCount,
+      lastAuditTime
+    };
+  },
+
+  /**
+   * Reset kết quả kiểm tra của một người cụ thể (GSBH hoặc NVBH)
+   * Trả toàn bộ điểm bán của người này về trạng thái Chưa Kiểm Tra và xóa các biên bản kiểm tra tương ứng
+   */
+  resetAuditsForUser(userOrUsername) {
+    if (!userOrUsername) return { success: false, message: "Không tìm thấy thông tin tài khoản người dùng!" };
+    const username = typeof userOrUsername === "object" ? userOrUsername.username : String(userOrUsername);
+    if (!username || username === "ALL") return { success: false, message: "Tên tài khoản không hợp lệ!" };
+
+    const lower = username.toLowerCase();
+    const normUser = this.normalizeUserCode(username);
+
+    // 1. Quét danh sách điểm bán và đưa các điểm bán của user này về Chưa kiểm tra
+    const allStores = this.getAllStores();
+    const userStoreIdSet = new Set();
+    let resetStoreCount = 0;
+
+    allStores.forEach(s => {
+      const gsbh = s.gsbhUsername ? s.gsbhUsername.toLowerCase() : "";
+      const assigned = s.assignedUser ? s.assignedUser.toLowerCase() : "";
+      const repCode = s.salesRepCode ? s.salesRepCode.toLowerCase() : "";
+      const repName = s.salesRep ? s.salesRep.toLowerCase() : "";
+
+      const isMatch = (gsbh === lower || assigned === lower || repCode === lower || repName === lower) ||
+                      (normUser && (this.normalizeUserCode(gsbh) === normUser || this.normalizeUserCode(assigned) === normUser || this.normalizeUserCode(repCode) === normUser));
+
+      if (isMatch) {
+        userStoreIdSet.add(s.id);
+        if (s.isAudited || (s.lastAuditDate && s.lastAuditDate !== "Chưa kiểm tra")) {
+          resetStoreCount++;
+        }
+        s.isAudited = false;
+        s.status = "good";
+        s.lastAuditDate = "Chưa kiểm tra";
+        delete s.lastAuditTime;
+        delete s.lastAuditFull;
+        delete s.lastAuditor;
+        delete s.lastTemp;
+        delete s.lastScore;
+        s.posmCondition = "Sử Dụng Được";
+        delete s.ticketCreated;
+        delete s.ticketDetails;
+      }
+    });
+
+    this.saveStores(allStores);
+
+    // 2. Reset tủ đông thuộc các điểm bán này
+    try {
+      const freezers = this.getFreezers();
+      let freezersUpdated = false;
+      freezers.forEach(f => {
+        if (f.assignedStoreId && userStoreIdSet.has(f.assignedStoreId)) {
+          f.status = "good";
+          delete f.lastTemperature;
+          freezersUpdated = true;
+        }
+      });
+      if (freezersUpdated) {
+        localStorage.setItem(this.KEYS.FREEZERS, JSON.stringify(freezers));
+      }
+    } catch (_) {}
+
+    // 3. Xóa các biên bản kiểm tra thuộc về user này hoặc điểm bán của user này
+    const allAudits = this.getAudits();
+    const beforeAuditCount = allAudits.length;
+    const remainingAudits = allAudits.filter(a => {
+      const aGsbh = a.gsbhUsername ? a.gsbhUsername.toLowerCase() : "";
+      const aAuditor = a.auditorUser ? a.auditorUser.toLowerCase() : "";
+      const aAssigned = a.assignedUser ? a.assignedUser.toLowerCase() : "";
+      const aStoreId = a.storeId;
+
+      const isUserAudit = (aGsbh === lower || aAuditor === lower || aAssigned === lower) ||
+                          (normUser && (this.normalizeUserCode(aGsbh) === normUser || this.normalizeUserCode(aAuditor) === normUser || this.normalizeUserCode(aAssigned) === normUser)) ||
+                          (aStoreId && userStoreIdSet.has(aStoreId));
+
+      return !isUserAudit;
+    });
+
+    const removedAuditCount = beforeAuditCount - remainingAudits.length;
+    localStorage.setItem(this.KEYS.AUDITS, JSON.stringify(remainingAudits));
+
+    // 4. Xóa các ticket sự cố tương ứng
+    try {
+      const allTickets = JSON.parse(localStorage.getItem(this.KEYS.TICKETS) || "[]");
+      const remainingTickets = allTickets.filter(t => {
+        if (t.storeId && userStoreIdSet.has(t.storeId)) return false;
+        if (t.userCode && (t.userCode.toLowerCase() === lower || this.normalizeUserCode(t.userCode) === normUser)) return false;
+        return true;
+      });
+      localStorage.setItem(this.KEYS.TICKETS, JSON.stringify(remainingTickets));
+    } catch (_) {}
+
+    return {
+      success: true,
+      resetStoreCount,
+      removedAuditCount,
+      message: `Đã reset thành công ${resetStoreCount} điểm bán và ${removedAuditCount} biên bản kiểm tra của tài khoản "${username}".`
+    };
+  },
+
   resetAllData() {
     localStorage.setItem(this.KEYS.STORES, JSON.stringify([]));
     localStorage.setItem(this.KEYS.FREEZERS, JSON.stringify([]));
