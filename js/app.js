@@ -769,6 +769,260 @@ const CJApp = {
     if (modal) modal.classList.add("hidden");
   },
 
+  adminProgressSearchQuery: "",
+  adminProgressStatusFilter: "ALL",
+  adminProgressRoleFilter: "ALL",
+
+  openAdminProgressReportModal() {
+    this.adminProgressSearchQuery = "";
+    this.adminProgressStatusFilter = "ALL";
+    this.adminProgressRoleFilter = "ALL";
+
+    const searchInput = document.getElementById("adminProgressSearchInput");
+    if (searchInput) searchInput.value = "";
+    const statusSelect = document.getElementById("adminProgressStatusFilter");
+    if (statusSelect) statusSelect.value = "ALL";
+    const roleSelect = document.getElementById("adminProgressRoleFilter");
+    if (roleSelect) roleSelect.value = "ALL";
+
+    this.renderAdminProgressReportTable();
+    const modal = document.getElementById("modalAdminProgressReport");
+    if (modal) modal.classList.remove("hidden");
+  },
+
+  closeAdminProgressReportModal() {
+    const modal = document.getElementById("modalAdminProgressReport");
+    if (modal) modal.classList.add("hidden");
+  },
+
+  onAdminProgressSearch(query) {
+    this.adminProgressSearchQuery = String(query || "").trim().toLowerCase();
+    this.renderAdminProgressReportTable();
+  },
+
+  onAdminProgressFilterStatus(status) {
+    this.adminProgressStatusFilter = status || "ALL";
+    this.renderAdminProgressReportTable();
+  },
+
+  onAdminProgressFilterRole(role) {
+    this.adminProgressRoleFilter = role || "ALL";
+    this.renderAdminProgressReportTable();
+  },
+
+  renderAdminProgressReportTable() {
+    const tbody = document.getElementById("adminProgressReportTableBody");
+    if (!tbody) return;
+
+    const allUsers = (typeof CJStorage !== "undefined" && CJStorage.getUsers) ? CJStorage.getUsers() : GSBH_ACCOUNTS;
+    const isSearch = !!this.adminProgressSearchQuery;
+    const q = this.adminProgressSearchQuery;
+
+    // Calculate stats for all users
+    const userStatsList = allUsers.map(u => {
+      const stats = (typeof CJStorage !== "undefined" && CJStorage.getUserAuditStats)
+        ? CJStorage.getUserAuditStats(u.username)
+        : { totalStores: 0, auditedStores: 0, unauditedStores: 0, completionRate: 0, goodCount: 0, abnormalCount: 0, auditsCount: 0, lastAuditTime: null };
+      return { user: u, stats };
+    });
+
+    // Compute Overall KPI Card Metrics
+    const operationalUsers = userStatsList.filter(item => item.user.role !== "admin");
+    const totalOpsCount = operationalUsers.length;
+    const activeAuditorsCount = operationalUsers.filter(item => item.stats.auditedStores > 0).length;
+    const inactiveAuditorsCount = operationalUsers.filter(item => item.stats.auditedStores === 0 && item.stats.totalStores > 0).length;
+
+    // National audited stores total
+    const allStores = (typeof CJStorage !== "undefined" && CJStorage.getAllStores) ? CJStorage.getAllStores() : [];
+    const totalStoresNat = allStores.length;
+    const auditedStoresNat = allStores.filter(s => s.isAudited || (s.lastAuditDate && s.lastAuditDate !== "Chưa kiểm tra")).length;
+    const natRate = totalStoresNat > 0 ? Math.round((auditedStoresNat / totalStoresNat) * 100) : 0;
+
+    // Update KPI Card DOM
+    const elTotalStaff = document.getElementById("kpiReportTotalStaff");
+    if (elTotalStaff) elTotalStaff.textContent = `${totalOpsCount} nhân sự`;
+    const elActiveStaff = document.getElementById("kpiReportActiveStaff");
+    if (elActiveStaff) elActiveStaff.textContent = `${activeAuditorsCount} người`;
+    const elInactiveStaff = document.getElementById("kpiReportInactiveStaff");
+    if (elInactiveStaff) elInactiveStaff.textContent = `${inactiveAuditorsCount} người`;
+    const elNatProgress = document.getElementById("kpiReportNatProgress");
+    if (elNatProgress) elNatProgress.textContent = `${auditedStoresNat}/${totalStoresNat} KH (${natRate}%)`;
+
+    // Filter table list
+    let filtered = userStatsList.filter(item => {
+      const u = item.user;
+      const s = item.stats;
+
+      // Role filter
+      if (this.adminProgressRoleFilter === "GSBH" && !(u.role === "gsbh_gt" || u.role === "sup" || u.role === "asm")) return false;
+      if (this.adminProgressRoleFilter === "NVBH" && u.role !== "sales_rep") return false;
+      if (this.adminProgressRoleFilter === "ADMIN" && u.role !== "admin") return false;
+
+      // Status filter
+      if (this.adminProgressStatusFilter === "COMPLETED" && s.completionRate < 100) return false;
+      if (this.adminProgressStatusFilter === "IN_PROGRESS" && (s.auditedStores === 0 || s.completionRate === 100)) return false;
+      if (this.adminProgressStatusFilter === "NOT_STARTED" && s.auditedStores > 0) return false;
+
+      // Search filter
+      if (isSearch) {
+        const matchName = (u.name || "").toLowerCase().includes(q);
+        const matchUser = (u.username || "").toLowerCase().includes(q);
+        const matchCode = (u.empCode || "").toLowerCase().includes(q);
+        const matchArea = (u.area || "").toLowerCase().includes(q);
+        const matchRoute = (u.route || "").toLowerCase().includes(q);
+        if (!matchName && !matchUser && !matchCode && !matchArea && !matchRoute) return false;
+      }
+
+      return true;
+    });
+
+    if (filtered.length === 0) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="10" class="p-8 text-center text-gray-400 text-xs">
+            Không tìm thấy nhân viên nào phù hợp với bộ lọc tìm kiếm!
+          </td>
+        </tr>
+      `;
+      return;
+    }
+
+    tbody.innerHTML = filtered.map((item, idx) => {
+      const u = item.user;
+      const s = item.stats;
+      const isAdmin = u.role === "admin";
+      const isGsbh = u.role === "gsbh_gt" || u.role === "sup" || u.role === "asm";
+
+      const roleBadgeClass = isAdmin 
+        ? 'bg-amber-100 text-amber-900 border border-amber-300' 
+        : (isGsbh ? 'bg-blue-100 text-blue-900 border border-blue-300' : 'bg-emerald-100 text-emerald-900 border border-emerald-300');
+
+      const isComplete = s.totalStores > 0 && s.completionRate === 100;
+      const isInProgress = s.auditedStores > 0 && s.completionRate < 100;
+
+      const progressColor = isComplete ? 'bg-emerald-500' : (isInProgress ? 'bg-blue-600' : 'bg-gray-300');
+      const progressBadge = isComplete 
+        ? '<span class="bg-emerald-100 text-emerald-800 text-[10px] font-black px-2 py-0.5 rounded-full">✅ 100% Hoàn Thành</span>' 
+        : (isInProgress 
+          ? `<span class="bg-blue-100 text-blue-800 text-[10px] font-black px-2 py-0.5 rounded-full">⏳ ${s.completionRate}% Đang Làm</span>` 
+          : '<span class="bg-gray-100 text-gray-500 text-[10px] font-bold px-2 py-0.5 rounded-full">⚪ 0% Chưa Làm</span>');
+
+      return `
+        <tr class="border-b border-gray-100 hover:bg-blue-50/40 transition">
+          <td class="p-3 text-center text-gray-500 font-bold">${idx + 1}</td>
+          <td class="p-3 text-left">
+            <div class="flex items-center gap-2.5">
+              <span class="text-2xl">${u.avatar || (isAdmin ? "👑" : (isGsbh ? "👮‍♂️" : "👤"))}</span>
+              <div>
+                <div class="font-black text-xs sm:text-sm text-gray-900 flex items-center gap-1.5">
+                  <span>${u.name}</span>
+                </div>
+                <div class="text-[10px] text-gray-500">Tài khoản: <b class="text-blue-700">${u.username}</b> • Mã: <span class="font-mono text-gray-700">${u.empCode || '---'}</span></div>
+              </div>
+            </div>
+          </td>
+          <td class="p-3 text-center">
+            <span class="px-2.5 py-1 rounded-full text-[10px] font-black ${roleBadgeClass}">
+              ${u.roleTitle || (isAdmin ? "Quản Trị Viên" : (isGsbh ? "GSBH GT" : "NVBH GT"))}
+            </span>
+          </td>
+          <td class="p-3 text-left text-xs text-gray-600">
+            <div class="font-semibold text-gray-800">${u.area || "Toàn Quốc"}</div>
+            ${u.route ? `<div class="text-[10px] text-blue-600 font-medium">${u.route}</div>` : ''}
+          </td>
+          <td class="p-3 text-center font-black text-xs text-slate-900">
+            ${s.totalStores} KH
+          </td>
+          <td class="p-3 text-center">
+            <div class="flex flex-col items-center">
+              <div class="font-black text-xs ${s.auditedStores > 0 ? 'text-emerald-700' : 'text-gray-400'}">
+                ${s.auditedStores} KH
+              </div>
+              <div class="w-24 bg-gray-200 rounded-full h-2 mt-1 overflow-hidden shadow-inner">
+                <div class="h-2 rounded-full ${progressColor} transition-all duration-500" style="width: ${s.completionRate}%"></div>
+              </div>
+              <div class="mt-1">${progressBadge}</div>
+            </div>
+          </td>
+          <td class="p-3 text-center font-bold text-xs ${s.unauditedStores > 0 ? 'text-amber-700' : 'text-gray-400'}">
+            ${s.unauditedStores} KH
+          </td>
+          <td class="p-3 text-center text-[11px]">
+            ${s.auditedStores > 0 ? `
+              <div class="flex items-center justify-center gap-1.5 font-bold">
+                <span class="text-emerald-700">🟢 ${s.goodCount}</span>
+                ${s.abnormalCount > 0 ? `<span class="text-rose-600">🔴 ${s.abnormalCount}</span>` : ''}
+              </div>
+              <div class="text-[9px] text-gray-400 mt-0.5">${s.auditsCount} lượt audit</div>
+            ` : `<span class="text-gray-400">---</span>`}
+          </td>
+          <td class="p-3 text-center text-[11px] text-gray-600">
+            ${s.lastAuditTime ? `
+              <div class="font-semibold text-slate-800">${s.lastAuditTime.split(' ')[0] || s.lastAuditTime}</div>
+              <div class="text-[9px] text-gray-400">${s.lastAuditTime.split(' ')[1] || ''}</div>
+            ` : `<span class="text-gray-400">Chưa kiểm tra</span>`}
+          </td>
+          <td class="p-3 text-right">
+            <div class="flex items-center justify-end gap-1.5">
+              <button type="button" onclick="CJApp.onAdminSwitchUser('${isAdmin ? 'ALL' : u.username}'); CJApp.closeAdminProgressReportModal();" class="px-2.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-sm transition active:scale-95 flex items-center gap-1 cursor-pointer" title="Điều khiển góc nhìn để xem danh sách điểm bán của user này">
+                <span>👁️</span>
+                <span>Xem KH</span>
+              </button>
+              ${!isAdmin ? `
+              <button type="button" onclick="CJApp.confirmResetUserAudits('${u.username}', '${u.name}')" class="px-3 py-1.5 rounded-xl bg-gradient-to-r from-rose-600 to-red-700 hover:from-rose-500 hover:to-red-600 text-white font-black text-xs shadow-md transition active:scale-95 flex items-center gap-1 cursor-pointer" title="Reset kết quả kiểm tra của nhân viên này để nhân viên làm lại từ đầu">
+                <span>🔄</span>
+                <span>Reset KQ</span>
+              </button>
+              ` : ''}
+            </div>
+          </td>
+        </tr>
+      `;
+    }).join("");
+  },
+
+  confirmResetUserAudits(username, userName = "") {
+    const stats = (typeof CJStorage !== "undefined" && CJStorage.getUserAuditStats) ? CJStorage.getUserAuditStats(username) : null;
+    const auditedCount = stats ? stats.auditedStores : 0;
+    const totalCount = stats ? stats.totalStores : 0;
+    const displayName = userName || username;
+
+    const msg = `⚠️ XÁC NHẬN RESET KẾT QUẢ KIỂM TRA CHO NHÂN VIÊN?\n\n` +
+      `• Nhân sự: ${displayName} (Tài khoản: ${username})\n` +
+      `• Hiện đã kiểm tra: ${auditedCount} / ${totalCount} điểm bán (${stats ? stats.completionRate : 0}%)\n` +
+      `• Số biên bản audit: ${stats ? stats.auditsCount : 0} biên bản\n\n` +
+      `Hành động này sẽ:\n` +
+      `1. Đặt lại toàn bộ điểm bán của nhân viên này về trạng thái: "Chưa kiểm tra" (0%).\n` +
+      `2. Xóa toàn bộ các biên bản kiểm tra và ticket sự cố đã nộp của nhân viên này.\n` +
+      `3. Nhân viên có thể tiến hành kiểm tra lại từ đầu trên ứng dụng.\n` +
+      `4. 100% Danh sách khách hàng và tài khoản nhân viên vẫn được BẢO LƯU NGUYÊN VẸN.\n\n` +
+      `Bạn có chắc chắn muốn RESET kết quả của ${displayName}?`;
+
+    if (!confirm(msg)) return;
+
+    const result = CJStorage.resetAuditsForUser(username);
+    if (result && result.success) {
+      this.renderAdminUserManagementTable();
+      if (document.getElementById("modalAdminProgressReport") && !document.getElementById("modalAdminProgressReport").classList.contains("hidden")) {
+        this.renderAdminProgressReportTable();
+      }
+      if (typeof CJDashboard !== "undefined" && CJDashboard.refresh) {
+        CJDashboard.refresh();
+      }
+      if (typeof CJAudit !== "undefined" && CJAudit.renderStoreList) {
+        CJAudit.renderStoreList();
+      }
+
+      if (typeof CJAudit !== "undefined" && CJAudit.showToast) {
+        CJAudit.showToast(`✅ Đã reset kết quả kiểm tra của ${displayName} (${result.resetStoreCount} KH)!`, "success");
+      } else {
+        alert(`✅ ĐÃ RESET KẾT QUẢ THÀNH CÔNG!\n\n${result.message}`);
+      }
+    } else {
+      alert(`❌ Lỗi khi reset: ${result?.message || "Không xác định"}`);
+    }
+  },
+
   async onUserExcelFileSelected(input) {
     if (!input || !input.files || !input.files[0]) return;
     const file = input.files[0];
@@ -936,9 +1190,12 @@ ${typeof CJ_PROMOTIONS !== "undefined" ? "const CJ_PROMOTIONS = " + JSON.stringi
 
     tbody.innerHTML = allUsers.map(u => {
       const isControlled = (this.adminControlledUser === u.username) || (u.role === "admin" && this.adminControlledUser === "ALL");
-      const storeCount = CJStorage.getStoresForUser(u.username).length;
       const isAdmin = u.role === "admin";
       const isGsbh = u.role === "gsbh_gt" || u.role === "sup" || u.role === "asm";
+
+      const stats = (typeof CJStorage !== "undefined" && CJStorage.getUserAuditStats)
+        ? CJStorage.getUserAuditStats(u.username)
+        : { totalStores: 0, auditedStores: 0, unauditedStores: 0, completionRate: 0, goodCount: 0, abnormalCount: 0, auditsCount: 0, lastAuditTime: null };
 
       const roleBadgeClass = isAdmin 
         ? 'bg-amber-100 text-amber-900 border border-amber-300' 
@@ -974,22 +1231,44 @@ ${typeof CJ_PROMOTIONS !== "undefined" ? "const CJ_PROMOTIONS = " + JSON.stringi
             ${u.manager ? `<span class="bg-purple-50 text-purple-700 px-2 py-0.5 rounded border border-purple-200 font-semibold text-[10px]">${u.manager}</span>` : `<span class="text-gray-400 text-[10px]">${isAdmin ? "Cấp cao nhất" : "Trực tiếp"}</span>`}
           </td>
           <td class="p-3 text-center font-black text-xs text-[#184594]">
-            ${storeCount} KH
+            ${stats.totalStores} KH
+          </td>
+          <td class="p-3 text-center">
+            <div class="flex flex-col items-center min-w-[110px]">
+              <div class="flex items-center gap-1 font-black text-xs ${stats.auditedStores > 0 ? 'text-emerald-700' : 'text-gray-500'}">
+                <span>${stats.auditedStores}/${stats.totalStores}</span>
+                <span class="text-[10px] px-1.5 py-0.2 rounded-full font-bold ${stats.completionRate === 100 ? 'bg-emerald-100 text-emerald-800' : (stats.completionRate > 0 ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-600')}">
+                  ${stats.completionRate}%
+                </span>
+              </div>
+              <div class="w-20 bg-gray-200 rounded-full h-1.5 mt-1 overflow-hidden">
+                <div class="h-1.5 rounded-full ${stats.completionRate === 100 ? 'bg-emerald-500' : (stats.completionRate > 0 ? 'bg-blue-600' : 'bg-gray-300')}" style="width: ${stats.completionRate}%"></div>
+              </div>
+              <div class="text-[9px] text-gray-400 mt-0.5">
+                ${stats.auditsCount} lượt audit ${stats.lastAuditTime ? `• ${stats.lastAuditTime.split(' ')[0] || ''}` : ''}
+              </div>
+            </div>
           </td>
           <td class="p-3 text-right">
             <div class="flex items-center justify-end gap-1.5">
-              <button type="button" onclick="CJApp.openEditUserModal('${u.username}')" class="px-2.5 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 font-bold text-xs transition cursor-pointer flex items-center gap-1 active:scale-95" title="Chỉnh sửa thông tin user này">
+              <button type="button" onclick="CJApp.openEditUserModal('${u.username}')" class="px-2 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 font-bold text-xs transition cursor-pointer flex items-center gap-1 active:scale-95" title="Chỉnh sửa thông tin user này">
                 <span>✏️</span>
                 <span>Sửa</span>
               </button>
-              <button type="button" onclick="CJApp.openImportModal('${isAdmin ? 'AUTO' : u.username}'); CJApp.closeAdminUserManagementModal();" class="px-2.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs shadow-sm transition active:scale-95 flex items-center gap-1 cursor-pointer" title="Upload file Excel danh sách khách hàng gán cho user này">
+              <button type="button" onclick="CJApp.openImportModal('${isAdmin ? 'AUTO' : u.username}'); CJApp.closeAdminUserManagementModal();" class="px-2 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs shadow-sm transition active:scale-95 flex items-center gap-1 cursor-pointer" title="Upload file Excel danh sách khách hàng gán cho user này">
                 <span>📂</span>
                 <span>Nạp KH</span>
               </button>
-              <button type="button" onclick="CJApp.onAdminSwitchUser('${isAdmin ? 'ALL' : u.username}'); CJApp.closeAdminUserManagementModal();" class="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-sm transition active:scale-95 flex items-center gap-1 cursor-pointer" title="Điều khiển góc nhìn user này">
+              <button type="button" onclick="CJApp.onAdminSwitchUser('${isAdmin ? 'ALL' : u.username}'); CJApp.closeAdminUserManagementModal();" class="px-2.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-sm transition active:scale-95 flex items-center gap-1 cursor-pointer" title="Điều khiển góc nhìn user này">
                 <span>👁️</span>
                 <span>Điều khiển</span>
               </button>
+              ${!isAdmin ? `
+              <button type="button" onclick="CJApp.confirmResetUserAudits('${u.username}', '${u.name}')" class="px-2.5 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-300 font-bold text-xs transition cursor-pointer flex items-center gap-1 active:scale-95" title="Reset kết quả kiểm tra của riêng user này về 0">
+                <span>🔄</span>
+                <span>Reset KQ</span>
+              </button>
+              ` : ''}
               <button type="button" onclick="CJApp.openChangePasswordModal('${u.username}')" class="px-2 py-1.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold text-xs transition cursor-pointer" title="Đổi mật khẩu">
                 <span>🔑</span>
               </button>
