@@ -553,5 +553,74 @@ const CJExcel = {
     } else {
       alert(`Đã xuất thành công ${exportRows.length} user ra file Excel!`);
     }
+  },
+
+  /**
+   * Xuất báo cáo tiến độ kiểm tra của từng người dùng ra file Excel
+   */
+  exportAuditorProgressToExcel() {
+    if (typeof XLSX === "undefined") {
+      alert("Thư viện SheetJS chưa sẵn sàng!");
+      return;
+    }
+
+    const users = (typeof CJStorage !== "undefined" && CJStorage.getUsers) 
+      ? CJStorage.getUsers() 
+      : (typeof GSBH_ACCOUNTS !== "undefined" ? GSBH_ACCOUNTS : []);
+
+    if (!users || users.length === 0) {
+      alert("Không có dữ liệu người dùng để xuất!");
+      return;
+    }
+
+    const exportRows = users.map((u, idx) => {
+      const stats = (typeof CJStorage !== "undefined" && CJStorage.getUserAuditStats)
+        ? CJStorage.getUserAuditStats(u.username)
+        : { totalStores: 0, auditedStores: 0, unauditedStores: 0, completionRate: 0, goodCount: 0, abnormalCount: 0, auditsCount: 0, lastAuditTime: "" };
+
+      const roleStr = u.role === "admin" ? "ADMIN" : (u.role === "sales_rep" ? "NVBH" : (u.role === "asm" ? "ASM" : "GSBH"));
+
+      return {
+        "STT": idx + 1,
+        "Tai_Khoan": u.username,
+        "Ma_NV": u.empCode || "",
+        "Ho_Va_Ten": u.name || "",
+        "Vai_Tro": roleStr,
+        "Kenh": u.channel || "GT",
+        "Khu_Vuc": u.area || "",
+        "Tuyen_Ban_Hang": u.route || "",
+        "Nguoi_Quan_Ly": u.manager || "",
+        "Tong_So_KH": stats.totalStores,
+        "Da_Kiem_Tra": stats.auditedStores,
+        "Chua_Kiem_Tra": stats.unauditedStores,
+        "Ty_Le_Hoan_Thanh": `${stats.completionRate}%`,
+        "Tu_Dat_Chuan": stats.goodCount,
+        "Tu_Bat_Thuong": stats.abnormalCount,
+        "So_Luot_Audit": stats.auditsCount,
+        "Lan_Kiem_Tra_Cuoi": stats.lastAuditTime || "Chưa có"
+      };
+    });
+
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.json_to_sheet(exportRows);
+
+    const keys = Object.keys(exportRows[0]);
+    ws["!cols"] = keys.map(k => ({ wch: Math.max(k.length + 4, 15) }));
+
+    XLSX.utils.book_append_sheet(wb, ws, "TienDo_KiemTra_TungNguoi");
+
+    const now = new Date();
+    const yyyy = now.getFullYear();
+    const mm = String(now.getMonth() + 1).padStart(2, '0');
+    const dd = String(now.getDate()).padStart(2, '0');
+    const filename = `CJFoods_BaoCao_TienDo_KiemTra_${yyyy}${mm}${dd}.xlsx`;
+
+    XLSX.writeFile(wb, filename);
+
+    if (typeof CJAudit !== "undefined" && CJAudit.showToast) {
+      CJAudit.showToast(`✅ Đã xuất báo cáo tiến độ ${exportRows.length} nhân sự ra file: ${filename}`, "success");
+    } else {
+      alert(`Đã xuất báo cáo tiến độ ${exportRows.length} nhân sự ra file Excel!`);
+    }
   }
 };
