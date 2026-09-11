@@ -391,13 +391,13 @@
           </select>
         </div>
 
-        <button type="button" onclick="CJApp.openAdminUserManagementModal()" class="px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xs shadow-md transition active:scale-95 flex items-center gap-1.5 cursor-pointer">
+        <button type="button" id="btnAdminUserManagement" onclick="CJApp.openAdminUserManagementModal()" class="px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xs shadow-md transition active:scale-95 flex items-center gap-1.5 cursor-pointer">
           <span>👥</span>
           <span>Quản Lý User</span>
         </button>
 
         <!-- Nút Xem Tiến Độ Kiểm Tra Từng Người & Reset Kết Quả -->
-        <button type="button" onclick="CJApp.openAdminProgressReportModal()" class="px-3.5 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-500 hover:to-indigo-600 text-white font-black text-xs shadow-md transition active:scale-95 flex items-center gap-1.5 cursor-pointer border border-blue-400/50" title="Xem số lượng điểm bán đã kiểm tra của từng người và reset kết quả">
+        <button type="button" id="btnAdminProgressReport" onclick="CJApp.openAdminProgressReportModal()" class="px-3.5 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-500 hover:to-indigo-600 text-white font-black text-xs shadow-md transition active:scale-95 flex items-center gap-1.5 cursor-pointer border border-blue-400/50" title="Xem số lượng điểm bán đã kiểm tra của từng người và reset kết quả">
           <span>📈</span>
           <span>Tiến Độ Từng Người</span>
         </button>
@@ -2188,7 +2188,7 @@
   </div>
 
   <!-- ================= MODAL: ADMIN USER MANAGEMENT & CONTROL ================= -->
-  <div id="modalAdminUserManagement" class="hidden fixed inset-0 bg-black/75 z-50 flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+  <div id="modalAdminUserManagement" class="hidden fixed inset-0 bg-black/75 z-[100] flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
     <div class="bg-white rounded-3xl max-w-4xl w-full p-4 sm:p-6 space-y-4 shadow-2xl animate-fade-in border border-gray-200 my-auto">
       
       <!-- Modal Header -->
@@ -2283,7 +2283,7 @@
   </div>
 
   <!-- ================= MODAL: BÁO CÁO TIẾN ĐỘ KIỂM TRA & RESET KẾT QUẢ TỪNG NGƯỜI ================= -->
-  <div id="modalAdminProgressReport" class="hidden fixed inset-0 bg-black/75 z-50 flex items-center justify-center p-3 sm:p-4 overflow-y-auto font-sans">
+  <div id="modalAdminProgressReport" class="hidden fixed inset-0 bg-black/75 z-[100] flex items-center justify-center p-3 sm:p-4 overflow-y-auto font-sans">
     <div class="bg-white rounded-3xl max-w-6xl w-full p-4 sm:p-6 space-y-4 shadow-2xl animate-fade-in border border-gray-200 my-auto">
       
       <!-- Modal Header -->
@@ -2981,14 +2981,14 @@
   <div id="appToast" class="fixed top-5 right-5 z-50 opacity-0 translate-y-[-20px] pointer-events-none transition-all duration-300"></div>
 
   <!-- ================= APPLICATION SCRIPTS ================= -->
-  <script src="js/data.js?v=6.2"></script>
-  <script src="js/auth.js?v=6.2"></script>
-  <script src="js/storage.js?v=6.2"></script>
-  <script src="js/watermark.js?v=6.2"></script>
-  <script src="js/cloud_sync.js?v=6.2"></script>
-  <script src="js/audit.js?v=6.2"></script>
-  <script src="js/dashboard.js?v=6.2"></script>
-  <script src="js/excel.js?v=6.2"></script>
-  <script src="js/app.js?v=6.2"></script>
+  <script src="js/data.js?v=6.3"></script>
+  <script src="js/auth.js?v=6.3"></script>
+  <script src="js/storage.js?v=6.3"></script>
+  <script src="js/watermark.js?v=6.3"></script>
+  <script src="js/cloud_sync.js?v=6.3"></script>
+  <script src="js/audit.js?v=6.3"></script>
+  <script src="js/dashboard.js?v=6.3"></script>
+  <script src="js/excel.js?v=6.3"></script>
+  <script src="js/app.js?v=6.3"></script>
 </body>
 </html>
