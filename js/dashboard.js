@@ -718,3 +718,8 @@ const CJDashboard = {
     this.renderAuditTable(audits);
   }
 };
+
+if (typeof window !== "undefined") {
+  window.CJDashboard = CJDashboard;
+}
+
