@@ -1802,3 +1802,8 @@ const CJAudit = {
     }, 3500);
   }
 };
+
+if (typeof window !== "undefined") {
+  window.CJAudit = CJAudit;
+}
+
