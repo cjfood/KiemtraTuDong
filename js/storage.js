@@ -1404,3 +1404,8 @@ const CJStorage = {
     localStorage.setItem(this.KEYS.TICKETS, JSON.stringify([]));
   }
 };
+
+if (typeof window !== "undefined") {
+  window.CJStorage = CJStorage;
+}
+
