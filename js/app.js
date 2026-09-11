@@ -316,6 +316,13 @@ const CJApp = {
       }
 
       this.populateAdminActiveUserFilter();
+
+      // Tự động kéo dữ liệu kiểm tra từ Google Sheet về máy Admin (chạy ngầm không làm phiền)
+      if (typeof CJCloudSync !== "undefined" && CJCloudSync.syncAllFromCloud) {
+        setTimeout(() => {
+          CJCloudSync.syncAllFromCloud(true);
+        }, 800);
+      }
     } else {
       // REGULAR FIELD USER (GSBH / NVBH): CHỈ HIỂN THỊ DUY NHẤT GIAO DIỆN APP ĐIỆN THOẠI (PHẦN KHOANH ĐỎ)
       document.body.classList.add("is-user");
@@ -1049,6 +1056,43 @@ const CJApp = {
     } finally {
       input.value = "";
     }
+  },
+
+  async syncAuditsFromGoogleSheetManual() {
+    const spinners = document.querySelectorAll(".sync-sheet-spinner");
+    spinners.forEach(s => s.classList.add("animate-spin"));
+
+    if (typeof CJAudit !== "undefined" && CJAudit.showToast) {
+      CJAudit.showToast("🔄 Đang tải toàn bộ dữ liệu kiểm tra từ Google Sheet...", "info");
+    }
+
+    try {
+      if (typeof CJCloudSync !== "undefined" && CJCloudSync.syncAllFromCloud) {
+        const res = await CJCloudSync.syncAllFromCloud(false);
+        if (res && res.success) {
+          this.renderAdminUserManagementTable();
+          if (document.getElementById("modalAdminProgressReport") && !document.getElementById("modalAdminProgressReport").classList.contains("hidden")) {
+            this.renderAdminProgressReportTable();
+          }
+        }
+      } else {
+        alert("Chức năng đồng bộ chưa được nạp!");
+      }
+    } catch (err) {
+      console.error("Lỗi đồng bộ:", err);
+      alert("Lỗi khi đồng bộ Google Sheet: " + (err.message || err));
+    } finally {
+      spinners.forEach(s => s.classList.remove("animate-spin"));
+    }
+  },
+
+  onGoogleSheetAuditFileSelected(input) {
+    if (!input || !input.files || !input.files[0]) return;
+    const file = input.files[0];
+    if (typeof CJExcel !== "undefined" && CJExcel.importAuditsFromExcel) {
+      CJExcel.importAuditsFromExcel(file);
+    }
+    input.value = "";
   },
 
   resetUsersToAdminOnly() {
