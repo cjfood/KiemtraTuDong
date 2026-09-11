@@ -1085,6 +1085,172 @@ const CJStorage = {
     return true;
   },
 
+  saveStores(stores) {
+    if (!Array.isArray(stores)) return;
+    localStorage.setItem(this.KEYS.STORES, JSON.stringify(stores));
+  },
+
+  saveAudits(audits) {
+    if (!Array.isArray(audits)) return;
+    localStorage.setItem(this.KEYS.AUDITS, JSON.stringify(audits));
+  },
+
+  /**
+   * Đồng bộ các dòng kiểm tra từ Google Sheet về máy cục bộ
+   * Tự động cập nhật trạng thái isAudited của các điểm bán và danh sách AUDITS
+   */
+  syncAuditsFromCloud(cloudAudits) {
+    if (!Array.isArray(cloudAudits) || cloudAudits.length === 0) {
+      return { success: false, updatedStores: 0, addedAudits: 0, message: "Không có dữ liệu kiểm tra để đồng bộ" };
+    }
+
+    const stores = this.getAllStores();
+    const audits = this.getAudits();
+    const users = this.getUsers();
+
+    // Map tìm kiếm điểm bán nhanh
+    const storeByCode = new Map();
+    const storeByBarcode = new Map();
+    const storeByName = new Map();
+
+    stores.forEach(s => {
+      const clean = (val) => String(val || "").trim().toLowerCase();
+      if (s.id) storeByCode.set(clean(s.id), s);
+      if (s.storeCode) storeByCode.set(clean(s.storeCode), s);
+      if (s.code) storeByCode.set(clean(s.code), s);
+      if (s.originalId) storeByCode.set(clean(s.originalId), s);
+
+      if (s.serialNumber) storeByBarcode.set(clean(s.serialNumber), s);
+      if (s.barcode) storeByBarcode.set(clean(s.barcode), s);
+      if (s.freezerId) storeByBarcode.set(clean(s.freezerId), s);
+
+      if (s.name) storeByName.set(clean(s.name), s);
+      if (s.originalStoreName) storeByName.set(clean(s.originalStoreName), s);
+    });
+
+    // Map đối chiếu user
+    const userByCode = new Map();
+    users.forEach(u => {
+      const clean = (val) => String(val || "").trim().toLowerCase();
+      if (u.username) userByCode.set(clean(u.username), u);
+      if (u.empCode) userByCode.set(clean(u.empCode), u);
+      if (u.name) userByCode.set(clean(u.name), u);
+    });
+
+    let updatedStoresCount = 0;
+    let addedAuditsCount = 0;
+
+    cloudAudits.forEach((row, idx) => {
+      const custCode = String(row.customerCode || "").trim().toLowerCase();
+      const barcode = String(row.freezerBarcode || row.barcode || "").trim().toLowerCase();
+      const custName = String(row.customerName || "").trim().toLowerCase();
+      const userCode = String(row.userCode || "").trim().toLowerCase();
+      const userName = String(row.userName || "").trim();
+
+      // 1. Tìm điểm bán tương ứng
+      let store = null;
+      if (custCode && storeByCode.has(custCode)) {
+        store = storeByCode.get(custCode);
+      } else if (barcode && storeByBarcode.has(barcode)) {
+        store = storeByBarcode.get(barcode);
+      } else if (custName && storeByName.has(custName)) {
+        store = storeByName.get(custName);
+      }
+
+      const cond = String(row.workingCondition || "").toLowerCase();
+      const isAbnormal = cond.includes("hư") || cond.includes("hỏng") || cond.includes("lỗi") || cond.includes("bảo trì") || cond.includes("sửa");
+
+      // Chuẩn hóa thời gian
+      let auditDate = "Đã kiểm tra";
+      let auditTime = "";
+      if (row.timestamp) {
+        try {
+          const d = new Date(row.timestamp);
+          if (!isNaN(d.getTime())) {
+            auditDate = d.toLocaleDateString("vi-VN");
+            auditTime = d.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
+          } else {
+            auditDate = String(row.timestamp).split(" ")[0] || String(row.timestamp);
+            auditTime = String(row.timestamp).split(" ")[1] || "";
+          }
+        } catch (_) {
+          auditDate = String(row.timestamp);
+        }
+      }
+
+      if (store) {
+        store.isAudited = true;
+        store.status = isAbnormal ? "danger" : "good";
+        store.lastAuditDate = auditDate;
+        if (auditTime) store.lastAuditTime = auditTime;
+        store.lastAuditFull = auditTime ? `${auditTime} ${auditDate}` : auditDate;
+        store.lastAuditor = userName || row.userCode || store.lastAuditor || "";
+        store.posmCondition = row.workingCondition || "Sử Dụng Được";
+        if (row.notes || row.conditionNote) {
+          store.notes = row.conditionNote || row.notes;
+        }
+        if (row.photoPosmUrl && row.photoPosmUrl !== "Không có ảnh") {
+          store.photoPosmUrl = row.photoPosmUrl;
+        }
+        if (row.photoOverviewUrl && row.photoOverviewUrl !== "Không có ảnh") {
+          store.photoOverviewUrl = row.photoOverviewUrl;
+        }
+        updatedStoresCount++;
+      }
+
+      // 2. Thêm vào danh sách AUDITS nếu chưa có
+      const matchedUser = userByCode.get(userCode);
+      const effectiveUsername = matchedUser ? matchedUser.username : (row.userCode || (store && store.assignedUser) || "");
+
+      const auditKey = (custCode || (store && store.id) || "") + "_" + (barcode || "") + "_" + auditDate;
+      const alreadyHas = audits.some(a => {
+        const aKey = (a.storeId || a.customerCode || "") + "_" + (a.barcode || a.freezerBarcode || "") + "_" + (a.auditTime || "");
+        return aKey.toLowerCase().includes(custCode) && (barcode ? aKey.toLowerCase().includes(barcode) : true);
+      });
+
+      if (!alreadyHas) {
+        audits.unshift({
+          id: `AUDIT_SHEET_${Date.now()}_${idx}`,
+          auditTime: auditTime ? `${auditTime} ${auditDate}` : (row.timestamp || auditDate),
+          storeId: store ? store.id : (row.customerCode || ""),
+          storeName: store ? store.name : (row.customerName || ""),
+          channel: store ? store.channel : (row.region || "GT"),
+          auditorUser: effectiveUsername,
+          auditorName: userName || (matchedUser ? matchedUser.name : row.userCode) || "Nhân viên kiểm tra",
+          gsbhUsername: (store && store.assignedGsbh) || effectiveUsername,
+          assignedUser: (store && store.assignedUser) || effectiveUsername,
+          barcode: row.freezerBarcode || (store && store.barcode) || "",
+          freezerBarcode: row.freezerBarcode || "",
+          modelTu: row.freezerModel || (store && store.modelTu) || "",
+          posmQuantity: row.freezerQuantity || 1,
+          condition: row.workingCondition || "Sử Dụng Được",
+          workingCondition: row.workingCondition || "Sử Dụng Được",
+          notes: row.conditionNote || row.notes || "",
+          cleanliness: row.cleanliness || "Sạch sẽ",
+          photos: {
+            posm: row.photoPosmUrl || "",
+            overview: row.photoOverviewUrl || ""
+          },
+          photoPosmUrl: row.photoPosmUrl || "",
+          photoOverviewUrl: row.photoOverviewUrl || "",
+          fromCloudSheet: true
+        });
+        addedAuditsCount++;
+      }
+    });
+
+    this.saveStores(stores);
+    this.saveAudits(audits);
+
+    return {
+      success: true,
+      updatedStores: updatedStoresCount,
+      addedAudits: addedAuditsCount,
+      totalAudits: cloudAudits.length,
+      message: `Đã đồng bộ ${updatedStoresCount} điểm bán và ${addedAuditsCount} lượt kiểm tra từ Google Sheet!`
+    };
+  },
+
   /**
    * Thống kê số lượng và tiến độ kiểm tra của từng người dùng (Admin, GSBH, NVBH)
    */
