@@ -18,7 +18,7 @@ var SHEET_NAME = "DuLieuKiemTra";
 var FOLDER_NAME = "CJ_Market_Audit_Photos";
 
 function doGet(e) {
-  var action = (e && e.parameter && e.parameter.action) ? e.parameter.action : "ping";
+  var action = (e && e.parameter && e.parameter.action) ? e.parameter.action : "getAudits";
   
   if (action === "ping") {
     return ContentService.createTextOutput(JSON.stringify({
@@ -26,6 +26,84 @@ function doGet(e) {
       message: "Kết nối hệ thống Google Sheets & Drive CJ Foods (2 Ảnh) thành công!",
       timestamp: new Date().toISOString()
     })).setMimeType(ContentService.MimeType.JSON);
+  }
+  
+  if (action === "getAudits" || !action) {
+    try {
+      var ss = SpreadsheetApp.getActiveSpreadsheet();
+      var sheet = ss.getSheetByName(SHEET_NAME) || ss.getSheets()[0];
+      if (!sheet) {
+        return ContentService.createTextOutput(JSON.stringify({
+          status: "success",
+          total: 0,
+          audits: []
+        })).setMimeType(ContentService.MimeType.JSON);
+      }
+      
+      var lastRow = sheet.getLastRow();
+      if (lastRow <= 1) {
+        return ContentService.createTextOutput(JSON.stringify({
+          status: "success",
+          total: 0,
+          audits: []
+        })).setMimeType(ContentService.MimeType.JSON);
+      }
+      
+      var maxCols = Math.min(25, sheet.getLastColumn());
+      var data = sheet.getRange(2, 1, lastRow - 1, maxCols).getValues();
+      var audits = [];
+      
+      for (var i = 0; i < data.length; i++) {
+        var row = data[i];
+        // Bỏ qua dòng trống
+        if (!row[0] && !row[1] && !row[4] && !row[8]) continue;
+        
+        var timeVal = row[0];
+        var timeStr = "";
+        if (timeVal instanceof Date) {
+          timeStr = formatDate(timeVal);
+        } else {
+          timeStr = String(timeVal || "");
+        }
+        
+        audits.push({
+          timestamp: timeStr,
+          userCode: String(row[1] || "").trim(),
+          userName: String(row[2] || "").trim(),
+          region: String(row[3] || "").trim(),
+          customerCode: String(row[4] || "").trim(),
+          customerName: String(row[5] || "").trim(),
+          address: String(row[6] || "").trim(),
+          phone: String(row[7] || "").trim(),
+          freezerBarcode: String(row[8] || "").trim(),
+          freezerModel: String(row[9] || "").trim(),
+          freezerQuantity: row[10] || 1,
+          workingCondition: String(row[11] || "").trim(),
+          conditionNote: String(row[12] || "").trim(),
+          cleanliness: String(row[13] || "").trim(),
+          stockCompliance: String(row[14] || "").trim(),
+          displayLocation: String(row[15] || "").trim(),
+          posmStatus: String(row[16] || "").trim(),
+          notes: String(row[17] || "").trim(),
+          latitude: row[18] || "",
+          longitude: row[19] || "",
+          distanceMeters: row[20] || "",
+          photoPosmUrl: String(row[21] || "").trim(),
+          photoOverviewUrl: String(row[22] || "").trim()
+        });
+      }
+      
+      return ContentService.createTextOutput(JSON.stringify({
+        status: "success",
+        total: audits.length,
+        audits: audits
+      })).setMimeType(ContentService.MimeType.JSON);
+    } catch (err) {
+      return ContentService.createTextOutput(JSON.stringify({
+        status: "error",
+        message: "Lỗi đọc dữ liệu Google Sheets: " + err.toString()
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
   }
   
   return ContentService.createTextOutput(JSON.stringify({
