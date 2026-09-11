@@ -287,3 +287,8 @@ const CJAuth = {
     return user && user.role === "admin";
   }
 };
+
+if (typeof window !== "undefined") {
+  window.CJAuth = CJAuth;
+}
+
