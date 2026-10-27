@@ -722,6 +722,101 @@ const CJExcel = {
       }
     };
     reader.readAsArrayBuffer(file);
+  },
+
+  /**
+   * Export Comprehensive 23-Criteria Turnaround Audit Report to Excel
+   * Exactly matching the official 23 columns requested by FMCG/RTM Management
+   */
+  exportInactiveTurnaroundReport(targetUser = null) {
+    if (typeof XLSX === "undefined") {
+      alert("Thư viện SheetJS chưa được tải!");
+      return;
+    }
+
+    const currentUser = (typeof CJAuth !== "undefined" && CJAuth.getCurrentUser) ? CJAuth.getCurrentUser() : null;
+    let effectiveUser = targetUser;
+    if (!effectiveUser) {
+      effectiveUser = (typeof CJAuth !== "undefined" && CJAuth.isAdmin()) ? "ALL" : (currentUser ? currentUser.username : "ALL");
+    }
+
+    const stores = CJStorage.getStoresForUser(effectiveUser);
+    const audits = CJStorage.getAudits();
+    const auditMap = new Map();
+    audits.forEach(a => {
+      const k = a.storeId || a.customerCode;
+      if (k) auditMap.set(k, a);
+    });
+
+    const rows = stores.map((s, idx) => {
+      const a = auditMap.get(s.id) || auditMap.get(s.storeCode) || {};
+      return {
+        "STT": idx + 1,
+        "Miền": s.region || "",
+        "Vùng": s.area || "",
+        "Mã KH": s.storeCode || s.id,
+        "Tên Khách Hàng": s.originalStoreName || s.name,
+        "Địa Chỉ Điểm Đặt": s.address,
+        "Mã Thiết Bị": s.modelCode || s.freezerId,
+        "Tên Thiết Bị": s.model || s.modelTu,
+        "Số Seri": s.serialNumber || s.barcode || s.freezerId,
+        "Trạng Thái Gốc": s.assetStatus || "Active",
+        "Mức Doanh Số": s.salesTier || "",
+        "TB 3T Đông (VNĐ)": s.salesAvg3M || 0,
+        "User Kiểm Tra": a.auditorUser || s.auditorUser || "",
+        "Tên Người Kiểm Tra": a.auditorName || s.auditorName || "",
+        // 23 TIÊU CHÍ CHI TIẾT CHUẨN FMCG/RTM
+        "Tình trạng tủ": a.condition || s.posmCondition || "Chưa thẩm định",
+        "Tủ cắm điện / hoạt động?": a.powerStatus || (s.isAudited ? "Có" : "Chưa kiểm"),
+        "Tủ có hàng CJ?": a.hasCjGoods || "Chưa kiểm",
+        "Đơn hàng CJ 30 ngày?": a.orders30d !== undefined ? a.orders30d : "",
+        "Doanh số CJ 30 ngày (VND)": a.sales30d !== undefined ? a.sales30d : "",
+        "Loại hình điểm bán": a.storeType || s.channel || "",
+        "Kinh doanh ngành hàng gì?": a.businessCategory || "",
+        "Phù hợp nhóm CJ mục tiêu?": a.matchCjTarget || "",
+        "Vị trí tủ": a.freezerLocation || "",
+        "Độ nhận diện tủ": a.freezerVisibility || "",
+        "Tuyến có xe tải giao?": a.truckAccessible || "",
+        "Tần suất giao hàng": a.deliveryFrequency || "",
+        "Nguyên nhân chính không lấy hàng": a.rootCause || "",
+        "Nguyên nhân chi tiết/ghi chú": a.rootCauseDetail || "",
+        "Có bán hàng đối thủ?": a.hasCompetitor || "",
+        "Tiềm năng doanh số / tháng (VND)": a.revenuePotential || "",
+        "Đề xuất xử lý": a.actionProposal || s.actionProposal || "",
+        "PIC hành động": a.actionPic || s.actionPic || "",
+        "Hạn hoàn thành": a.deadline || "",
+        "Trạng thái": a.actionStatus || s.actionStatus || (s.isAudited ? "Đã kiểm tra" : "Chờ xử lý"),
+        "Ảnh hiện trạng / link": a.photoUrl ? "Đã chụp ảnh Watermark GPS" : "Chưa có ảnh",
+        "Kết quả sau xử lý": a.actionResult || "",
+        "Ngày Follow-up": a.followUpDate || "",
+        "Thời Gian Audit": a.auditTime || s.lastAuditFull || s.lastAuditDate || "Chưa audit"
+      };
+    });
+
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.json_to_sheet(rows);
+
+    const colWidths = [
+      { wch: 6 }, { wch: 12 }, { wch: 12 }, { wch: 14 }, { wch: 25 },
+      { wch: 30 }, { wch: 14 }, { wch: 20 }, { wch: 16 }, { wch: 14 },
+      { wch: 14 }, { wch: 16 }, { wch: 16 }, { wch: 22 }, { wch: 25 },
+      { wch: 22 }, { wch: 20 }, { wch: 15 }, { wch: 18 }, { wch: 20 },
+      { wch: 22 }, { wch: 20 }, { wch: 22 }, { wch: 20 }, { wch: 20 },
+      { wch: 20 }, { wch: 35 }, { wch: 40 }, { wch: 20 }, { wch: 22 },
+      { wch: 30 }, { wch: 20 }, { wch: 15 }, { wch: 18 }, { wch: 20 },
+      { wch: 25 }, { wch: 15 }, { wch: 20 }
+    ];
+    ws["!cols"] = colWidths;
+
+    XLSX.utils.book_append_sheet(wb, ws, "Báo Cáo 23 Tiêu Chí POSM");
+
+    const timeStr = new Date().toISOString().replace(/[-:T.]/g, "").slice(0, 14);
+    const fileName = `CJ_BaoCao_23TieuChi_TuDong_${timeStr}.xlsx`;
+    XLSX.writeFile(wb, fileName);
+
+    if (typeof CJAudit !== "undefined" && CJAudit.showToast) {
+      CJAudit.showToast(`✓ Đã xuất thành công ${rows.length} dòng báo cáo 23 tiêu chí!`, "success");
+    }
   }
 };
 
