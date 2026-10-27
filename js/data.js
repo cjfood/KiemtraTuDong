@@ -1,11 +1,11 @@
 /**
  * CJ MarketAudit - Comprehensive FMCG Master Database for CJ Foods Vietnam
- * Official Master Data: 53 Accounts, 3033 Outlets, 3033 Freezers
+ * Official Master Data: 56 Accounts, 3033 Outlets, 3033 Freezers
  * Auto-embedded from Master Excel Files (DS User.xlsx, DS_TuDong_CanKiemTra_PhanCong.xlsx)
- * Auto-sync timestamp: 20261027_153820
+ * Auto-sync timestamp: 20261027_154453
  */
 
-const CJ_DATA_TIMESTAMP = "20261027_153820";
+const CJ_DATA_TIMESTAMP = "20261027_154453";
 
 const CJ_SYSTEM_GOOGLE_SHEET_URL = "https://script.google.com/macros/s/AKfycbw4n6lsTKqsVXlrtyu2qx5GNFTksMmtoAyCcvgPpXfXD71nTP-pga_B2a2uAoSKRxOdOw/exec";
 
@@ -2813,6 +2813,54 @@ const GSBH_ACCOUNTS = [
     "avatar": "📋",
     "manager": "admin",
     "route": "Tuyến Rà Soát Tủ Đông",
+    "teamSalesReps": []
+  },
+  {
+    "username": "audit1",
+    "empCode": "AUDIT1",
+    "password": "123",
+    "name": "Nguyễn Văn An (Audit 1)",
+    "role": "auditor",
+    "roleTitle": "Thẩm Định Viên (Miền Nam (Văn Phòng))",
+    "channel": "GT",
+    "area": "Miền Nam (Văn Phòng)",
+    "phone": "0908 000 000",
+    "email": "audit1@cjfoods.vn",
+    "avatar": "📋",
+    "manager": "admin",
+    "route": "Tuyến Miền Nam (Văn Phòng)",
+    "teamSalesReps": []
+  },
+  {
+    "username": "audit2",
+    "empCode": "AUDIT2",
+    "password": "123",
+    "name": "Trần Thị Bích (Trade Mkt 2)",
+    "role": "auditor",
+    "roleTitle": "Thẩm Định Viên (Miền Bắc (Văn Phòng))",
+    "channel": "GT",
+    "area": "Miền Bắc (Văn Phòng)",
+    "phone": "0908 000 000",
+    "email": "audit2@cjfoods.vn",
+    "avatar": "📋",
+    "manager": "admin",
+    "route": "Tuyến Miền Bắc (Văn Phòng)",
+    "teamSalesReps": []
+  },
+  {
+    "username": "audit3",
+    "empCode": "AUDIT3",
+    "password": "123",
+    "name": "Lê Hoàng Nam (Sales Cap 3)",
+    "role": "auditor",
+    "roleTitle": "Thẩm Định Viên (Miền Trung (Văn Phòng))",
+    "channel": "GT",
+    "area": "Miền Trung (Văn Phòng)",
+    "phone": "0908 000 000",
+    "email": "audit3@cjfoods.vn",
+    "avatar": "📋",
+    "manager": "admin",
+    "route": "Tuyến Miền Trung (Văn Phòng)",
     "teamSalesReps": []
   }
 ];
