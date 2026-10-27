@@ -173,6 +173,22 @@
               Đăng nhập
             </button>
 
+            <!-- Quick Login Shortcuts for Auditors & Admin -->
+            <div class="mt-2.5 pt-2 border-t border-gray-200 text-center space-y-1.5">
+              <p class="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Chọn nhanh tài khoản kiểm tra:</p>
+              <div class="flex flex-wrap items-center justify-center gap-1.5">
+                <button type="button" onclick="document.getElementById('loginUsername').value='audit1';document.getElementById('loginPassword').value='123';document.getElementById('appLoginForm').requestSubmit();" class="text-[10px] font-extrabold px-2.5 py-1 bg-blue-100 hover:bg-blue-200 text-blue-900 rounded-lg transition active:scale-95 shadow-2xs">
+                  📋 audit1 (15 Điểm)
+                </button>
+                <button type="button" onclick="document.getElementById('loginUsername').value='audit2';document.getElementById('loginPassword').value='123';document.getElementById('appLoginForm').requestSubmit();" class="text-[10px] font-extrabold px-2.5 py-1 bg-indigo-100 hover:bg-indigo-200 text-indigo-900 rounded-lg transition active:scale-95 shadow-2xs">
+                  📋 audit2 (15 Điểm)
+                </button>
+                <button type="button" onclick="document.getElementById('loginUsername').value='admin';document.getElementById('loginPassword').value='123';document.getElementById('appLoginForm').requestSubmit();" class="text-[10px] font-extrabold px-2.5 py-1 bg-amber-100 hover:bg-amber-200 text-amber-900 rounded-lg transition active:scale-95 shadow-2xs">
+                  👑 admin
+                </button>
+              </div>
+            </div>
+
           </form>
 
         </div>
