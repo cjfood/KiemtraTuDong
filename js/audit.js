@@ -1868,8 +1868,7 @@ const CJAudit = {
     setTimeout(() => {
       toast.classList.add("opacity-0", "translate-y-[-20px]", "pointer-events-none");
     }, 3500);
-  }
-};
+  },
 
 
   // ================= 23-CRITERIA INACTIVE FREEZER AUDIT ENGINE =================
