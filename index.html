@@ -591,6 +591,10 @@
           </div>
 
           <div class="flex flex-wrap items-center gap-2">
+            <button onclick="CJExcel.exportInactiveTurnaroundReport()" class="bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white text-xs font-bold px-2.5 py-1.5 rounded-xl shadow flex items-center gap-1 transition active:scale-95 cursor-pointer" title="Xuất Báo Cáo Thẩm Định 23 Tiêu Chí RTM">
+              <span>📑</span>
+              <span class="hidden sm:inline">Xuất BC 23 Tiêu Chí</span>
+            </button>
             <button onclick="CJExcel.downloadImportTemplate()" class="bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 text-xs font-bold px-2.5 py-1.5 rounded-xl flex items-center gap-1 transition active:scale-95" title="Tải file Excel mẫu">
               <span>📥</span>
               <span class="hidden sm:inline">File Mẫu Excel</span>
@@ -634,6 +638,73 @@
                   <option value="hung.nv">Hùng ▼</option>
                 </select>
                 <div class="pointer-events-none absolute right-2 text-white text-[10px]">▼</div>
+              </div>
+            </div>
+
+            <!-- BẢNG TỔNG HỢP TIẾN ĐỘ THẨM ĐỊNH TỦ ĐÔNG (AUDIT DASHBOARD WIDGET) -->
+            <div id="auditorSummaryWidget" class="bg-gradient-to-br from-slate-900 via-blue-950 to-indigo-950 text-white p-3.5 sm:p-4 rounded-b-2xl border-b border-blue-500/30 shadow-lg space-y-3">
+              
+              <!-- Header: User Greeting & Route summary -->
+              <div class="flex items-center justify-between gap-2 border-b border-white/10 pb-2.5">
+                <div class="flex items-center gap-2">
+                  <span class="text-xl">📊</span>
+                  <div>
+                    <h3 class="text-xs sm:text-sm font-black tracking-wide text-yellow-300 uppercase" id="widgetAuditTitle">
+                      TIẾN ĐỘ THẨM ĐỊNH THỊ TRƯỜNG
+                    </h3>
+                    <p class="text-[11px] text-blue-200" id="widgetAuditSub">
+                      Tuyến phụ trách: <b id="widgetUserRoute" class="text-white">Toàn Quốc</b>
+                    </p>
+                  </div>
+                </div>
+                <div class="text-right">
+                  <span class="text-xs font-black px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/40" id="widgetCompletionBadge">
+                    0% Hoàn Thành
+                  </span>
+                </div>
+              </div>
+
+              <!-- 4 Primary KPI Metric Cards -->
+              <div class="grid grid-cols-4 gap-1.5 sm:gap-2">
+                <!-- Card 1: Total Stores -->
+                <div onclick="CJAudit.setStatusFilter('all')" class="bg-white/10 backdrop-blur-sm rounded-xl p-2 text-center border border-white/10 hover:border-blue-400 transition cursor-pointer active:scale-95">
+                  <p class="text-[10px] text-blue-200 font-bold uppercase">Tổng Điểm</p>
+                  <p class="text-base sm:text-lg font-black text-white mt-0.5" id="statTotalStores">0</p>
+                </div>
+
+                <!-- Card 2: Audited -->
+                <div onclick="CJAudit.setStatusFilter('audited')" class="bg-emerald-500/20 rounded-xl p-2 text-center border border-emerald-400/30 hover:border-emerald-300 transition cursor-pointer active:scale-95">
+                  <p class="text-[10px] text-emerald-300 font-bold uppercase">Đã Audit</p>
+                  <p class="text-base sm:text-lg font-black text-emerald-300 mt-0.5" id="statAuditedStores">0</p>
+                </div>
+
+                <!-- Card 3: Pending -->
+                <div onclick="CJAudit.setStatusFilter('pending')" class="bg-amber-500/20 rounded-xl p-2 text-center border border-amber-400/30 hover:border-amber-300 transition cursor-pointer active:scale-95">
+                  <p class="text-[10px] text-amber-300 font-bold uppercase">Chưa Đi</p>
+                  <p class="text-base sm:text-lg font-black text-amber-300 mt-0.5" id="statPendingStores">0</p>
+                </div>
+
+                <!-- Card 4: Action/Retract Needed -->
+                <div onclick="CJAudit.setStatusFilter('retract')" class="bg-rose-500/20 rounded-xl p-2 text-center border border-rose-400/30 hover:border-rose-300 transition cursor-pointer active:scale-95">
+                  <p class="text-[10px] text-rose-300 font-bold uppercase">Cần Thu Hồi</p>
+                  <p class="text-base sm:text-lg font-black text-rose-300 mt-0.5" id="statRetractStores">0</p>
+                </div>
+              </div>
+
+              <!-- Cold Chain & Sales Quality Progress Indicators -->
+              <div class="bg-white/5 rounded-xl px-2.5 py-1.5 flex flex-wrap items-center justify-between gap-2 text-[11px] text-gray-300 border border-white/5">
+                <div class="flex items-center gap-1">
+                  <span>⚡ Cắm điện:</span>
+                  <b class="text-emerald-400 font-black" id="statPowerRate">--%</b>
+                </div>
+                <div class="flex items-center gap-1">
+                  <span>❄️ Có hàng CJ:</span>
+                  <b class="text-blue-400 font-black" id="statGoodsRate">--%</b>
+                </div>
+                <div class="flex items-center gap-1">
+                  <span>⚠️ Tủ 3T Ko Mua:</span>
+                  <b class="text-amber-400 font-black" id="statZeroSales">0 tủ</b>
+                </div>
               </div>
             </div>
 
@@ -2973,6 +3044,354 @@
           Đóng
         </button>
       </div>
+
+    </div>
+  </div>
+
+  <!-- ================= MODAL: THẨM ĐỊNH TỦ ĐÔNG KÉM HIỆU QUẢ (23 TIÊU CHÍ RTM) ================= -->
+  <div id="modalInactiveFreezerAudit" class="hidden fixed inset-0 bg-black/80 z-[120] flex items-center justify-center p-2.5 sm:p-4 overflow-y-auto font-sans">
+    <div class="bg-white rounded-3xl max-w-2xl w-full p-4 sm:p-6 space-y-4 shadow-2xl animate-fade-in border border-gray-200 max-h-[92vh] overflow-y-auto relative">
+      
+      <!-- Top Modal Header -->
+      <div class="flex items-start justify-between border-b pb-3.5 gap-3">
+        <div class="flex items-center gap-3">
+          <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-amber-500 to-red-600 text-white flex items-center justify-center font-black text-xl shadow-md">
+            ❄️
+          </div>
+          <div>
+            <div class="flex flex-wrap items-center gap-1.5 mb-0.5">
+              <span class="text-[10px] font-black px-2 py-0.5 rounded-full bg-red-100 text-cj-red uppercase tracking-wider">Turnaround Audit</span>
+              <span class="text-xs font-bold text-gray-500" id="inAuditStoreCode">STR00000</span>
+            </div>
+            <h3 class="font-black text-base sm:text-lg text-gray-900 leading-tight" id="inAuditStoreName">Tên Điểm Bán</h3>
+            <p class="text-xs text-gray-500 mt-0.5 flex items-center gap-1" id="inAuditStoreAddress">📍 Địa chỉ</p>
+          </div>
+        </div>
+        <button type="button" onclick="CJAudit.closeInactiveAuditModal()" class="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-gray-900 flex items-center justify-center font-bold text-lg transition active:scale-90" title="Đóng modal">
+          ✕
+        </button>
+      </div>
+
+      <!-- Quick Info Strip (Freezer ID, Model, 3M Avg Sales, Status) -->
+      <div class="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200/80 rounded-2xl p-3 flex flex-wrap items-center justify-between gap-2 text-xs">
+        <div>
+          <span class="text-gray-500">Mã Tủ POSM:</span>
+          <b class="text-blue-900 font-black ml-1" id="inAuditFreezerId">TDO00000</b>
+          <span class="text-gray-400 mx-1">•</span>
+          <span class="text-gray-700 font-medium" id="inAuditFreezerModel">Alaska 300L</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="text-gray-500">Trạng thái:</span>
+          <span class="font-black px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 text-[11px]" id="inAuditAssetStatus">3T Ko Mua</span>
+          <span class="text-gray-500 ml-1">TB 3T:</span>
+          <b class="text-cj-red font-black" id="inAuditAvgSales">0 đ</b>
+        </div>
+      </div>
+
+      <!-- Audit Form Accordion / Step Blocks (23 Tiêu Chí) -->
+      <form id="formInactiveAudit" onsubmit="event.preventDefault(); CJAudit.submitInactiveAudit();" class="space-y-4 text-xs">
+
+        <!-- ================= NHÓM 1: VẬN HÀNH TỦ POSM ================= -->
+        <div class="bg-white border border-gray-200 rounded-2xl p-3.5 sm:p-4 space-y-3 shadow-sm">
+          <div class="flex items-center gap-2 border-b border-gray-100 pb-2">
+            <span class="text-base">❄️</span>
+            <h4 class="font-black text-sm text-gray-900 uppercase">1. Tình trạng vận hành tủ POSM</h4>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <!-- 1. Tình trạng tủ -->
+            <div>
+              <label class="block font-bold text-gray-700 mb-1">1. Tình trạng tủ *</label>
+              <select id="inAuditCondition" required class="w-full p-2.5 rounded-xl border border-gray-300 font-medium bg-gray-50 focus:bg-white focus:border-blue-500 outline-none">
+                <option value="Bình thường">Bình thường (Đang dùng tốt)</option>
+                <option value="Hỏng lốc máy / Không lạnh">Hỏng lốc máy / Không lạnh</option>
+                <option value="Hỏng kính / Gioăng đệm rách">Hỏng kính / Gioăng đệm rách</option>
+                <option value="Tủ cũ nát / Rỉ sét">Tủ cũ nát / Rỉ sét</option>
+                <option value="Mất tủ / Không thấy tủ tại điểm">Mất tủ / Không thấy tủ tại điểm</option>
+              </select>
+            </div>
+
+            <!-- 2. Tủ cắm điện / hoạt động? -->
+            <div>
+              <label class="block font-bold text-gray-700 mb-1">2. Tủ cắm điện / hoạt động? *</label>
+              <select id="inAuditPowerStatus" required class="w-full p-2.5 rounded-xl border border-gray-300 font-medium bg-gray-50 focus:bg-white focus:border-blue-500 outline-none">
+                <option value="Có cắm 24/7">Có cắm điện 24/7 (Đạt chuẩn)</option>
+                <option value="Rút điện ban đêm">Rút điện ban đêm (Hỏng hàng)</option>
+                <option value="Đang rút điện hoàn toàn">Đang rút điện hoàn toàn (Tắt)</option>
+                <option value="Cắm chập chờn / Ổ cắm hỏng">Cắm chập chờn / Ổ cắm hỏng</option>
+              </select>
+            </div>
+
+            <!-- 3. Tủ có hàng CJ? -->
+            <div>
+              <label class="block font-bold text-gray-700 mb-1">3. Tủ có hàng CJ? *</label>
+              <select id="inAuditHasCjGoods" required class="w-full p-2.5 rounded-xl border border-gray-300 font-medium bg-gray-50 focus:bg-white focus:border-blue-500 outline-none">
+                <option value="Đầy đủ hàng CJ">Đầy đủ hàng CJ (Trưng bày tốt)</option>
+                <option value="Rất ít hàng (1-3 gói)">Rất ít hàng (1-3 gói lèo tèo)</option>
+                <option value="Trống trơn không có hàng">Trống trơn không có hàng</option>
+                <option value="Bị hàng khác lấn chiếm 100%">Bị hàng khác lấn chiếm 100%</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- ================= NHÓM 2: DOANH SỐ & BÁN HÀNG ================= -->
+        <div class="bg-white border border-gray-200 rounded-2xl p-3.5 sm:p-4 space-y-3 shadow-sm">
+          <div class="flex items-center gap-2 border-b border-gray-100 pb-2">
+            <span class="text-base">📈</span>
+            <h4 class="font-black text-sm text-gray-900 uppercase">2. Hiệu quả kinh doanh & Sell-out thực tế</h4>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            <!-- 4. Đơn hàng CJ 30 ngày? -->
+            <div>
+              <label class="block font-bold text-gray-700 mb-1">4. Đơn hàng CJ 30 ngày *</label>
+              <input type="number" id="inAuditOrders30d" min="0" value="0" required class="w-full p-2.5 rounded-xl border border-gray-300 font-bold bg-gray-50 focus:bg-white focus:border-blue-500 outline-none" placeholder="Số đơn (VD: 0, 1, 2...)" />
+            </div>
+
+            <!-- 5. Doanh số CJ 30 ngày (VND) -->
+            <div>
+              <label class="block font-bold text-gray-700 mb-1">5. Doanh số CJ 30 ngày (VNĐ) *</label>
+              <input type="text" id="inAuditSales30d" value="0" required class="w-full p-2.5 rounded-xl border border-gray-300 font-bold bg-gray-50 focus:bg-white focus:border-blue-500 outline-none" placeholder="VNĐ (VD: 500,000)" />
+            </div>
+
+            <!-- 6. Có bán hàng đối thủ? -->
+            <div>
+              <label class="block font-bold text-gray-700 mb-1">6. Có bán hàng đối thủ? *</label>
+              <select id="inAuditHasCompetitor" onchange="CJAudit.onCompetitorChange(this.value)" required class="w-full p-2.5 rounded-xl border border-gray-300 font-medium bg-gray-50 focus:bg-white focus:border-blue-500 outline-none">
+                <option value="Không">Không (Chỉ bán hàng CJ)</option>
+                <option value="Có">Có (Có hàng đối thủ cạnh tranh)</option>
+              </select>
+            </div>
+
+            <!-- 7. Tiềm năng doanh số / tháng (VND) -->
+            <div>
+              <label class="block font-bold text-gray-700 mb-1">7. Tiềm năng doanh số / tháng *</label>
+              <select id="inAuditRevenuePotential" required class="w-full p-2.5 rounded-xl border border-gray-300 font-medium bg-gray-50 focus:bg-white focus:border-blue-500 outline-none">
+                <option value="Dưới 1 triệu">Dưới 1 triệu VNĐ / tháng</option>
+                <option value="1M ~ 3M">1.000.000 - 3.000.000 VNĐ</option>
+                <option value="3M ~ 5M">3.000.000 - 5.000.000 VNĐ</option>
+                <option value="Trên 5 triệu">Trên 5.000.000 VNĐ</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Chi tiết đối thủ (nếu chọn Có) -->
+          <div id="inAuditCompetitorDetailBox" class="hidden bg-amber-50/60 p-2.5 rounded-xl border border-amber-200">
+            <label class="block font-bold text-amber-900 mb-1">Tên đối thủ đang bán tại tiệm:</label>
+            <input type="text" id="inAuditCompetitorDetail" class="w-full p-2 rounded-lg border border-amber-300 bg-white text-gray-900 text-xs" placeholder="VD: CP, San Hà, Vissan, Hàng xá đông lạnh..." />
+          </div>
+        </div>
+
+        <!-- ================= NHÓM 3: ĐÁNH GIÁ ĐIỂM BÁN & LOGISTICS ================= -->
+        <div class="bg-white border border-gray-200 rounded-2xl p-3.5 sm:p-4 space-y-3 shadow-sm">
+          <div class="flex items-center gap-2 border-b border-gray-100 pb-2">
+            <span class="text-base">🏪</span>
+            <h4 class="font-black text-sm text-gray-900 uppercase">3. Đánh giá Điểm bán & Định vị RTM</h4>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            <!-- 8. Loại hình điểm bán -->
+            <div>
+              <label class="block font-bold text-gray-700 mb-1">8. Loại hình điểm bán *</label>
+              <select id="inAuditStoreType" required class="w-full p-2.5 rounded-xl border border-gray-300 font-medium bg-gray-50 focus:bg-white focus:border-blue-500 outline-none">
+                <option value="Tiệm tạp hóa truyền thống">Tiệm tạp hóa truyền thống</option>
+                <option value="Tạp hoá chợ">Tạp hoá chợ</option>
+                <option value="Mini Mart">Mini Mart / Cửa hàng tiện lợi</option>
+                <option value="Sỉ đông lạnh">Sỉ đông lạnh</option>
+                <option value="Nhà thầu / Tiệc cưới">Nhà thầu / Nấu ăn tiệc cưới</option>
+                <option value="Quán ăn vặt / Horeca">Quán ăn vặt / Nhà hàng Horeca</option>
+              </select>
+            </div>
+
+            <!-- 9. Kinh doanh ngành hàng gì? -->
+            <div>
+              <label class="block font-bold text-gray-700 mb-1">9. Kinh doanh ngành hàng gì? *</label>
+              <input type="text" id="inAuditBusinessCategory" required class="w-full p-2.5 rounded-xl border border-gray-300 font-medium bg-gray-50 focus:bg-white focus:border-blue-500 outline-none" placeholder="VD: Thực phẩm đông lạnh, Tươi sống, Bách hóa..." />
+            </div>
+
+            <!-- 10. Phù hợp nhóm CJ mục tiêu? -->
+            <div>
+              <label class="block font-bold text-gray-700 mb-1">10. Phù hợp nhóm CJ mục tiêu? *</label>
+              <select id="inAuditMatchCjTarget" required class="w-full p-2.5 rounded-xl border border-gray-300 font-medium bg-gray-50 focus:bg-white focus:border-blue-500 outline-none">
+                <option value="Rất phù hợp">Rất phù hợp (Khu đông dân, khách mua nhiều)</option>
+                <option value="Bình thường">Bình thường (Tiềm năng trung bình)</option>
+                <option value="Không phù hợp">Không phù hợp (Khu vắng, khách chuộng hàng rẻ)</option>
+              </select>
+            </div>
+
+            <!-- 11. Vị trí tủ -->
+            <div>
+              <label class="block font-bold text-gray-700 mb-1">11. Vị trí đặt tủ *</label>
+              <select id="inAuditFreezerLocation" required class="w-full p-2.5 rounded-xl border border-gray-300 font-medium bg-gray-50 focus:bg-white focus:border-blue-500 outline-none">
+                <option value="Mặt tiền đắc địa">Mặt tiền đắc địa (Đập vào mắt khách)</option>
+                <option value="Trong nhà khuất tầm nhìn">Trong nhà khuất tầm nhìn</option>
+                <option value="Sau quầy / Góc kho">Sau quầy / Góc kho (Khó tiếp cận)</option>
+              </select>
+            </div>
+
+            <!-- 12. Độ nhận diện tủ -->
+            <div>
+              <label class="block font-bold text-gray-700 mb-1">12. Độ nhận diện tủ *</label>
+              <select id="inAuditFreezerVisibility" required class="w-full p-2.5 rounded-xl border border-gray-300 font-medium bg-gray-50 focus:bg-white focus:border-blue-500 outline-none">
+                <option value="Rõ ràng bắt mắt">Rõ ràng, bắt mắt (Decal mới đẹp)</option>
+                <option value="Bị che khuất bởi hàng khác">Bị che khuất bởi hàng khác / thùng carton</option>
+                <option value="Decal thương hiệu rách/mờ">Decal thương hiệu CJ rách / mờ / bong tróc</option>
+              </select>
+            </div>
+
+            <!-- 13. Tuyến có xe tải giao? -->
+            <div>
+              <label class="block font-bold text-gray-700 mb-1">13. Tuyến có xe tải giao? *</label>
+              <select id="inAuditTruckAccessible" required class="w-full p-2.5 rounded-xl border border-gray-300 font-medium bg-gray-50 focus:bg-white focus:border-blue-500 outline-none">
+                <option value="Có xe tải vào tận nơi">Có - Xe tải vào tận nơi giao hàng</option>
+                <option value="Hẻm nhỏ chỉ xe máy vào được">Không - Hẻm nhỏ chỉ xe máy vào được</option>
+              </select>
+            </div>
+
+            <!-- 14. Tần suất giao hàng -->
+            <div class="sm:col-span-2 lg:col-span-3">
+              <label class="block font-bold text-gray-700 mb-1">14. Tần suất giao hàng của NPP / SR *</label>
+              <select id="inAuditDeliveryFrequency" required class="w-full p-2.5 rounded-xl border border-gray-300 font-medium bg-gray-50 focus:bg-white focus:border-blue-500 outline-none">
+                <option value="Hàng ngày (Daily)">Hàng ngày (Daily)</option>
+                <option value="2-3 lần/tuần">2-3 lần / tuần (Đúng lịch MCP)</option>
+                <option value="1 lần/tuần">1 lần / tuần</option>
+                <option value="Không có tuyến cố định">Không có tuyến cố định / Khi nào gọi mới giao</option>
+                <option value="NPP ngưng giao hàng">NPP ngưng giao hàng cho điểm này</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- ================= NHÓM 4: NGUYÊN NHÂN CỐT LÕI ================= -->
+        <div class="bg-white border border-gray-200 rounded-2xl p-3.5 sm:p-4 space-y-3 shadow-sm">
+          <div class="flex items-center gap-2 border-b border-gray-100 pb-2">
+            <span class="text-base">🔍</span>
+            <h4 class="font-black text-sm text-gray-900 uppercase">4. Chẩn đoán nguyên nhân không lấy hàng</h4>
+          </div>
+
+          <div class="space-y-3">
+            <!-- 15. Nguyên nhân chính không lấy hàng -->
+            <div>
+              <label class="block font-bold text-gray-700 mb-1">15. Nguyên nhân chính không lấy hàng *</label>
+              <select id="inAuditRootCause" required class="w-full p-2.5 rounded-xl border border-gray-300 font-bold text-blue-900 bg-gray-50 focus:bg-white focus:border-blue-500 outline-none">
+                <option value="Hàng CJ bán chậm, không có khách hỏi mua">Hàng CJ bán chậm, không có khách hỏi mua</option>
+                <option value="Giá nhập cao, lợi nhuận thấp hơn đối thủ">Giá nhập cao, lợi nhuận thấp hơn đối thủ</option>
+                <option value="NPP/SR không chăm sóc tuyến, không ghé chào hàng">NPP/SR không chăm sóc tuyến, không ghé chào hàng</option>
+                <option value="Tồn kho date cũ chưa được NPP thu hồi/đổi date">Tồn kho date cũ chưa được NPP thu hồi/đổi date</option>
+                <option value="Chủ tiệm đổi ngành nghề / chuẩn bị đóng cửa">Chủ tiệm đổi ngành nghề / chuẩn bị đóng cửa</option>
+                <option value="Khách chuộng sản phẩm đối thủ (CP, San Hà, Vissan)">Khách chuộng sản phẩm đối thủ (CP, San Hà, Vissan)</option>
+                <option value="Tủ đông bị hỏng lốc, tiệm không bán đồ đông lạnh nữa">Tủ đông bị hỏng lốc, tiệm không bán đồ đông lạnh nữa</option>
+                <option value="Lý do khác">Lý do khác (Ghi rõ bên dưới)</option>
+              </select>
+            </div>
+
+            <!-- 16. Nguyên nhân chi tiết / ghi chú -->
+            <div>
+              <label class="block font-bold text-gray-700 mb-1">16. Nguyên nhân chi tiết & Ý kiến chủ điểm bán *</label>
+              <textarea id="inAuditRootCauseDetail" rows="2" required class="w-full p-2.5 rounded-xl border border-gray-300 font-medium text-gray-900 outline-none focus:border-blue-500" placeholder="Ghi nhận trung thực phản hồi của chủ tiệm (VD: Chủ quán phàn nàn giá Mandu cao hơn sủi cảo đối thủ 4k/gói, SR 2 tháng nay không ghé...)"></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- ================= NHÓM 5: ĐỀ XUẤT XỬ LÝ & ACTION PLAN ================= -->
+        <div class="bg-white border border-gray-200 rounded-2xl p-3.5 sm:p-4 space-y-3 shadow-sm">
+          <div class="flex items-center gap-2 border-b border-gray-100 pb-2">
+            <span class="text-base">⚡</span>
+            <h4 class="font-black text-sm text-gray-900 uppercase">5. Kế hoạch hành động & Theo dõi xử lý (Action Plan)</h4>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            <!-- 17. Đề xuất xử lý -->
+            <div class="sm:col-span-2">
+              <label class="block font-bold text-gray-700 mb-1">17. Đề xuất xử lý *</label>
+              <select id="inAuditActionProposal" required class="w-full p-2.5 rounded-xl border border-gray-300 font-black text-cj-red bg-red-50/50 focus:bg-white focus:border-blue-500 outline-none">
+                <option value="Thu hồi tủ về kho (Không hiệu quả)">🚨 Thu hồi tủ về kho (Không hiệu quả)</option>
+                <option value="Đổi sang loại tủ nhỏ hơn (Tiết kiệm điện)">🔄 Đổi sang loại tủ nhỏ hơn (Tiết kiệm điện)</option>
+                <option value="Hỗ trợ CTKM Sell-out kích cầu (Kích hoạt lại)">🎯 Hỗ trợ CTKM Sell-out kích cầu (Kích hoạt lại)</option>
+                <option value="Yêu cầu NPP/SR tuyến ghé viếng thăm lại định kỳ">🤝 Yêu cầu NPP/SR tuyến ghé viếng thăm lại định kỳ</option>
+                <option value="Chuyển điểm bán sang NPP khác phụ trách">🚚 Chuyển điểm bán sang NPP khác phụ trách</option>
+                <option value="Yêu cầu dọn dẹp chuyển tủ ra mặt tiền">📍 Yêu cầu dọn dẹp chuyển tủ ra mặt tiền</option>
+                <option value="Giữ nguyên theo dõi thêm 1 tháng">⏳ Giữ nguyên theo dõi thêm 1 tháng</option>
+              </select>
+            </div>
+
+            <!-- 18. PIC hành động -->
+            <div>
+              <label class="block font-bold text-gray-700 mb-1">18. PIC hành động *</label>
+              <input type="text" id="inAuditActionPic" required class="w-full p-2.5 rounded-xl border border-gray-300 font-bold text-gray-900 bg-gray-50 focus:bg-white focus:border-blue-500 outline-none" placeholder="Tên nhân sự xử lý (VD: GSBH Nam)" />
+            </div>
+
+            <!-- 19. Hạn hoàn thành -->
+            <div>
+              <label class="block font-bold text-gray-700 mb-1">19. Hạn hoàn thành (Deadline) *</label>
+              <input type="date" id="inAuditDeadline" required class="w-full p-2.5 rounded-xl border border-gray-300 font-bold text-gray-900 bg-gray-50 focus:bg-white focus:border-blue-500 outline-none" />
+            </div>
+
+            <!-- 20. Trạng thái -->
+            <div>
+              <label class="block font-bold text-gray-700 mb-1">20. Trạng thái *</label>
+              <select id="inAuditActionStatus" required class="w-full p-2.5 rounded-xl border border-gray-300 font-bold bg-gray-50 focus:bg-white focus:border-blue-500 outline-none">
+                <option value="Chờ xử lý">Chờ xử lý (Pending)</option>
+                <option value="Đang xử lý">Đang xử lý (In Progress)</option>
+                <option value="Đã hoàn thành">Đã hoàn thành (Resolved)</option>
+                <option value="Không thể xử lý">Không thể xử lý (Failed)</option>
+              </select>
+            </div>
+
+            <!-- 22. Kết quả sau xử lý -->
+            <div>
+              <label class="block font-bold text-gray-700 mb-1">22. Kết quả sau xử lý</label>
+              <input type="text" id="inAuditActionResult" class="w-full p-2.5 rounded-xl border border-gray-300 font-medium text-gray-900 bg-gray-50 focus:bg-white focus:border-blue-500 outline-none" placeholder="VD: Đã thu hồi / Đã lên đơn mới..." />
+            </div>
+
+            <!-- 23. Ngày Follow-up -->
+            <div class="sm:col-span-2">
+              <label class="block font-bold text-gray-700 mb-1">23. Ngày Follow-up (Tái kiểm tra) *</label>
+              <input type="date" id="inAuditFollowUpDate" required class="w-full p-2.5 rounded-xl border border-gray-300 font-bold text-gray-900 bg-gray-50 focus:bg-white focus:border-blue-500 outline-none" />
+            </div>
+          </div>
+
+          <!-- 21. Ảnh hiện trạng (Chống gian lận Watermark GPS) -->
+          <div class="border-t border-gray-100 pt-3 space-y-2">
+            <label class="block font-bold text-gray-800">21. Ảnh chụp hiện trạng tủ đông (Đóng dấu Watermark GPS) *</label>
+            <div class="flex flex-wrap items-center gap-2">
+              <button type="button" onclick="CJAudit.triggerInactiveCamera()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-3.5 py-2 rounded-xl flex items-center gap-1.5 shadow transition active:scale-95">
+                <span>📷</span>
+                <span>Bật Camera Chụp Ngay</span>
+              </button>
+              <label class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold px-3 py-2 rounded-xl flex items-center gap-1.5 cursor-pointer transition active:scale-95">
+                <span>📁</span>
+                <span>Chọn từ thư viện ảnh</span>
+                <input type="file" id="inAuditPhotoFileInput" accept="image/*" class="hidden" onchange="CJAudit.handleInactivePhotoUpload(event)" />
+              </label>
+            </div>
+
+            <!-- Image Preview Box -->
+            <div id="inAuditPhotoPreviewBox" class="hidden mt-2 p-2 bg-gray-50 rounded-xl border border-gray-200 flex items-center gap-3">
+              <img id="inAuditPhotoPreview" src="" alt="Ảnh hiện trạng" class="w-20 h-20 object-cover rounded-lg border border-gray-300" />
+              <div>
+                <span class="text-xs font-bold text-emerald-700 flex items-center gap-1">
+                  <span>✓</span> Đã đóng dấu Watermark GPS & Giờ thực tế
+                </span>
+                <p class="text-[10px] text-gray-500 mt-0.5" id="inAuditPhotoMetadata">Lat: ... | Lon: ...</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Submit & Actions Button Bar -->
+        <div class="flex items-center justify-end gap-2.5 pt-2 border-t">
+          <button type="button" onclick="CJAudit.closeInactiveAuditModal()" class="px-4 py-2.5 rounded-xl border border-gray-300 font-bold text-gray-700 hover:bg-gray-100 transition active:scale-95">
+            Hủy bỏ
+          </button>
+          <button type="submit" class="bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white font-black px-6 py-2.5 rounded-xl shadow-lg flex items-center gap-2 transition active:scale-95 text-xs sm:text-sm">
+            <span>💾</span>
+            <span>LƯU PHIẾU THẨM ĐỊNH (SAVE AUDIT)</span>
+          </button>
+        </div>
+
+      </form>
 
     </div>
   </div>
