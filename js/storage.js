@@ -13,8 +13,8 @@ const CJStorage = {
     TICKETS: "cj_market_audit_tickets_v5"
   },
 
-  init() {
-    const DATA_VERSION = "2026.09.10_USER_NORMALIZED_V3";
+  init(force = false) {
+    const DATA_VERSION = "2026.10.27_INACTIVE_FREEZER_V8_1";
     const currentVer = localStorage.getItem("cj_market_audit_data_ver");
     const dataTimestamp = (typeof CJ_DATA_TIMESTAMP !== "undefined") ? CJ_DATA_TIMESTAMP : "";
     const lastSyncTs = localStorage.getItem("cj_market_audit_sync_timestamp");
@@ -22,9 +22,26 @@ const CJStorage = {
     // Auto-migrate to official master data if version changed, sync timestamp changed, or if stores/users are empty
     const existingStores = localStorage.getItem(this.KEYS.STORES);
     const existingUsers = localStorage.getItem(this.KEYS.USERS);
-    let needInit = false;
+    let needInit = Boolean(force);
 
-    if (dataTimestamp && lastSyncTs !== dataTimestamp) {
+    // Verify if existing stores contain the full master data (>= 2000 stores) and auditor assignments
+    let hasFullStores = false;
+    let hasAuditors = false;
+    try {
+      if (existingStores && existingStores !== "[]") {
+        const parsed = JSON.parse(existingStores);
+        if (Array.isArray(parsed) && parsed.length >= 2000) {
+          hasFullStores = true;
+          hasAuditors = parsed.some(s => s.auditorUser || s.assignedUser === "audit01" || s.assignedUser === "audit1");
+        }
+      }
+    } catch (e) {
+      hasFullStores = false;
+    }
+
+    if (!hasFullStores || !hasAuditors) {
+      needInit = true;
+    } else if (dataTimestamp && lastSyncTs !== dataTimestamp) {
       needInit = true;
     } else if (currentVer !== DATA_VERSION) {
       needInit = true;
@@ -468,7 +485,7 @@ const CJStorage = {
   },
 
   /**
-   * Helper: Normalize user codes to match variants with/without leading zero or letter O (e.g. 5319 <-> 05319)
+   * Helper: Normalize user codes to match variants with/without leading zero or letter O (e.g. 5319 <-> 05319, audit01 <-> audit1)
    */
   normalizeUserCode(code) {
     if (!code) return "";
@@ -482,8 +499,8 @@ const CJStorage = {
   },
 
   /**
-   * Universal Store lookup supporting user object or username string (Admin / GSBH / SR)
-   * With robust leading zero normalization (e.g. 05319 <-> 5319)
+   * Universal Store lookup supporting user object or username string (Admin / GSBH / SR / Auditor)
+   * With robust leading zero normalization (e.g. 05319 <-> 5319) and auditor aliases (audit1 <-> audit01)
    */
   getStoresForUser(userOrUsername) {
     const all = this.getAllStores();
@@ -492,22 +509,45 @@ const CJStorage = {
     const username = typeof userOrUsername === "object" ? userOrUsername.username : String(userOrUsername);
     if (!username || username === "ALL" || username.toLowerCase() === "admin") return all;
 
-    const lower = username.toLowerCase();
-    const normUser = this.normalizeUserCode(username);
+    const lower = username.toLowerCase().trim();
+    const normUser = this.normalizeUserCode(lower);
+
+    // Bidirectional alias set for audit accounts
+    const aliases = new Set([lower, normUser]);
+    if (lower === "audit1" || lower === "audit01" || lower === "audit_01" || lower === "audit_1") {
+      aliases.add("audit1");
+      aliases.add("audit01");
+      aliases.add("audit_01");
+      aliases.add("audit_1");
+    } else if (lower === "audit2" || lower === "audit02" || lower === "audit_02" || lower === "audit_2") {
+      aliases.add("audit2");
+      aliases.add("audit02");
+      aliases.add("audit_02");
+      aliases.add("audit_2");
+    } else if (lower === "audit3" || lower === "audit03" || lower === "audit_03" || lower === "audit_3") {
+      aliases.add("audit3");
+      aliases.add("audit03");
+      aliases.add("audit_03");
+      aliases.add("audit_3");
+    } else if (lower === "vanphong1" || lower === "vp01" || lower === "vp1") {
+      aliases.add("vanphong1");
+      aliases.add("vp01");
+      aliases.add("vp1");
+    }
 
     return all.filter(s => {
-      const gsbh = s.gsbhUsername ? s.gsbhUsername.toLowerCase() : "";
-      const assigned = s.assignedUser ? s.assignedUser.toLowerCase() : "";
-      const auditor = s.auditorUser ? s.auditorUser.toLowerCase() : "";
-      const repCode = s.salesRepCode ? s.salesRepCode.toLowerCase() : "";
-      const repName = s.salesRep ? s.salesRep.toLowerCase() : "";
+      const gsbh = (s.gsbhUsername || "").toLowerCase().trim();
+      const assigned = (s.assignedUser || "").toLowerCase().trim();
+      const auditor = (s.auditorUser || "").toLowerCase().trim();
+      const repCode = (s.salesRepCode || "").toLowerCase().trim();
+      const repName = (s.salesRep || "").toLowerCase().trim();
 
-      // 1. Direct match
-      if (gsbh === lower || assigned === lower || auditor === lower || repCode === lower || repName === lower) {
+      // 1. Direct or alias match
+      if (aliases.has(gsbh) || aliases.has(assigned) || aliases.has(auditor) || aliases.has(repCode) || aliases.has(repName)) {
         return true;
       }
 
-      // 2. Normalized match (handles 05319 vs 5319, O1093 vs 01093)
+      // 2. Normalized match (handles 05319 vs 5319, O1093 vs 01093, audit01 vs audit1)
       if (normUser) {
         if (gsbh && this.normalizeUserCode(gsbh) === normUser) return true;
         if (assigned && this.normalizeUserCode(assigned) === normUser) return true;
