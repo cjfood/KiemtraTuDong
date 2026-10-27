@@ -2,10 +2,10 @@
  * CJ MarketAudit - Comprehensive FMCG Master Database for CJ Foods Vietnam
  * Official Master Data: 53 Accounts, 3033 Outlets, 3033 Freezers
  * Auto-embedded from Master Excel Files (DS User.xlsx, DS_TuDong_CanKiemTra_PhanCong.xlsx)
- * Auto-sync timestamp: 20261027_153401
+ * Auto-sync timestamp: 20261027_153820
  */
 
-const CJ_DATA_TIMESTAMP = "20261027_153401";
+const CJ_DATA_TIMESTAMP = "20261027_153820";
 
 const CJ_SYSTEM_GOOGLE_SHEET_URL = "https://script.google.com/macros/s/AKfycbw4n6lsTKqsVXlrtyu2qx5GNFTksMmtoAyCcvgPpXfXD71nTP-pga_B2a2uAoSKRxOdOw/exec";
 
