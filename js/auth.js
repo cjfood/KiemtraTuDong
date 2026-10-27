@@ -32,9 +32,9 @@ const CJAuth = {
     if (s.startsWith("o") && /^\d+$/.test(s.slice(1))) {
       s = "0" + s.slice(1);
     }
-    s = s.replace(/^([a-z]+)0+(\d+)$/, "$1$2");
-    const stripped = s.replace(/^0+/, "");
-    return stripped || s;
+    // Remove leading zeros in numeric segments: audit01 <-> audit1, 05319 <-> 5319, O0321 <-> 321
+    s = s.replace(/0+(\d+)/g, "$1");
+    return s;
   },
 
   getCustomPasswords() {
