@@ -186,6 +186,37 @@ const CJApp = {
     if (modal) modal.classList.add("hidden");
   },
 
+  onLoginFormSubmit(e) {
+    if (e && e.preventDefault) e.preventDefault();
+    const uInput = document.getElementById("loginUsername");
+    const pInput = document.getElementById("loginPassword");
+    const remInput = document.getElementById("loginRememberMe");
+    const u = uInput ? uInput.value.trim() : "";
+    const p = pInput ? pInput.value.trim() : "";
+    const remember = remInput ? remInput.checked : true;
+
+    if (!u) {
+      alert("Vui lòng nhập Tên đăng nhập hoặc Mã nhân viên (vd: admin, 05319, O1333, O0321...)");
+      if (uInput) uInput.focus();
+      return;
+    }
+
+    const res = CJAuth.login(u, p, remember);
+    if (res.success) {
+      this.hideLoginModal();
+      this.onUserLoggedIn(res.user);
+      if (typeof CJAudit !== "undefined" && CJAudit.showToast) {
+        CJAudit.showToast(`Xin chào, ${res.user.name} (${res.user.roleTitle})!`, "success");
+      }
+    } else {
+      alert(res.message || "Tên đăng nhập hoặc mật khẩu không chính xác!");
+    }
+  },
+
+  onLoginButtonClick(e) {
+    this.onLoginFormSubmit(e);
+  },
+
   bindAuthEvents() {
     // 1-Click Quick GSBH Login buttons
     document.querySelectorAll(".btn-quick-gsbh").forEach(btn => {
@@ -204,18 +235,7 @@ const CJApp = {
     const loginForm = document.getElementById("appLoginForm");
     if (loginForm) {
       loginForm.addEventListener("submit", (e) => {
-        e.preventDefault();
-        const u = document.getElementById("loginUsername").value;
-        const p = document.getElementById("loginPassword").value;
-        const remember = document.getElementById("loginRememberMe") ? document.getElementById("loginRememberMe").checked : true;
-        const res = CJAuth.login(u, p, remember);
-        if (res.success) {
-          this.hideLoginModal();
-          this.onUserLoggedIn(res.user);
-          CJAudit.showToast(`Xin chào, ${res.user.name}!`, "success");
-        } else {
-          alert(res.message);
-        }
+        this.onLoginFormSubmit(e);
       });
     }
 
