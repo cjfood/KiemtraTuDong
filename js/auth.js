@@ -216,22 +216,27 @@ const CJAuth = {
     const cleanUser = (username || "").trim().toLowerCase();
     const cleanPass = (password || "").trim();
 
-    let normInput = cleanUser;
-    if (normInput.startsWith("o") && /^\d+$/.test(normInput.slice(1))) {
-      normInput = "0" + normInput.slice(1);
-    }
-    const strippedInput = normInput.replace(/^0+/, "");
+    const normCode = (s) => {
+      let str = String(s || "").trim().toLowerCase();
+      if (str.startsWith("o") && /^\d+$/.test(str.slice(1))) {
+        str = "0" + str.slice(1);
+      }
+      str = str.replace(/^([a-z]+)0+(\d+)$/, "$1$2");
+      return str.replace(/^0+/, "");
+    };
+
+    const normInput = normCode(cleanUser);
 
     const allUsers = this.getUsersList();
     const matched = allUsers.find(u => {
       const uName = u.username.toLowerCase();
       const uEmp = (u.empCode || "").toLowerCase();
-      const normU = (uName.startsWith("o") && /^\d+$/.test(uName.slice(1))) ? ("0" + uName.slice(1)).replace(/^0+/, "") : uName.replace(/^0+/, "");
-      const normE = (uEmp.startsWith("o") && /^\d+$/.test(uEmp.slice(1))) ? ("0" + uEmp.slice(1)).replace(/^0+/, "") : uEmp.replace(/^0+/, "");
+      const normU = normCode(uName);
+      const normE = normCode(uEmp);
 
       return uName === cleanUser || 
              uEmp === cleanUser ||
-             (strippedInput && (normU === strippedInput || normE === strippedInput)) ||
+             (normInput && (normU === normInput || normE === normInput)) ||
              u.name.toLowerCase() === cleanUser ||
              u.name.toLowerCase().includes(cleanUser);
     });
