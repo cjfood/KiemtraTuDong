@@ -128,7 +128,7 @@
             Đăng nhập
           </h2>
 
-          <form id="appLoginForm" class="space-y-3.5">
+          <form id="appLoginForm" onsubmit="CJApp.onLoginFormSubmit(event); return false;" class="space-y-3.5">
             
             <!-- Username input with User Icon -->
             <div class="rounded-2xl border border-gray-300 px-3.5 py-3 flex items-center gap-2.5 bg-white focus-within:border-blue-600 focus-within:ring-2 focus-within:ring-blue-100 transition shadow-sm">
@@ -169,22 +169,28 @@
             </div>
 
             <!-- Submit Button (Màu xanh navy chuẩn ảnh) -->
-            <button type="submit" class="w-full bg-[#1c3668] hover:bg-[#13274e] text-white font-black text-sm sm:text-base py-3.5 rounded-2xl shadow-lg transition active:scale-95 text-center flex items-center justify-center tracking-wide mt-1">
+            <button type="submit" onclick="CJApp.onLoginButtonClick(event)" class="w-full bg-[#1c3668] hover:bg-[#13274e] text-white font-black text-sm sm:text-base py-3.5 rounded-2xl shadow-lg transition active:scale-95 text-center flex items-center justify-center tracking-wide mt-1 cursor-pointer">
               Đăng nhập
             </button>
 
-            <!-- Quick Login Shortcuts for Auditors & Admin -->
+            <!-- Quick Login Shortcuts for Auditors, GSBH & Admin -->
             <div class="mt-2.5 pt-2 border-t border-gray-200 text-center space-y-1.5">
-              <p class="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Chọn nhanh tài khoản kiểm tra:</p>
+              <p class="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Chọn nhanh tài khoản kiểm tra (1 chạm):</p>
               <div class="flex flex-wrap items-center justify-center gap-1.5">
-                <button type="button" onclick="document.getElementById('loginUsername').value='audit1';document.getElementById('loginPassword').value='123';document.getElementById('appLoginForm').requestSubmit();" class="text-[10px] font-extrabold px-2.5 py-1 bg-blue-100 hover:bg-blue-200 text-blue-900 rounded-lg transition active:scale-95 shadow-2xs">
-                  📋 audit1 (15 Điểm)
-                </button>
-                <button type="button" onclick="document.getElementById('loginUsername').value='audit2';document.getElementById('loginPassword').value='123';document.getElementById('appLoginForm').requestSubmit();" class="text-[10px] font-extrabold px-2.5 py-1 bg-indigo-100 hover:bg-indigo-200 text-indigo-900 rounded-lg transition active:scale-95 shadow-2xs">
-                  📋 audit2 (15 Điểm)
-                </button>
-                <button type="button" onclick="document.getElementById('loginUsername').value='admin';document.getElementById('loginPassword').value='123';document.getElementById('appLoginForm').requestSubmit();" class="text-[10px] font-extrabold px-2.5 py-1 bg-amber-100 hover:bg-amber-200 text-amber-900 rounded-lg transition active:scale-95 shadow-2xs">
+                <button type="button" onclick="CJApp.quickLogin('admin')" class="text-[10px] font-extrabold px-2.5 py-1 bg-amber-100 hover:bg-amber-200 text-amber-900 rounded-lg transition active:scale-95 shadow-sm cursor-pointer">
                   👑 admin
+                </button>
+                <button type="button" onclick="CJApp.quickLogin('audit01')" class="text-[10px] font-extrabold px-2.5 py-1 bg-blue-100 hover:bg-blue-200 text-blue-900 rounded-lg transition active:scale-95 shadow-sm cursor-pointer">
+                  📋 audit01
+                </button>
+                <button type="button" onclick="CJApp.quickLogin('audit02')" class="text-[10px] font-extrabold px-2.5 py-1 bg-indigo-100 hover:bg-indigo-200 text-indigo-900 rounded-lg transition active:scale-95 shadow-sm cursor-pointer">
+                  📋 audit02
+                </button>
+                <button type="button" onclick="CJApp.quickLogin('05319')" class="text-[10px] font-extrabold px-2.5 py-1 bg-emerald-100 hover:bg-emerald-200 text-emerald-900 rounded-lg transition active:scale-95 shadow-sm cursor-pointer">
+                  👮‍♂️ 05319 (Hiển)
+                </button>
+                <button type="button" onclick="CJApp.quickLogin('O1333')" class="text-[10px] font-extrabold px-2.5 py-1 bg-sky-100 hover:bg-sky-200 text-sky-900 rounded-lg transition active:scale-95 shadow-sm cursor-pointer">
+                  👮‍♂️ O1333 (Sáu)
                 </button>
               </div>
             </div>
