@@ -13,35 +13,30 @@ const CJStorage = {
     TICKETS: "cj_market_audit_tickets_v5"
   },
 
+  _storesCache: null,
+  _usersCache: null,
+
+  safeSetItem(key, value) {
+    try {
+      localStorage.setItem(key, value);
+      return true;
+    } catch (e) {
+      console.warn(`[CJStorage] safeSetItem bypassed for "${key}" (storage quota or access):`, e);
+      return false;
+    }
+  },
+
   init(force = false) {
-    const DATA_VERSION = "2026.10.27_INACTIVE_FREEZER_V8_1";
+    const DATA_VERSION = "2026.10.27_INACTIVE_FREEZER_V8_3";
     const currentVer = localStorage.getItem("cj_market_audit_data_ver");
     const dataTimestamp = (typeof CJ_DATA_TIMESTAMP !== "undefined") ? CJ_DATA_TIMESTAMP : "";
     const lastSyncTs = localStorage.getItem("cj_market_audit_sync_timestamp");
     
-    // Auto-migrate to official master data if version changed, sync timestamp changed, or if stores/users are empty
     const existingStores = localStorage.getItem(this.KEYS.STORES);
     const existingUsers = localStorage.getItem(this.KEYS.USERS);
     let needInit = Boolean(force);
 
-    // Verify if existing stores contain the full master data (>= 2000 stores) and auditor assignments
-    let hasFullStores = false;
-    let hasAuditors = false;
-    try {
-      if (existingStores && existingStores !== "[]") {
-        const parsed = JSON.parse(existingStores);
-        if (Array.isArray(parsed) && parsed.length >= 2000) {
-          hasFullStores = true;
-          hasAuditors = parsed.some(s => s.auditorUser || s.assignedUser === "audit01" || s.assignedUser === "audit1");
-        }
-      }
-    } catch (e) {
-      hasFullStores = false;
-    }
-
-    if (!hasFullStores || !hasAuditors) {
-      needInit = true;
-    } else if (dataTimestamp && lastSyncTs !== dataTimestamp) {
+    if (dataTimestamp && lastSyncTs !== dataTimestamp) {
       needInit = true;
     } else if (currentVer !== DATA_VERSION) {
       needInit = true;
@@ -50,42 +45,29 @@ const CJStorage = {
     }
 
     if (needInit) {
-      localStorage.setItem(this.KEYS.USERS, JSON.stringify(GSBH_ACCOUNTS));
-      localStorage.setItem(this.KEYS.STORES, JSON.stringify(INITIAL_STORES));
-      localStorage.setItem(this.KEYS.FREEZERS, JSON.stringify(INITIAL_FREEZERS));
+      this._storesCache = null;
+      this.safeSetItem(this.KEYS.USERS, JSON.stringify(GSBH_ACCOUNTS));
+      this.safeSetItem(this.KEYS.STORES, JSON.stringify(INITIAL_STORES));
+      try {
+        if (typeof INITIAL_FREEZERS !== "undefined" && INITIAL_FREEZERS.length < 500) {
+          localStorage.setItem(this.KEYS.FREEZERS, JSON.stringify(INITIAL_FREEZERS));
+        }
+      } catch (e) {}
       if (!localStorage.getItem(this.KEYS.AUDITS)) {
-        localStorage.setItem(this.KEYS.AUDITS, JSON.stringify(INITIAL_AUDITS));
+        this.safeSetItem(this.KEYS.AUDITS, JSON.stringify(INITIAL_AUDITS));
       }
       if (!localStorage.getItem(this.KEYS.ORDERS)) {
-        localStorage.setItem(this.KEYS.ORDERS, JSON.stringify([]));
+        this.safeSetItem(this.KEYS.ORDERS, JSON.stringify([]));
       }
       if (!localStorage.getItem(this.KEYS.TICKETS)) {
-        localStorage.setItem(this.KEYS.TICKETS, JSON.stringify([]));
+        this.safeSetItem(this.KEYS.TICKETS, JSON.stringify([]));
       }
-      localStorage.setItem("cj_market_audit_data_ver", DATA_VERSION);
+      this.safeSetItem("cj_market_audit_data_ver", DATA_VERSION);
       if (dataTimestamp) {
-        localStorage.setItem("cj_market_audit_sync_timestamp", dataTimestamp);
-      }
-    } else {
-      if (!localStorage.getItem(this.KEYS.USERS)) {
-        localStorage.setItem(this.KEYS.USERS, JSON.stringify(GSBH_ACCOUNTS));
-      }
-      if (!localStorage.getItem(this.KEYS.STORES)) {
-        localStorage.setItem(this.KEYS.STORES, JSON.stringify(INITIAL_STORES));
-      }
-      if (!localStorage.getItem(this.KEYS.FREEZERS)) {
-        localStorage.setItem(this.KEYS.FREEZERS, JSON.stringify(INITIAL_FREEZERS));
-      }
-      if (!localStorage.getItem(this.KEYS.AUDITS)) {
-        localStorage.setItem(this.KEYS.AUDITS, JSON.stringify(INITIAL_AUDITS));
-      }
-      if (!localStorage.getItem(this.KEYS.ORDERS)) {
-        localStorage.setItem(this.KEYS.ORDERS, JSON.stringify([]));
-      }
-      if (!localStorage.getItem(this.KEYS.TICKETS)) {
-        localStorage.setItem(this.KEYS.TICKETS, JSON.stringify([]));
+        this.safeSetItem("cj_market_audit_sync_timestamp", dataTimestamp);
       }
     }
+  },
 
     // Auto-reconcile stores & freezers: đảm bảo serialNumber và barcode luôn lấy đúng Cột L (So_Serial)
     try {
@@ -442,14 +424,26 @@ const CJStorage = {
   },
 
   getAllStores() {
+    if (this._storesCache && Array.isArray(this._storesCache) && this._storesCache.length > 0) {
+      return this._storesCache;
+    }
     this.init();
     try {
-      let stores = JSON.parse(localStorage.getItem(this.KEYS.STORES));
-      if (!Array.isArray(stores)) return [];
-      return stores.filter(s => !s.id.startsWith("STR-GT-"));
-    } catch (e) {
-      return [];
+      const raw = localStorage.getItem(this.KEYS.STORES);
+      if (raw && raw !== "[]") {
+        let stores = JSON.parse(raw);
+        if (Array.isArray(stores) && stores.length > 0) {
+          this._storesCache = stores.filter(s => !s.id.startsWith("STR-GT-"));
+          return this._storesCache;
+        }
+      }
+    } catch (e) {}
+
+    if (typeof INITIAL_STORES !== "undefined" && Array.isArray(INITIAL_STORES)) {
+      this._storesCache = INITIAL_STORES.filter(s => !s.id.startsWith("STR-GT-"));
+      return this._storesCache;
     }
+    return [];
   },
 
   /**
@@ -648,12 +642,18 @@ const CJStorage = {
   getFreezers() {
     this.init();
     try {
-      let freezers = JSON.parse(localStorage.getItem(this.KEYS.FREEZERS));
-      if (!Array.isArray(freezers)) return [];
-      return freezers.filter(f => !f.id.startsWith("FZ-CJ-"));
-    } catch (e) {
-      return [];
+      const raw = localStorage.getItem(this.KEYS.FREEZERS);
+      if (raw && raw !== "[]") {
+        let freezers = JSON.parse(raw);
+        if (Array.isArray(freezers) && freezers.length > 0) {
+          return freezers.filter(f => !f.id.startsWith("FZ-CJ-"));
+        }
+      }
+    } catch (e) {}
+    if (typeof INITIAL_FREEZERS !== "undefined" && Array.isArray(INITIAL_FREEZERS)) {
+      return INITIAL_FREEZERS.filter(f => !f.id.startsWith("FZ-CJ-"));
     }
+    return [];
   },
 
   getFreezerById(id) {
