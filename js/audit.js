@@ -52,7 +52,22 @@ const CJAudit = {
     const filterEl = document.getElementById("filterSalesRepSelect");
     if (!filterEl) return;
 
-    const teamReps = CJAuth.getCurrentTeamSalesReps();
+    const currentUser = CJAuth.getCurrentUser();
+    const isAuditor = currentUser && (currentUser.role === "auditor" || (currentUser.username && currentUser.username.toLowerCase().includes("audit")));
+
+    let teamReps = CJAuth.getCurrentTeamSalesReps();
+    if (isAuditor) {
+      const myStores = CJStorage.getStoresForUser(currentUser.username);
+      const repMap = new Map();
+      myStores.forEach(s => {
+        const code = s.salesRepCode || "";
+        const name = s.salesRep || code;
+        if (code && !repMap.has(code.toLowerCase())) {
+          repMap.set(code.toLowerCase(), { username: code.toLowerCase(), empCode: code, name: name });
+        }
+      });
+      teamReps = Array.from(repMap.values());
+    }
     const countLabel = teamReps.length > 0 ? ` (${teamReps.length} NV)` : "";
     let optionsHtml = `<option value="ALL">📋 Tất cả NVBH${countLabel}</option>`;
 
@@ -631,6 +646,15 @@ const CJAudit = {
       gsbhTitleEl.textContent = `${currentUser.name} (${currentUser.area})`;
     }
 
+    const allAudits = (typeof CJStorage !== "undefined" && CJStorage.getAudits) ? CJStorage.getAudits() : [];
+    const auditMap = new Map();
+    allAudits.forEach(a => {
+      const k = a.storeId || a.customerCode;
+      if (k && !auditMap.has(k)) {
+        auditMap.set(k, a);
+      }
+    });
+
     this.updateAuditorWidget();
 
     let stores = rawStores;
@@ -685,13 +709,7 @@ const CJAudit = {
       return;
     }
 
-    const allAudits = (typeof CJStorage !== "undefined" && CJStorage.getAudits) ? CJStorage.getAudits() : [];
-    const auditMap = new Map();
-    allAudits.forEach(a => {
-      if (a.storeId && !auditMap.has(a.storeId)) {
-        auditMap.set(a.storeId, a);
-      }
-    });
+// auditMap initialized at beginning of renderStoreList
 
     container.innerHTML = stores.map((store, idx) => {
       const freezer = CJStorage.getFreezerById(store.freezerId);
