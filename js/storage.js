@@ -213,6 +213,10 @@ const CJStorage = {
     if (role === "admin") {
       roleTitle = "Quản Trị Viên (Admin RTM)";
       avatar = "👑";
+    } else if (role === "auditor" || role === "office" || role === "van_phong") {
+      role = "auditor";
+      roleTitle = `Thẩm Định Viên (${updatedData.area || target.area || "Văn Phòng"})`;
+      avatar = "📋";
     } else if (role === "sales_rep" || role === "nvbh") {
       role = "sales_rep";
       roleTitle = `NVBH Kênh ${updatedData.channel || target.channel || "GT"}`;
@@ -338,6 +342,10 @@ const CJStorage = {
         role = "admin";
         roleTitle = "Quản Trị Viên (Admin RTM)";
         avatar = "👑";
+      } else if (rawRole.includes("AUDIT") || rawRole.includes("OFFICE") || rawRole.includes("VAN PHONG") || rawRole.includes("VP")) {
+        role = "auditor";
+        roleTitle = "Thẩm Định Viên (" + area + ")";
+        avatar = "📋";
       } else if (rawRole.includes("NVBH") || rawRole.includes("SALE") || rawRole.includes("SR") || rawRole.includes("NHAN VIEN")) {
         role = "sales_rep";
         roleTitle = `NVBH Kênh ${channel}`;
@@ -489,11 +497,12 @@ const CJStorage = {
     return all.filter(s => {
       const gsbh = s.gsbhUsername ? s.gsbhUsername.toLowerCase() : "";
       const assigned = s.assignedUser ? s.assignedUser.toLowerCase() : "";
+      const auditor = s.auditorUser ? s.auditorUser.toLowerCase() : "";
       const repCode = s.salesRepCode ? s.salesRepCode.toLowerCase() : "";
       const repName = s.salesRep ? s.salesRep.toLowerCase() : "";
 
       // 1. Direct match
-      if (gsbh === lower || assigned === lower || repCode === lower || repName === lower) {
+      if (gsbh === lower || assigned === lower || auditor === lower || repCode === lower || repName === lower) {
         return true;
       }
 
@@ -501,11 +510,68 @@ const CJStorage = {
       if (normUser) {
         if (gsbh && this.normalizeUserCode(gsbh) === normUser) return true;
         if (assigned && this.normalizeUserCode(assigned) === normUser) return true;
+        if (auditor && this.normalizeUserCode(auditor) === normUser) return true;
         if (repCode && this.normalizeUserCode(repCode) === normUser) return true;
       }
 
       return false;
     });
+  },
+
+  /**
+   * Executive Audit & Turnaround KPI Stats for personal user or national
+   */
+  getAuditorStats(userOrUsername) {
+    const stores = this.getStoresForUser(userOrUsername);
+    const audits = this.getAudits();
+    const auditMap = new Map();
+    audits.forEach(a => {
+      const k = a.storeId || a.customerCode;
+      if (k) auditMap.set(k, a);
+    });
+
+    const total = stores.length;
+    let auditedCount = 0;
+    let powerCount = 0;
+    let goodsCount = 0;
+    let retractCount = 0;
+    let underperformingCount = 0;
+    let zeroSalesCount = 0;
+
+    stores.forEach(s => {
+      const a = auditMap.get(s.id) || auditMap.get(s.storeCode);
+      const isAudited = Boolean(s.isAudited || a || (s.lastAuditDate && s.lastAuditDate !== "Chưa kiểm tra"));
+      if (isAudited) {
+        auditedCount++;
+        if (a) {
+          const p = (a.powerStatus || a.workingCondition || "").toLowerCase();
+          if (p.includes("có") || p.includes("24/7") || p === "good" || p === "yes") powerCount++;
+          const g = (a.hasCjGoods || "").toLowerCase();
+          if (g.includes("đầy đủ") || g.includes("có") || a.hasCjProducts) goodsCount++;
+          const act = (a.actionProposal || "").toLowerCase();
+          if (act.includes("thu hồi")) retractCount++;
+        }
+      }
+      if (s.isUnderperforming || s.assetStatus === "3T Ko Mua" || s.assetStatus === "Chưa mua") underperformingCount++;
+      if (s.salesTier === "= 0" || s.salesAvg3M === 0) zeroSalesCount++;
+    });
+
+    const pending = total - auditedCount;
+    const completionRate = total > 0 ? Math.round((auditedCount / total) * 100) : 0;
+    const powerRate = auditedCount > 0 ? Math.round((powerCount / auditedCount) * 100) : 0;
+    const goodsRate = auditedCount > 0 ? Math.round((goodsCount / auditedCount) * 100) : 0;
+
+    return {
+      total,
+      audited: auditedCount,
+      pending,
+      completionRate,
+      retractCount,
+      underperformingCount,
+      zeroSalesCount,
+      powerRate,
+      goodsRate
+    };
   },
 
   getStoreById(id) {
