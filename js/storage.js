@@ -27,32 +27,22 @@ const CJStorage = {
   },
 
   init(force = false) {
-    const DATA_VERSION = "2026.10.27_INACTIVE_FREEZER_V8_3";
+    const DATA_VERSION = "2026.10.27_DIRECT_MASTER_V8_5";
     const currentVer = localStorage.getItem("cj_market_audit_data_ver");
     const dataTimestamp = (typeof CJ_DATA_TIMESTAMP !== "undefined") ? CJ_DATA_TIMESTAMP : "";
     const lastSyncTs = localStorage.getItem("cj_market_audit_sync_timestamp");
     
-    const existingStores = localStorage.getItem(this.KEYS.STORES);
-    const existingUsers = localStorage.getItem(this.KEYS.USERS);
-    let needInit = Boolean(force);
-
-    if (dataTimestamp && lastSyncTs !== dataTimestamp) {
-      needInit = true;
-    } else if (currentVer !== DATA_VERSION) {
-      needInit = true;
-    } else if (!existingStores || existingStores === "[]" || !existingUsers) {
-      needInit = true;
-    }
+    let needInit = Boolean(force) || (dataTimestamp && lastSyncTs !== dataTimestamp) || (currentVer !== DATA_VERSION);
 
     if (needInit) {
       this._storesCache = null;
-      this.safeSetItem(this.KEYS.USERS, JSON.stringify(GSBH_ACCOUNTS));
-      this.safeSetItem(this.KEYS.STORES, JSON.stringify(INITIAL_STORES));
+      // Clean up legacy bulky stores from localStorage to prevent quota errors & stale data
       try {
-        if (typeof INITIAL_FREEZERS !== "undefined" && INITIAL_FREEZERS.length < 500) {
-          localStorage.setItem(this.KEYS.FREEZERS, JSON.stringify(INITIAL_FREEZERS));
-        }
+        localStorage.removeItem(this.KEYS.STORES);
+        localStorage.removeItem(this.KEYS.FREEZERS);
       } catch (e) {}
+
+      this.safeSetItem(this.KEYS.USERS, JSON.stringify(GSBH_ACCOUNTS));
       if (!localStorage.getItem(this.KEYS.AUDITS)) {
         this.safeSetItem(this.KEYS.AUDITS, JSON.stringify(INITIAL_AUDITS));
       }
@@ -67,7 +57,6 @@ const CJStorage = {
         this.safeSetItem("cj_market_audit_sync_timestamp", dataTimestamp);
       }
     }
-  },
 
     // Auto-reconcile stores & freezers: đảm bảo serialNumber và barcode luôn lấy đúng Cột L (So_Serial)
     try {
@@ -428,22 +417,52 @@ const CJStorage = {
       return this._storesCache;
     }
     this.init();
+
+    // 1. Authoritative master stores from INITIAL_STORES compiled from Excel
+    let stores = [];
+    if (typeof INITIAL_STORES !== "undefined" && Array.isArray(INITIAL_STORES) && INITIAL_STORES.length > 0) {
+      stores = INITIAL_STORES.map(s => ({ ...s }));
+    } else {
+      try {
+        const raw = localStorage.getItem(this.KEYS.STORES);
+        if (raw) stores = JSON.parse(raw) || [];
+      } catch (e) {}
+    }
+
+    // 2. Overlay audit records submitted locally
     try {
-      const raw = localStorage.getItem(this.KEYS.STORES);
-      if (raw && raw !== "[]") {
-        let stores = JSON.parse(raw);
-        if (Array.isArray(stores) && stores.length > 0) {
-          this._storesCache = stores.filter(s => !s.id.startsWith("STR-GT-"));
-          return this._storesCache;
-        }
+      const audits = this.getAudits();
+      if (Array.isArray(audits) && audits.length > 0) {
+        const auditMap = new Map();
+        audits.forEach(a => {
+          const k = a.storeId || a.customerCode;
+          if (k) auditMap.set(k, a);
+        });
+        stores.forEach(s => {
+          const a = auditMap.get(s.id) || auditMap.get(s.storeCode);
+          if (a) {
+            s.isAudited = true;
+            s.lastAuditDate = a.date || a.timestamp || "Đã kiểm tra";
+            s.lastAuditTime = a.auditTime || a.date;
+            s.lastAuditor = a.auditorName || a.auditorUser || s.lastAuditor;
+            s.posmCondition = a.condition || a.workingCondition || s.posmCondition;
+            s.status = (a.workingCondition === "good" || a.workingCondition === "Sử Dụng Được") ? "good" : "danger";
+          }
+        });
       }
     } catch (e) {}
 
-    if (typeof INITIAL_STORES !== "undefined" && Array.isArray(INITIAL_STORES)) {
-      this._storesCache = INITIAL_STORES.filter(s => !s.id.startsWith("STR-GT-"));
-      return this._storesCache;
-    }
-    return [];
+    // 3. Append offline custom stores if any
+    try {
+      const customRaw = localStorage.getItem("cj_custom_added_stores");
+      if (customRaw) {
+        const custom = JSON.parse(customRaw);
+        if (Array.isArray(custom)) stores.unshift(...custom);
+      }
+    } catch (e) {}
+
+    this._storesCache = stores.filter(s => !s.id.startsWith("STR-GT-"));
+    return this._storesCache;
   },
 
   /**
@@ -630,7 +649,7 @@ const CJStorage = {
     const idx = stores.findIndex(s => s.id === updatedStore.id);
     if (idx !== -1) {
       stores[idx] = updatedStore;
-      localStorage.setItem(this.KEYS.STORES, JSON.stringify(stores));
+      this._storesCache = stores;
     }
     return updatedStore;
   },
