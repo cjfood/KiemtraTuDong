@@ -370,8 +370,8 @@ const CJApp = {
     CJAudit.init();
     CJDashboard.init();
 
-    // MÀN HÌNH 1: Mở ngay Dashboard tổng hợp công việc cần kiểm tra theo yêu cầu
-    this.switchTab("dashboard");
+    // MÀN HÌNH 1: Mở ngay Màn hình Tổng hợp & Danh sách điểm bán cần kiểm tra theo yêu cầu
+    this.switchTab("mobileAudit");
   },
 
   togglePasswordVisibility() {
