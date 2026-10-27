@@ -492,7 +492,11 @@ const CJAudit = {
     const pills = [
       { id: "pillAllStores", key: "all" },
       { id: "pillActiveStores", key: "active" },
-      { id: "pillInactiveStores", key: "inactive" }
+      { id: "pillInactiveStores", key: "inactive" },
+      { id: "pillPendingStores", key: "pending" },
+      { id: "pillAuditedStores", key: "audited" },
+      { id: "pillUnderperformingStores", key: "underperforming" },
+      { id: "pillRetractStores", key: "retract" }
     ];
 
     pills.forEach(p => {
@@ -627,11 +631,24 @@ const CJAudit = {
       gsbhTitleEl.textContent = `${currentUser.name} (${currentUser.area})`;
     }
 
+    this.updateAuditorWidget();
+
     let stores = rawStores;
     if (this.statusFilter === "active") {
       stores = stores.filter(s => s.isActive !== false);
     } else if (this.statusFilter === "inactive") {
       stores = stores.filter(s => s.isActive === false);
+    } else if (this.statusFilter === "pending") {
+      stores = stores.filter(s => !auditMap.has(s.id) && !auditMap.has(s.storeCode) && (!s.lastAuditDate || s.lastAuditDate === "Chưa kiểm tra"));
+    } else if (this.statusFilter === "audited") {
+      stores = stores.filter(s => auditMap.has(s.id) || auditMap.has(s.storeCode) || (s.lastAuditDate && s.lastAuditDate !== "Chưa kiểm tra"));
+    } else if (this.statusFilter === "underperforming") {
+      stores = stores.filter(s => s.isUnderperforming || s.assetStatus === "3T Ko Mua" || s.assetStatus === "Chưa mua" || s.salesTier === "= 0" || s.salesAvg3M === 0);
+    } else if (this.statusFilter === "retract") {
+      stores = stores.filter(s => {
+        const a = auditMap.get(s.id) || auditMap.get(s.storeCode);
+        return (a && a.actionProposal && a.actionProposal.toLowerCase().includes("thu hồi")) || (s.actionProposal && s.actionProposal.toLowerCase().includes("thu hồi"));
+      });
     }
 
     const q = (this.searchQuery || "").toLowerCase().trim();
@@ -719,6 +736,30 @@ const CJAudit = {
                 `}
               </div>
               <h3 class="font-black text-gray-900 text-sm sm:text-base leading-tight">${store.name}</h3>
+              
+              <!-- Rich POSM Status & Sales Badges -->
+              <div class="flex flex-wrap items-center gap-1.5 mt-1 text-[11px]">
+                ${store.assetStatus ? `
+                  <span class="px-2 py-0.5 rounded-full font-bold ${store.assetStatus === 'Active' ? 'bg-emerald-100 text-emerald-800' : store.assetStatus === '3T Ko Mua' ? 'bg-rose-100 text-rose-800 border border-rose-300' : 'bg-amber-100 text-amber-900 border border-amber-300'}">
+                    ${store.assetStatus === '3T Ko Mua' ? '🚨' : store.assetStatus === 'Chưa mua' ? '⚠️' : '🟢'} ${store.assetStatus}
+                  </span>
+                ` : ''}
+                ${store.salesTier ? `
+                  <span class="px-2 py-0.5 rounded-full font-bold bg-gray-100 text-gray-800 border border-gray-200">
+                    DS: <b class="${store.salesTier === '= 0' ? 'text-rose-700' : store.salesTier === '< 500k' ? 'text-amber-700' : 'text-emerald-700'}">${store.salesTier}</b>
+                  </span>
+                ` : ''}
+                ${(store.salesAvg3M !== undefined && store.salesAvg3M > 0) ? `
+                  <span class="px-2 py-0.5 rounded-full font-bold bg-indigo-50 text-indigo-900 border border-indigo-200">
+                    TB 3T: <b>${Math.round(store.salesAvg3M).toLocaleString('vi-VN')} đ</b>
+                  </span>
+                ` : ''}
+                ${store.auditorName ? `
+                  <span class="px-2 py-0.5 rounded-full font-bold bg-purple-50 text-purple-900 border border-purple-200">
+                    👤 Người kiểm: <b>${store.auditorName}</b>
+                  </span>
+                ` : ''}
+              </div>
             </div>
           </div>
 
@@ -793,17 +834,26 @@ const CJAudit = {
           </div>
           `}
 
-          <!-- CORE ACTION BUTTONS: [🔍 Kiểm tra / 🔄 Kiểm tra lại] + [📍 Maps] -->
+          <!-- CORE ACTION BUTTONS: [📝 Thẩm định 23 Tiêu chí] + [⚡ 60s] + [📍 Maps] -->
           <div class="flex items-center gap-2 pt-1">
             
-            <!-- Button 1: Kiểm tra / Kiểm tra lại -->
+            <!-- Button 1: Thẩm định 23 Tiêu chí Turnaround -->
+            <button 
+              type="button" 
+              onclick="CJAudit.openInactiveAuditModal('${store.id}')" 
+              class="flex-1 ${isAudited ? 'bg-emerald-700 hover:bg-emerald-800 border border-emerald-600' : 'bg-gradient-to-r from-blue-700 to-indigo-800 hover:from-blue-800 hover:to-indigo-900'} text-white font-black text-xs py-2.5 px-3 rounded-xl shadow flex items-center justify-center gap-1.5 transition active:scale-95 cursor-pointer" 
+              title="Thẩm định tủ đông theo 23 tiêu chí RTM & Kế hoạch xử lý">
+              <span class="text-sm font-black">${isAudited ? '🔄' : '📝'}</span>
+              <span>${isAudited ? 'Xem / Sửa Phiếu 23 Tiêu Chí' : 'Thẩm Định Tủ Đông'}</span>
+            </button>
+
+            <!-- Button 2: Kiểm tra nhanh 60s -->
             <button 
               type="button" 
               onclick="CJAudit.selectStore('${store.id}')" 
-              class="flex-1 ${isAudited ? 'bg-emerald-700 hover:bg-emerald-800 border border-emerald-600' : 'bg-[#184594] hover:bg-[#123675]'} text-white font-black text-xs py-2.5 px-3 rounded-xl shadow flex items-center justify-center gap-1.5 transition active:scale-95 cursor-pointer" 
-              title="${isAudited ? 'Xem lại hoặc kiểm tra lại tủ đông tại điểm bán này' : 'Bắt đầu kiểm tra thiết bị tủ đông tại điểm bán'}">
-              <span class="text-sm font-black">${isAudited ? '🔄' : '🔍'}</span>
-              <span>${isAudited ? 'Kiểm tra lại' : 'Kiểm tra'}</span>
+              class="px-2.5 py-2.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-900 font-bold text-xs transition active:scale-95 shadow-sm border border-blue-200" 
+              title="Audit nhanh 60s thường quy">
+              <span>⚡ 60s</span>
             </button>
 
             <!-- Button 2: Google Maps Direct Link -->
@@ -1801,6 +1851,327 @@ const CJAudit = {
       toast.classList.add("opacity-0", "translate-y-[-20px]", "pointer-events-none");
     }, 3500);
   }
+};
+
+
+  // ================= 23-CRITERIA INACTIVE FREEZER AUDIT ENGINE =================
+  currentInactiveStore: null,
+  inactiveAuditPhoto: "",
+  inactivePhotoMetadata: null,
+
+  updateAuditorWidget() {
+    try {
+      const currentUser = (typeof CJAuth !== "undefined" && CJAuth.getCurrentUser) ? CJAuth.getCurrentUser() : null;
+      if (!currentUser) return;
+
+      const stats = (typeof CJStorage !== "undefined" && CJStorage.getAuditorStats) ? CJStorage.getAuditorStats(currentUser) : null;
+      if (!stats) return;
+
+      const elTotal = document.getElementById("statTotalStores");
+      const elAudited = document.getElementById("statAuditedStores");
+      const elPending = document.getElementById("statPendingStores");
+      const elRetract = document.getElementById("statRetractStores");
+      const elBadge = document.getElementById("widgetCompletionBadge");
+      const elPower = document.getElementById("statPowerRate");
+      const elGoods = document.getElementById("statGoodsRate");
+      const elZero = document.getElementById("statZeroSales");
+      const elRoute = document.getElementById("widgetUserRoute");
+      const elTitle = document.getElementById("widgetAuditTitle");
+
+      if (elTotal) elTotal.textContent = stats.total;
+      if (elAudited) elAudited.textContent = stats.audited;
+      if (elPending) elPending.textContent = stats.pending;
+      if (elRetract) elRetract.textContent = stats.retractCount;
+      if (elBadge) {
+        elBadge.textContent = `${stats.completionRate}% Hoàn Thành`;
+        if (stats.completionRate === 100) {
+          elBadge.className = "text-xs font-black px-2.5 py-1 rounded-full bg-emerald-500 text-slate-950 shadow";
+        }
+      }
+      if (elPower) elPower.textContent = stats.audited > 0 ? `${stats.powerRate}%` : "--%";
+      if (elGoods) elGoods.textContent = stats.audited > 0 ? `${stats.goodsRate}%` : "--%";
+      if (elZero) elZero.textContent = `${stats.underperformingCount} tủ`;
+
+      if (elRoute) {
+        elRoute.textContent = `${currentUser.name} • ${currentUser.area || "Toàn Quốc"}`;
+      }
+      if (elTitle) {
+        if (currentUser.role === "auditor") {
+          elTitle.textContent = "TIẾN ĐỘ THẨM ĐỊNH THỊ TRƯỜNG (VĂN PHÒNG)";
+        } else if (currentUser.role === "admin") {
+          elTitle.textContent = "TIẾN ĐỘ THẨM ĐỊNH TỦ ĐÔNG TOÀN QUỐC";
+        } else {
+          elTitle.textContent = "TIẾN ĐỘ KIỂM TRA THỰC ĐỊA";
+        }
+      }
+    } catch (e) {
+      console.warn("Lỗi updateAuditorWidget:", e);
+    }
+  },
+
+  openInactiveAuditModal(storeId) {
+    const store = (typeof CJStorage !== "undefined" && CJStorage.getStoreById) ? CJStorage.getStoreById(storeId) : null;
+    if (!store) {
+      alert("Không tìm thấy thông tin cửa hàng!");
+      return;
+    }
+
+    this.currentInactiveStore = store;
+    this.inactiveAuditPhoto = "";
+    this.inactivePhotoMetadata = null;
+
+    const modal = document.getElementById("modalInactiveFreezerAudit");
+    if (!modal) return;
+
+    modal.classList.remove("hidden");
+    modal.style.display = "flex";
+
+    try {
+      // Header Info
+      const codeEl = document.getElementById("inAuditStoreCode");
+      const nameEl = document.getElementById("inAuditStoreName");
+      const addrEl = document.getElementById("inAuditStoreAddress");
+      const fzIdEl = document.getElementById("inAuditFreezerId");
+      const fzModEl = document.getElementById("inAuditFreezerModel");
+      const statusEl = document.getElementById("inAuditAssetStatus");
+      const avgSalesEl = document.getElementById("inAuditAvgSales");
+
+      if (codeEl) codeEl.textContent = store.storeCode || store.id;
+      if (nameEl) nameEl.textContent = store.originalStoreName || store.name;
+      if (addrEl) addrEl.textContent = `📍 ${store.address || 'Việt Nam'}`;
+      if (fzIdEl) fzIdEl.textContent = store.serialNumber || store.barcode || store.freezerId || 'TDO-001';
+      if (fzModEl) fzModEl.textContent = store.model || store.modelTu || store.freezerModel || 'Alaska 300L';
+      if (statusEl) statusEl.textContent = store.assetStatus || (store.isActive !== false ? 'Active' : 'Ngừng');
+      if (avgSalesEl) avgSalesEl.textContent = store.salesAvg3M ? `${Math.round(store.salesAvg3M).toLocaleString('vi-VN')} đ` : '0 đ';
+
+      // Check existing audit
+      const allAudits = (typeof CJStorage !== "undefined" && CJStorage.getAudits) ? CJStorage.getAudits() : [];
+      const existing = allAudits.find(a => a.storeId === store.id || a.customerCode === store.storeCode);
+
+      const currentUser = (typeof CJAuth !== "undefined" && CJAuth.getCurrentUser) ? CJAuth.getCurrentUser() : null;
+
+      // Populate 23 criteria fields
+      document.getElementById("inAuditCondition").value = existing?.condition || "Bình thường";
+      document.getElementById("inAuditPowerStatus").value = existing?.powerStatus || "Có cắm 24/7";
+      document.getElementById("inAuditHasCjGoods").value = existing?.hasCjGoods || "Đầy đủ hàng CJ";
+      document.getElementById("inAuditOrders30d").value = existing?.orders30d !== undefined ? existing.orders30d : (store.salesTier === "= 0" || store.assetStatus === "3T Ko Mua" ? 0 : 2);
+      document.getElementById("inAuditSales30d").value = existing?.sales30d ? Number(existing.sales30d).toLocaleString('vi-VN') : (store.salesAvg3M ? Number(store.salesAvg3M).toLocaleString('vi-VN') : "0");
+      document.getElementById("inAuditHasCompetitor").value = existing?.hasCompetitor || "Không";
+      document.getElementById("inAuditCompetitorDetail").value = existing?.competitorDetail || "";
+      this.onCompetitorChange(document.getElementById("inAuditHasCompetitor").value);
+
+      document.getElementById("inAuditRevenuePotential").value = existing?.revenuePotential || "1M ~ 3M";
+      document.getElementById("inAuditStoreType").value = existing?.storeType || store.channel || "Tiệm tạp hóa truyền thống";
+      document.getElementById("inAuditBusinessCategory").value = existing?.businessCategory || "Thực phẩm đông lạnh, Tạp hóa";
+      document.getElementById("inAuditMatchCjTarget").value = existing?.matchCjTarget || "Rất phù hợp";
+      document.getElementById("inAuditFreezerLocation").value = existing?.freezerLocation || "Mặt tiền đắc địa";
+      document.getElementById("inAuditFreezerVisibility").value = existing?.freezerVisibility || "Rõ ràng bắt mắt";
+      document.getElementById("inAuditTruckAccessible").value = existing?.truckAccessible || "Có xe tải vào tận nơi";
+      document.getElementById("inAuditDeliveryFrequency").value = existing?.deliveryFrequency || "2-3 lần/tuần";
+
+      document.getElementById("inAuditRootCause").value = existing?.rootCause || (store.salesTier === "= 0" ? "Hàng CJ bán chậm, không có khách hỏi mua" : "NPP/SR không chăm sóc tuyến, không ghé chào hàng");
+      document.getElementById("inAuditRootCauseDetail").value = existing?.rootCauseDetail || "";
+
+      // Action plan pre-fill
+      const defaultProposal = (store.assetStatus === "3T Ko Mua" || store.salesTier === "= 0") ? "Thu hồi tủ về kho (Không hiệu quả)" : "Hỗ trợ CTKM Sell-out kích cầu (Kích hoạt lại)";
+      document.getElementById("inAuditActionProposal").value = existing?.actionProposal || defaultProposal;
+      document.getElementById("inAuditActionPic").value = existing?.actionPic || currentUser?.name || store.salesRep || "GSBH Khu Vực";
+
+      // Dates
+      const now = new Date();
+      const deadlineDate = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);
+      const followUpDate = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+
+      document.getElementById("inAuditDeadline").value = existing?.deadline || deadlineDate.toISOString().split("T")[0];
+      document.getElementById("inAuditActionStatus").value = existing?.actionStatus || "Chờ xử lý";
+      document.getElementById("inAuditActionResult").value = existing?.actionResult || "";
+      document.getElementById("inAuditFollowUpDate").value = existing?.followUpDate || followUpDate.toISOString().split("T")[0];
+
+      // Photo preview
+      const previewBox = document.getElementById("inAuditPhotoPreviewBox");
+      const previewImg = document.getElementById("inAuditPhotoPreview");
+      if (existing?.photoUrl) {
+        this.inactiveAuditPhoto = existing.photoUrl;
+        if (previewImg) previewImg.src = existing.photoUrl;
+        if (previewBox) previewBox.classList.remove("hidden");
+      } else {
+        if (previewBox) previewBox.classList.add("hidden");
+      }
+    } catch (err) {
+      console.error("Lỗi khi mở form 23 tiêu chí:", err);
+    }
+  },
+
+  closeInactiveAuditModal() {
+    const modal = document.getElementById("modalInactiveFreezerAudit");
+    if (modal) {
+      modal.classList.add("hidden");
+      modal.style.display = "none";
+    }
+  },
+
+  onCompetitorChange(val) {
+    const box = document.getElementById("inAuditCompetitorDetailBox");
+    if (box) {
+      if (val === "Có") {
+        box.classList.remove("hidden");
+      } else {
+        box.classList.add("hidden");
+      }
+    }
+  },
+
+  triggerInactiveCamera() {
+    const fileInput = document.getElementById("inAuditPhotoFileInput");
+    if (fileInput) {
+      fileInput.click();
+    }
+  },
+
+  async handleInactivePhotoUpload(event) {
+    const file = event.target.files && event.target.files[0];
+    if (!file) return;
+
+    const store = this.currentInactiveStore;
+    const currentUser = (typeof CJAuth !== "undefined" && CJAuth.getCurrentUser) ? CJAuth.getCurrentUser() : null;
+
+    try {
+      this.showToast("Đang đóng dấu Watermark GPS chống gian lận...", "info");
+
+      const metadata = {
+        storeName: store?.name || "Điểm bán CJ",
+        storeCode: store?.storeCode || store?.id || "STR01",
+        freezerId: store?.serialNumber || store?.barcode || store?.freezerId || "TDO01",
+        auditorName: currentUser?.name || "Thẩm Định Viên",
+        auditorCode: currentUser?.username || "AUDIT",
+        lat: this.currentGPS?.lat || store?.lat || 10.7769,
+        lng: this.currentGPS?.lng || store?.lng || 106.7009,
+        temperature: "-18°C",
+        statusText: document.getElementById("inAuditCondition")?.value || "Hoạt động"
+      };
+
+      const watermarkedBase64 = (typeof CJWatermark !== "undefined" && CJWatermark.processImage) 
+        ? await CJWatermark.processImage(file, metadata) 
+        : await this.readFileAsDataURL(file);
+
+      this.inactiveAuditPhoto = watermarkedBase64;
+      this.inactivePhotoMetadata = metadata;
+
+      const previewBox = document.getElementById("inAuditPhotoPreviewBox");
+      const previewImg = document.getElementById("inAuditPhotoPreview");
+      const metaText = document.getElementById("inAuditPhotoMetadata");
+
+      if (previewImg) previewImg.src = watermarkedBase64;
+      if (metaText) metaText.textContent = `GPS: ${metadata.lat.toFixed(4)}, ${metadata.lng.toFixed(4)} | Giờ: ${new Date().toLocaleTimeString('vi-VN')}`;
+      if (previewBox) previewBox.classList.remove("hidden");
+
+      this.showToast("✓ Đã gắn Watermark GPS thành công!", "success");
+    } catch (err) {
+      console.error("Lỗi khi xử lý ảnh Watermark:", err);
+      alert("Không thể đóng dấu ảnh: " + err.message);
+    }
+  },
+
+  submitInactiveAudit() {
+    const store = this.currentInactiveStore;
+    if (!store) return;
+
+    const currentUser = (typeof CJAuth !== "undefined" && CJAuth.getCurrentUser) ? CJAuth.getCurrentUser() : null;
+
+    const condition = document.getElementById("inAuditCondition").value;
+    const powerStatus = document.getElementById("inAuditPowerStatus").value;
+    const hasCjGoods = document.getElementById("inAuditHasCjGoods").value;
+    const orders30d = parseInt(document.getElementById("inAuditOrders30d").value, 10) || 0;
+    const sales30d = parseFloat(String(document.getElementById("inAuditSales30d").value).replace(/[^0-9.-]+/g, "")) || 0;
+    const hasCompetitor = document.getElementById("inAuditHasCompetitor").value;
+    const competitorDetail = document.getElementById("inAuditCompetitorDetail").value;
+    const revenuePotential = document.getElementById("inAuditRevenuePotential").value;
+    const storeType = document.getElementById("inAuditStoreType").value;
+    const businessCategory = document.getElementById("inAuditBusinessCategory").value;
+    const matchCjTarget = document.getElementById("inAuditMatchCjTarget").value;
+    const freezerLocation = document.getElementById("inAuditFreezerLocation").value;
+    const freezerVisibility = document.getElementById("inAuditFreezerVisibility").value;
+    const truckAccessible = document.getElementById("inAuditTruckAccessible").value;
+    const deliveryFrequency = document.getElementById("inAuditDeliveryFrequency").value;
+    const rootCause = document.getElementById("inAuditRootCause").value;
+    const rootCauseDetail = document.getElementById("inAuditRootCauseDetail").value;
+    const actionProposal = document.getElementById("inAuditActionProposal").value;
+    const actionPic = document.getElementById("inAuditActionPic").value;
+    const deadline = document.getElementById("inAuditDeadline").value;
+    const actionStatus = document.getElementById("inAuditActionStatus").value;
+    const actionResult = document.getElementById("inAuditActionResult").value;
+    const followUpDate = document.getElementById("inAuditFollowUpDate").value;
+
+    const nowStr = new Date().toLocaleString("vi-VN");
+
+    const auditRecord = {
+      id: "AUDIT-" + Date.now(),
+      auditType: "turnaround_23_criteria",
+      storeId: store.id,
+      storeCode: store.storeCode || store.id,
+      storeName: store.originalStoreName || store.name,
+      address: store.address,
+      freezerId: store.serialNumber || store.freezerId,
+      model: store.model || store.modelTu,
+      condition,
+      powerStatus,
+      hasCjGoods,
+      orders30d,
+      sales30d,
+      hasCompetitor,
+      competitorDetail,
+      revenuePotential,
+      storeType,
+      businessCategory,
+      matchCjTarget,
+      freezerLocation,
+      freezerVisibility,
+      truckAccessible,
+      deliveryFrequency,
+      rootCause,
+      rootCauseDetail,
+      actionProposal,
+      actionPic,
+      deadline,
+      actionStatus,
+      actionResult,
+      followUpDate,
+      photoUrl: this.inactiveAuditPhoto || "",
+      photoMetadata: this.inactivePhotoMetadata,
+      auditorUser: currentUser?.username || "audit",
+      auditorName: currentUser?.name || "Thẩm Định Viên",
+      auditTime: nowStr,
+      date: nowStr.split(" ")[0]
+    };
+
+    // Save to Local Database
+    if (typeof CJStorage !== "undefined") {
+      CJStorage.saveAudit(auditRecord);
+
+      // Update store state
+      store.isAudited = true;
+      store.lastAuditDate = nowStr.split(" ")[0];
+      store.lastAuditFull = nowStr;
+      store.lastAuditor = currentUser?.name || "Thẩm Định Viên";
+      store.posmCondition = condition;
+      store.actionProposal = actionProposal;
+      store.actionStatus = actionStatus;
+      store.actionPic = actionPic;
+      CJStorage.updateStore(store);
+    }
+
+    // Close modal & refresh store list
+    this.closeInactiveAuditModal();
+    this.renderStoreList();
+
+    this.showToast("✓ Đã lưu phiếu thẩm định 23 tiêu chí thành công!", "success");
+
+    // Background Cloud Sync to Google Sheets
+    if (typeof CJCloudSync !== "undefined" && CJCloudSync.syncAuditRecord) {
+      CJCloudSync.syncAuditRecord(auditRecord);
+    }
+  },
+
 };
 
 if (typeof window !== "undefined") {
