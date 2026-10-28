@@ -96,31 +96,63 @@ const CJCloudSync = (function () {
         const user = (typeof CJAuth !== 'undefined' && typeof CJAuth.getCurrentUser === 'function') 
             ? (CJAuth.getCurrentUser() || {}) 
             : ((typeof CJAuth !== 'undefined' && CJAuth.currentUser) ? CJAuth.currentUser : {});
+        const storeObj = (typeof CJStorage !== 'undefined' && (auditData.storeId || auditData.customerCode))
+            ? (CJStorage.getStoreById(auditData.storeId) || CJStorage.getStoreById(auditData.customerCode) || {})
+            : {};
+
         const payload = {
-            timestamp: auditData.timestamp || auditData.date || new Date().toISOString(),
-            userCode: auditData.userCode || user.username || user.userCode || '',
-            userName: auditData.userName || user.name || user.fullName || '',
-            region: auditData.region || user.area || user.region || user.channel || '',
-            customerCode: auditData.customerCode || auditData.outletCode || '',
-            customerName: auditData.customerName || auditData.outletName || '',
-            address: auditData.address || '',
-            phone: auditData.phone || '',
-            freezerBarcode: auditData.freezerBarcode || auditData.barcode || '',
-            freezerModel: auditData.freezerModel || '',
+            timestamp: auditData.timestamp || auditData.auditTime || auditData.date || new Date().toISOString(),
+            userCode: auditData.userCode || auditData.auditorUser || user.username || user.userCode || '',
+            userName: auditData.userName || auditData.auditorName || user.name || user.fullName || '',
+            region: auditData.region || user.area || user.region || '',
+            customerCode: auditData.customerCode || auditData.storeCode || auditData.storeId || storeObj.storeCode || storeObj.id || '',
+            customerName: auditData.customerName || auditData.storeName || storeObj.name || '',
+            channel: auditData.channel || storeObj.channel || 'GT',
+            route: auditData.route || storeObj.route || '',
+            address: auditData.address || storeObj.address || '',
+            phone: auditData.phone || storeObj.phone || '',
+            salesRep: auditData.salesRep || storeObj.salesRep || '',
+            salesRepPhone: auditData.salesRepPhone || storeObj.salesRepPhone || '',
+            freezerBarcode: auditData.freezerBarcode || auditData.freezerId || auditData.barcode || storeObj.serialNumber || storeObj.barcode || '',
+            freezerModel: auditData.freezerModel || auditData.model || storeObj.model || storeObj.modelTu || '',
             freezerQuantity: auditData.freezerQuantity || 1,
-            workingCondition: auditData.workingCondition || '',
+            workingCondition: auditData.condition || auditData.workingCondition || '',
+            condition: auditData.condition || auditData.workingCondition || '',
+            powerStatus: auditData.powerStatus || '',
+            hasCjGoods: auditData.hasCjGoods || '',
+            orders30d: auditData.orders30d !== undefined ? auditData.orders30d : '',
+            sales30d: auditData.sales30d !== undefined ? auditData.sales30d : '',
+            hasCompetitor: auditData.hasCompetitor || '',
+            competitorDetail: auditData.competitorDetail || '',
+            revenuePotential: auditData.revenuePotential || '',
+            storeType: auditData.storeType || auditData.channel || 'GT',
+            businessCategory: auditData.businessCategory || '',
+            matchCjTarget: auditData.matchCjTarget || '',
+            freezerLocation: auditData.freezerLocation || '',
+            freezerVisibility: auditData.freezerVisibility || '',
+            truckAccessible: auditData.truckAccessible || '',
+            deliveryFrequency: auditData.deliveryFrequency || '',
+            rootCause: auditData.rootCause || '',
+            rootCauseDetail: auditData.rootCauseDetail || '',
+            actionProposal: auditData.actionProposal || '',
+            actionPic: auditData.actionPic || '',
+            deadline: auditData.deadline || '',
+            actionStatus: auditData.actionStatus || 'Chờ xử lý',
+            actionResult: auditData.actionResult || '',
+            followUpDate: auditData.followUpDate || '',
             conditionNote: auditData.conditionNote || '',
             cleanliness: auditData.cleanliness || '',
             stockCompliance: auditData.stockCompliance || '',
             displayLocation: auditData.displayLocation || '',
             posmStatus: auditData.posmStatus || '',
             notes: auditData.notes || '',
-            latitude: auditData.latitude || (auditData.location ? auditData.location.lat : '') || '',
-            longitude: auditData.longitude || (auditData.location ? auditData.location.lng : '') || '',
+            latitude: auditData.latitude || (auditData.photoMetadata ? auditData.photoMetadata.lat : '') || (auditData.location ? auditData.location.lat : '') || storeObj.lat || '',
+            longitude: auditData.longitude || (auditData.photoMetadata ? auditData.photoMetadata.lng : '') || (auditData.location ? auditData.location.lng : '') || storeObj.lng || '',
             distanceMeters: auditData.distanceMeters || '',
-            photo: auditData.photo || auditData.photoPosm || '', // base64 photo 1 (fallback)
-            photoPosm: auditData.photoPosm || auditData.photo || '', // base64 photo 1 (Tủ đông)
-            photoOverview: auditData.photoOverview || '' // base64 photo 2 (Tổng quan cửa hàng)
+            photo: auditData.photo || auditData.photoPosm || auditData.photoUrl || '',
+            photoPosm: auditData.photoPosm || auditData.photo || auditData.photoUrl || '',
+            photoOverview: auditData.photoOverview || '',
+            photoMetadata: auditData.photoMetadata || null
         };
 
         if (typeof CJAudit !== 'undefined' && CJAudit.showToast) {
@@ -320,6 +352,7 @@ const CJCloudSync = (function () {
         setScriptUrl: setScriptUrl,
         testConnection: testConnection,
         sendAuditToGoogleSheet: sendAuditToGoogleSheet,
+        syncAuditRecord: sendAuditToGoogleSheet,
         pullAuditsFromGoogleSheet: pullAuditsFromGoogleSheet,
         syncAllFromCloud: syncAllFromCloud,
         syncPendingQueue: syncPendingQueue,
