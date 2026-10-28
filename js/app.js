@@ -387,8 +387,8 @@ const CJApp = {
 
     // Initialize modules with the new GSBH context (default to ALL to view all stores)
     CJAudit.selectedSalesRep = "ALL";
+    CJAudit.displayLimit = 40;
     CJAudit.init();
-    CJDashboard.init();
 
     // MÀN HÌNH 1: Mở ngay Màn hình Tổng hợp & Danh sách điểm bán cần kiểm tra theo yêu cầu
     this.switchTab("mobileAudit");
@@ -495,7 +495,10 @@ const CJApp = {
         CJDashboard.refresh();
       }, 150);
     } else if (tabId === "mobileAudit") {
-      CJAudit.renderStoreList();
+      const c = document.getElementById("storeListContainer");
+      if (!c || c.children.length === 0) {
+        CJAudit.renderStoreList();
+      }
     } else if (tabId === "auditLog") {
       CJDashboard.renderAuditTable();
     } else if (tabId === "tickets") {
@@ -667,6 +670,25 @@ const CJApp = {
     if (!select) return;
 
     const allUsers = (typeof CJStorage !== "undefined" && CJStorage.getUsers) ? CJStorage.getUsers() : (typeof GSBH_ACCOUNTS !== "undefined" ? GSBH_ACCOUNTS : []);
+    const allStores = (typeof CJStorage !== "undefined" && CJStorage.getAllStores) ? CJStorage.getAllStores() : [];
+
+    // Pre-calculate store count per user in a single O(N) pass for instant dropdown populating
+    const storeCountByUser = {};
+    allStores.forEach(s => {
+      const u1 = (s.gsbhUsername || "").toLowerCase();
+      const u2 = (s.assignedUser || "").toLowerCase();
+      const u3 = (s.auditorUser || "").toLowerCase();
+      const u4 = (s.salesRepCode || "").toLowerCase();
+      if (u1) storeCountByUser[u1] = (storeCountByUser[u1] || 0) + 1;
+      if (u2 && u2 !== u1) storeCountByUser[u2] = (storeCountByUser[u2] || 0) + 1;
+      if (u3 && u3 !== u1 && u3 !== u2) storeCountByUser[u3] = (storeCountByUser[u3] || 0) + 1;
+      if (u4 && u4 !== u1 && u4 !== u2 && u4 !== u3) storeCountByUser[u4] = (storeCountByUser[u4] || 0) + 1;
+    });
+
+    const getCount = (uname) => {
+      if (!uname) return 0;
+      return storeCountByUser[uname.toLowerCase()] || 0;
+    };
 
     let html = `<option value="ALL">🌐 Toàn Quốc (Tất Cả User Hệ Thống)</option>`;
 
@@ -674,7 +696,7 @@ const CJApp = {
     if (gsbhList.length > 0) {
       html += `<optgroup label="👮‍♂️ Giám Sát Bán Hàng (GSBH Kênh GT)">`;
       gsbhList.forEach(g => {
-        const storeCount = CJStorage.getStoresForUser(g.username).length;
+        const storeCount = getCount(g.username);
         html += `<option value="${g.username}">👮‍♂️ GSBH ${g.name} (${g.username} - ${storeCount} KH)</option>`;
       });
       html += `</optgroup>`;
@@ -684,7 +706,7 @@ const CJApp = {
     if (allReps.length > 0) {
       html += `<optgroup label="👤 Nhân Viên Bán Hàng (Sales Rep - GT)">`;
       allReps.forEach(r => {
-        const storeCount = CJStorage.getStoresForUser(r.username).length;
+        const storeCount = getCount(r.username) || getCount(r.code);
         html += `<option value="${r.username}">👤 NVBH ${r.name} (${r.code} - ${storeCount} KH)</option>`;
       });
       html += `</optgroup>`;
