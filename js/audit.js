@@ -591,7 +591,7 @@ const CJAudit = {
       new_outlet: {
         icon: "🏪",
         title: "Đang kiểm tra: Khảo Sát Mở Mới Điểm Bán GT",
-        guide: "Khảo sát thực địa và thẩm định cấp đặt tủ đông mới cho tiệm tạp hóa."
+        guide: "Khảo sát thực địa và kiểm tra cấp đặt tủ đông mới cho tiệm tạp hóa."
       }
     };
 
@@ -868,9 +868,9 @@ const CJAudit = {
               type="button" 
               onclick="CJAudit.openInactiveAuditModal('${store.id}')" 
               class="flex-1 ${isAudited ? 'bg-emerald-700 hover:bg-emerald-800 border border-emerald-600' : 'bg-gradient-to-r from-blue-700 to-indigo-800 hover:from-blue-800 hover:to-indigo-900'} text-white font-black text-xs py-2.5 px-3 rounded-xl shadow flex items-center justify-center gap-1.5 transition active:scale-95 cursor-pointer" 
-              title="Thẩm định tủ đông theo 23 tiêu chí RTM & Kế hoạch xử lý">
+              title="Kiểm tra tủ đông theo 23 tiêu chí RTM & Kế hoạch xử lý">
               <span class="text-sm font-black">${isAudited ? '🔄' : '📝'}</span>
-              <span>${isAudited ? 'Xem / Sửa Phiếu 23 Tiêu Chí' : 'Thẩm Định Tủ Đông'}</span>
+              <span>${isAudited ? 'Xem / Sửa Phiếu Kiểm Tra' : 'Kiểm Tra Tủ Đông'}</span>
             </button>
 
             <!-- Button 2: Kiểm tra nhanh 60s -->
@@ -1946,9 +1946,9 @@ const CJAudit = {
       }
       if (elTitle) {
         if (currentUser.role === "auditor") {
-          elTitle.textContent = "TIẾN ĐỘ THẨM ĐỊNH THỊ TRƯỜNG (VĂN PHÒNG)";
+          elTitle.textContent = "TIẾN ĐỘ KIỂM TRA THỊ TRƯỜNG (VĂN PHÒNG)";
         } else if (currentUser.role === "admin") {
-          elTitle.textContent = "TIẾN ĐỘ THẨM ĐỊNH TỦ ĐÔNG TOÀN QUỐC";
+          elTitle.textContent = "TIẾN ĐỘ KIỂM TRA TỦ ĐÔNG TOÀN QUỐC";
         } else {
           elTitle.textContent = "TIẾN ĐỘ KIỂM TRA THỰC ĐỊA";
         }
@@ -2018,7 +2018,7 @@ const CJAudit = {
       document.getElementById("inAuditTruckAccessible").value = existing?.truckAccessible || "Có xe tải vào tận nơi";
       document.getElementById("inAuditDeliveryFrequency").value = existing?.deliveryFrequency || "2-3 lần/tuần";
 
-      document.getElementById("inAuditRootCause").value = existing?.rootCause || (store.salesTier === "= 0" ? "Hàng CJ bán chậm, không có khách hỏi mua" : "NPP/SR không chăm sóc tuyến, không ghé chào hàng");
+      document.getElementById("inAuditRootCause").value = existing?.rootCause || (store.salesTier === "= 0" ? "Hàng CJ bán chậm, không có khách hỏi mua" : "NPP/NVBH không chăm sóc tuyến, không ghé chào hàng");
       document.getElementById("inAuditRootCauseDetail").value = existing?.rootCauseDetail || "";
 
       // Action plan pre-fill
@@ -2071,9 +2071,28 @@ const CJAudit = {
   },
 
   triggerInactiveCamera() {
-    const fileInput = document.getElementById("inAuditPhotoFileInput");
-    if (fileInput) {
-      fileInput.click();
+    this.showToast("Đang kích hoạt Camera & định vị GPS...", "info");
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          this.currentGPS = {
+            lat: pos.coords.latitude,
+            lng: pos.coords.longitude,
+            accuracy: pos.coords.accuracy
+          };
+          const fileInput = document.getElementById("inAuditPhotoFileInput");
+          if (fileInput) fileInput.click();
+        },
+        (err) => {
+          console.warn("GPS request warning:", err);
+          const fileInput = document.getElementById("inAuditPhotoFileInput");
+          if (fileInput) fileInput.click();
+        },
+        { enableHighAccuracy: true, timeout: 6000 }
+      );
+    } else {
+      const fileInput = document.getElementById("inAuditPhotoFileInput");
+      if (fileInput) fileInput.click();
     }
   },
 
@@ -2091,7 +2110,7 @@ const CJAudit = {
         storeName: store?.name || "Điểm bán CJ",
         storeCode: store?.storeCode || store?.id || "STR01",
         freezerId: store?.serialNumber || store?.barcode || store?.freezerId || "TDO01",
-        auditorName: currentUser?.name || "Thẩm Định Viên",
+        auditorName: currentUser?.name || "Người kiểm tra",
         auditorCode: currentUser?.username || "AUDIT",
         lat: this.currentGPS?.lat || store?.lat || 10.7769,
         lng: this.currentGPS?.lng || store?.lng || 106.7009,
@@ -2124,6 +2143,11 @@ const CJAudit = {
   submitInactiveAudit() {
     const store = this.currentInactiveStore;
     if (!store) return;
+
+    if (!this.inactiveAuditPhoto) {
+      alert("⚠️ BẮT BUỘC CHỤP ẢNH TỦ ĐÔNG CÓ GPS:\n\nQuy định kiểm tra thực địa bắt buộc phải chụp ảnh trực tiếp tại điểm bán có đóng dấu GPS. Vui lòng bấm nút [📸 CHỤP ẢNH TRỰC TIẾP] trước khi Lưu!");
+      return;
+    }
 
     const currentUser = (typeof CJAuth !== "undefined" && CJAuth.getCurrentUser) ? CJAuth.getCurrentUser() : null;
 
@@ -2188,7 +2212,7 @@ const CJAudit = {
       photoUrl: this.inactiveAuditPhoto || "",
       photoMetadata: this.inactivePhotoMetadata,
       auditorUser: currentUser?.username || "audit",
-      auditorName: currentUser?.name || "Thẩm Định Viên",
+      auditorName: currentUser?.name || "Người kiểm tra",
       auditTime: nowStr,
       date: nowStr.split(" ")[0]
     };
@@ -2201,7 +2225,7 @@ const CJAudit = {
       store.isAudited = true;
       store.lastAuditDate = nowStr.split(" ")[0];
       store.lastAuditFull = nowStr;
-      store.lastAuditor = currentUser?.name || "Thẩm Định Viên";
+      store.lastAuditor = currentUser?.name || "Người kiểm tra";
       store.posmCondition = condition;
       store.actionProposal = actionProposal;
       store.actionStatus = actionStatus;
@@ -2213,7 +2237,7 @@ const CJAudit = {
     this.closeInactiveAuditModal();
     this.renderStoreList();
 
-    this.showToast("✓ Đã lưu phiếu thẩm định 23 tiêu chí thành công!", "success");
+    this.showToast("✓ Đã lưu phiếu kiểm tra 23 tiêu chí thành công!", "success");
 
     // Background Cloud Sync to Google Sheets
     if (typeof CJCloudSync !== "undefined" && CJCloudSync.syncAuditRecord) {
