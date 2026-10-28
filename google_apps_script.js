@@ -2,7 +2,7 @@
  * =========================================================================
  * CJ CAU TRE / CJ FOODS VIETNAM - MARKET AUDIT SYSTEM
  * GOOGLE APPS SCRIPT BACKEND (GOOGLE SHEETS & GOOGLE DRIVE)
- * HỖ TRỢ ĐỒNG BỘ 2 HÌNH ẢNH: TỦ ĐÔNG & TỔNG QUAN CỬA HÀNG
+ * BẢNG TỔNG HỢP KIỂM TRA THỊ TRƯỜNG & TỦ ĐÔNG ĐẦY ĐỦ THÔNG TIN
  * =========================================================================
  * Hướng dẫn cập nhật:
  * 1. Mở file Google Sheets của bạn ("CJ_Market_Audit_Data_2026")
@@ -17,13 +17,58 @@
 var SHEET_NAME = "DuLieuKiemTra";
 var FOLDER_NAME = "CJ_Market_Audit_Photos";
 
+var HEADERS = [
+  "Thời Gian Kiểm Tra",              // 1: A
+  "Mã Nhân Viên (User)",             // 2: B
+  "Tên Người Kiểm Tra",              // 3: C
+  "Mã Khách Hàng (Mã KH)",           // 4: D
+  "Tên Khách Hàng",                  // 5: E
+  "Kênh Bán Hàng",                   // 6: F
+  "Tuyến Bán Hàng",                  // 7: G
+  "Địa Chỉ Cửa Hàng",                // 8: H
+  "Số Điện Thoại",                   // 9: I
+  "NVBH Tuyến",                      // 10: J
+  "SĐT NVBH",                        // 11: K
+  "Mã Tủ / Barcode / Serial",        // 12: L
+  "Model Tủ Đông",                   // 13: M
+  "1. Tình Trạng Tủ",                // 14: N
+  "2. Tủ Cắm Điện 24/7",             // 15: O
+  "3. Tủ Có Hàng CJ",                // 16: P
+  "4. Đơn Hàng CJ 30 Ngày",          // 17: Q
+  "5. Doanh Số CJ 30 Ngày (VNĐ)",    // 18: R
+  "6. Có Bán Hàng Đối Thủ",          // 19: S
+  "Chi Tiết Hàng Đối Thủ",           // 20: T
+  "7. Tiềm Năng Doanh Số / Tháng",   // 21: U
+  "8. Loại Hình Cửa Hàng",           // 22: V
+  "9. Ngành Hàng Kinh Doanh",        // 23: W
+  "10. Phù Hợp Định Hướng CJ",       // 24: X
+  "11. Vị Trí Đặt Tủ",               // 25: Y
+  "12. Độ Nhận Diện Tủ",             // 26: Z
+  "13. Tuyến Có Xe Tải Giao",        // 27: AA
+  "14. Tần Suất Giao Của NPP / NVBH",// 28: AB
+  "15. Nguyên Nhân Không Lấy Hàng",  // 29: AC
+  "Chi Tiết Nguyên Nhân",            // 30: AD
+  "17. Đề Xuất Xử Lý",               // 31: AE
+  "18. PIC Hành Động",               // 32: AF
+  "19. Hạn Hoàn Thành (Deadline)",   // 33: AG
+  "20. Trạng Thái Xử Lý",            // 34: AH
+  "22. Kết Quả Sau Xử Lý",           // 35: AI
+  "23. Ngày Follow-Up",              // 36: AJ
+  "GPS Vĩ Độ (Lat)",                 // 37: AK
+  "GPS Kinh Độ (Lng)",               // 38: AL
+  "📸 Link Ảnh Kiểm Tra Tủ Đông",    // 39: AM
+  "📸 Link Ảnh Tổng Quan Cửa Hàng",  // 40: AN
+  "Drive ID (Tủ Đông)",              // 41: AO
+  "Drive ID (Tổng Quan)"             // 42: AP
+];
+
 function doGet(e) {
   var action = (e && e.parameter && e.parameter.action) ? e.parameter.action : "getAudits";
   
   if (action === "ping") {
     return ContentService.createTextOutput(JSON.stringify({
       status: "success",
-      message: "Kết nối hệ thống Google Sheets & Drive CJ Foods (2 Ảnh) thành công!",
+      message: "Kết nối hệ thống Google Sheets & Drive CJ Foods Vietnam thành công!",
       timestamp: new Date().toISOString()
     })).setMimeType(ContentService.MimeType.JSON);
   }
@@ -49,47 +94,59 @@ function doGet(e) {
         })).setMimeType(ContentService.MimeType.JSON);
       }
       
-      var maxCols = Math.min(25, sheet.getLastColumn());
+      var maxCols = Math.min(HEADERS.length, sheet.getLastColumn());
       var data = sheet.getRange(2, 1, lastRow - 1, maxCols).getValues();
       var audits = [];
       
       for (var i = 0; i < data.length; i++) {
         var row = data[i];
-        // Bỏ qua dòng trống
-        if (!row[0] && !row[1] && !row[4] && !row[8]) continue;
+        if (!row[0] && !row[1] && !row[3] && !row[11]) continue;
         
         var timeVal = row[0];
-        var timeStr = "";
-        if (timeVal instanceof Date) {
-          timeStr = formatDate(timeVal);
-        } else {
-          timeStr = String(timeVal || "");
-        }
+        var timeStr = (timeVal instanceof Date) ? formatDate(timeVal) : String(timeVal || "");
         
         audits.push({
           timestamp: timeStr,
           userCode: String(row[1] || "").trim(),
           userName: String(row[2] || "").trim(),
-          region: String(row[3] || "").trim(),
-          customerCode: String(row[4] || "").trim(),
-          customerName: String(row[5] || "").trim(),
-          address: String(row[6] || "").trim(),
-          phone: String(row[7] || "").trim(),
-          freezerBarcode: String(row[8] || "").trim(),
-          freezerModel: String(row[9] || "").trim(),
-          freezerQuantity: row[10] || 1,
-          workingCondition: String(row[11] || "").trim(),
-          conditionNote: String(row[12] || "").trim(),
-          cleanliness: String(row[13] || "").trim(),
-          stockCompliance: String(row[14] || "").trim(),
-          displayLocation: String(row[15] || "").trim(),
-          posmStatus: String(row[16] || "").trim(),
-          notes: String(row[17] || "").trim(),
-          latitude: row[18] || "",
-          longitude: row[19] || "",
-          distanceMeters: row[20] || "",
-          photoPosmUrl: String(row[21] || "").trim(),
-          photoOverviewUrl: String(row[22] || "").trim()
+          customerCode: String(row[3] || "").trim(),
+          customerName: String(row[4] || "").trim(),
+          channel: String(row[5] || "GT").trim(),
+          route: String(row[6] || "").trim(),
+          address: String(row[7] || "").trim(),
+          phone: String(row[8] || "").trim(),
+          salesRep: String(row[9] || "").trim(),
+          salesRepPhone: String(row[10] || "").trim(),
+          freezerBarcode: String(row[11] || "").trim(),
+          freezerModel: String(row[12] || "").trim(),
+          workingCondition: String(row[13] || "").trim(),
+          condition: String(row[13] || "").trim(),
+          powerStatus: String(row[14] || "").trim(),
+          hasCjGoods: String(row[15] || "").trim(),
+          orders30d: row[16] || 0,
+          sales30d: row[17] || 0,
+          hasCompetitor: String(row[18] || "").trim(),
+          competitorDetail: String(row[19] || "").trim(),
+          revenuePotential: String(row[20] || "").trim(),
+          storeType: String(row[21] || "").trim(),
+          businessCategory: String(row[22] || "").trim(),
+          matchCjTarget: String(row[23] || "").trim(),
+          freezerLocation: String(row[24] || "").trim(),
+          freezerVisibility: String(row[25] || "").trim(),
+          truckAccessible: String(row[26] || "").trim(),
+          deliveryFrequency: String(row[27] || "").trim(),
+          rootCause: String(row[28] || "").trim(),
+          rootCauseDetail: String(row[29] || "").trim(),
+          actionProposal: String(row[30] || "").trim(),
+          actionPic: String(row[31] || "").trim(),
+          deadline: String(row[32] || "").trim(),
+          actionStatus: String(row[33] || "").trim(),
+          actionResult: String(row[34] || "").trim(),
+          followUpDate: String(row[35] || "").trim(),
+          latitude: row[36] || "",
+          longitude: row[37] || "",
+          photoPosmUrl: String(row[38] || "").trim(),
+          photoOverviewUrl: String(row[39] || "").trim()
         });
       }
       
@@ -108,7 +165,7 @@ function doGet(e) {
   
   return ContentService.createTextOutput(JSON.stringify({
     status: "ok",
-    message: "CJ Audit Web Service (2 Photos Supported) is active"
+    message: "CJ Market Audit Web Service is active"
   })).setMimeType(ContentService.MimeType.JSON);
 }
 
@@ -123,95 +180,109 @@ function doPost(e) {
 
     var data = JSON.parse(e.postData.contents);
     var ss = SpreadsheetApp.getActiveSpreadsheet();
-    var sheet = ss.getSheetByName(SHEET_NAME) || ss.getSheets()[0];
+    var sheet = ss.getSheetByName(SHEET_NAME);
 
-    // Nếu chưa có sheet, tự động tạo và định dạng header chuẩn
     if (!sheet) {
       sheet = ss.insertSheet(SHEET_NAME);
       initSheetHeader(sheet);
     } else {
-      // Tự động kiểm tra và nâng cấp tiêu đề sang 2 cột ảnh nếu đang dùng mẫu cũ
-      upgradeSheetHeader(sheet);
+      ensureComprehensiveHeaders(sheet);
     }
 
-    // 1. Xử lý lưu ảnh 1: Tủ đông vào Google Drive
-    var photoPosmBase64 = data.photoPosm || data.photo || "";
+    // 1. Lưu ảnh 1: Tủ đông (Watermark GPS)
+    var photoPosmBase64 = data.photoPosm || data.photo || data.photoUrl || "";
     var photoPosmUrl = "";
     var fileIdPosm = "";
     if (photoPosmBase64 && photoPosmBase64.indexOf("data:image") !== -1) {
-      var uploadResPosm = savePhotoToDrive(photoPosmBase64, data.customerCode, data.userCode, "TUDONG");
+      var uploadResPosm = savePhotoToDrive(photoPosmBase64, data.customerCode || data.storeCode, data.userCode, "TUDONG");
       photoPosmUrl = uploadResPosm.url;
       fileIdPosm = uploadResPosm.id;
-    } else if (data.photoPosmUrl || data.photoUrl) {
+    } else if (data.photoPosmUrl || (data.photoUrl && data.photoUrl.indexOf("http") === 0)) {
       photoPosmUrl = data.photoPosmUrl || data.photoUrl;
     }
 
-    // 2. Xử lý lưu ảnh 2: Tổng quan cửa hàng vào Google Drive
+    // 2. Lưu ảnh 2: Tổng quan cửa hàng
     var photoOverviewBase64 = data.photoOverview || "";
     var photoOverviewUrl = "";
     var fileIdOverview = "";
     if (photoOverviewBase64 && photoOverviewBase64.indexOf("data:image") !== -1) {
-      var uploadResOv = savePhotoToDrive(photoOverviewBase64, data.customerCode, data.userCode, "TONGQUAN");
+      var uploadResOv = savePhotoToDrive(photoOverviewBase64, data.customerCode || data.storeCode, data.userCode, "TONGQUAN");
       photoOverviewUrl = uploadResOv.url;
       fileIdOverview = uploadResOv.id;
-    } else if (data.photoOverviewUrl) {
+    } else if (data.photoOverviewUrl && data.photoOverviewUrl.indexOf("http") === 0) {
       photoOverviewUrl = data.photoOverviewUrl;
     }
 
-    // Chuẩn bị dòng dữ liệu đầy đủ 25 cột
+    // Dòng dữ liệu đầy đủ 42 cột chuẩn mực FMCG RTM
     var timestamp = new Date();
     var rowData = [
-      formatDate(timestamp),                         // A: Thời Gian Lưu
-      data.userCode || "",                           // B: Mã Nhân Viên
-      data.userName || "",                           // C: Tên Nhân Viên
-      data.region || "",                             // D: Vùng / Khu Vực
-      data.customerCode || "",                       // E: Mã Khách Hàng
-      data.customerName || "",                       // F: Tên Khách Hàng
-      data.address || "",                            // G: Địa Chỉ
-      data.phone || "",                              // H: Số Điện Thoại
-      data.freezerBarcode || data.barcode || "",    // I: Mã Tủ / Serial
-      data.freezerModel || "",                       // J: Tên Tủ / Model
-      data.freezerQuantity || 1,                     // K: Số Lượng Tủ
-      data.workingCondition || "",                   // L: Tình Trạng Tủ
-      data.conditionNote || "",                      // M: Ghi Chú Tình Trạng
-      data.cleanliness || "",                        // N: Vệ Sinh Tủ
-      data.stockCompliance || "",                    // O: Tình Trạng Hàng Hóa
-      data.displayLocation || "",                    // P: Vị Trí Trưng Bày
-      data.posmStatus || "",                         // Q: POSM / Dán Nhãn
-      data.notes || "",                              // R: Ghi Chú Chung
-      data.latitude || "",                           // S: Vĩ Độ (Lat)
-      data.longitude || "",                          // T: Kinh Độ (Lng)
-      data.distanceMeters || "",                     // U: Khoảng Cách (m)
-      photoPosmUrl || "Không có ảnh",                // V: Cột Ảnh 1 (Tủ đông)
-      photoOverviewUrl || "Không có ảnh",            // W: Cột Ảnh 2 (Tổng quan CH)
-      fileIdPosm || "",                              // X: Drive ID (Tủ đông)
-      fileIdOverview || ""                           // Y: Drive ID (Tổng quan)
+      formatDate(timestamp),                                            // 1: Thời Gian Kiểm Tra
+      data.userCode || data.auditorUser || "",                          // 2: Mã NV Kiểm Tra
+      data.userName || data.auditorName || "",                          // 3: Tên Người Kiểm Tra
+      data.customerCode || data.storeCode || data.storeId || "",        // 4: Mã Khách Hàng
+      data.customerName || data.storeName || "",                        // 5: Tên Khách Hàng
+      data.channel || "GT",                                             // 6: Kênh Bán Hàng
+      data.route || "",                                                 // 7: Tuyến Bán Hàng
+      data.address || "",                                               // 8: Địa Chỉ
+      data.phone || "",                                                 // 9: Số Điện Thoại
+      data.salesRep || "",                                              // 10: NVBH Tuyến
+      data.salesRepPhone || "",                                         // 11: SĐT NVBH
+      data.freezerBarcode || data.barcode || data.freezerId || "",      // 12: Mã Tủ / Serial
+      data.freezerModel || data.model || "",                            // 13: Model Tủ
+      data.condition || data.workingCondition || "Bình thường",         // 14: 1. Tình Trạng Tủ
+      data.powerStatus || "",                                           // 15: 2. Tủ Cắm Điện 24/7
+      data.hasCjGoods || "",                                            // 16: 3. Tủ Có Hàng CJ
+      data.orders30d !== undefined ? data.orders30d : "",               // 17: 4. Đơn Hàng CJ 30 Ngày
+      data.sales30d !== undefined ? data.sales30d : "",                 // 18: 5. Doanh Số CJ 30 Ngày
+      data.hasCompetitor || "",                                         // 19: 6. Có Bán Hàng Đối Thủ
+      data.competitorDetail || "",                                      // 20: Chi Tiết Đối Thủ
+      data.revenuePotential || "",                                      // 21: 7. Tiềm Năng Doanh Số
+      data.storeType || "",                                             // 22: 8. Loại Hình Cửa Hàng
+      data.businessCategory || "",                                      // 23: 9. Ngành Hàng Kinh Doanh
+      data.matchCjTarget || "",                                         // 24: 10. Phù Hợp Định Hướng CJ
+      data.freezerLocation || "",                                       // 25: 11. Vị Trí Đặt Tủ
+      data.freezerVisibility || "",                                     // 26: 12. Độ Nhận Diện Tủ
+      data.truckAccessible || "",                                       // 27: 13. Tuyến Có Xe Tải Giao
+      data.deliveryFrequency || "",                                     // 28: 14. Tần Suất Giao Của NPP / NVBH
+      data.rootCause || "",                                             // 29: 15. Nguyên Nhân Không Lấy Hàng
+      data.rootCauseDetail || "",                                       // 30: Chi Tiết Nguyên Nhân
+      data.actionProposal || "",                                        // 31: 17. Đề Xuất Xử Lý
+      data.actionPic || "",                                             // 32: 18. PIC Hành Động
+      data.deadline || "",                                              // 33: 19. Hạn Hoàn Thành
+      data.actionStatus || "Chờ xử lý",                                 // 34: 20. Trạng Thái Xử Lý
+      data.actionResult || "",                                          // 35: 22. Kết Quả Sau Xử Lý
+      data.followUpDate || "",                                          // 36: 23. Ngày Follow-Up
+      data.latitude || (data.photoMetadata ? data.photoMetadata.lat : "") || "",  // 37: Vĩ Độ
+      data.longitude || (data.photoMetadata ? data.photoMetadata.lng : "") || "", // 38: Kinh Độ
+      photoPosmUrl || "Không có ảnh",                                   // 39: Link Ảnh Tủ Đông
+      photoOverviewUrl || "Không có ảnh",                               // 40: Link Ảnh Tổng Quan
+      fileIdPosm || "",                                                 // 41: Drive ID Tủ Đông
+      fileIdOverview || ""                                              // 42: Drive ID Tổng Quan
     ];
 
     sheet.appendRow(rowData);
     var lastRow = sheet.getLastRow();
 
-    // Gán Hyperlink native chuẩn cho Ảnh 1: Tủ Đông (Cột 22 / V)
-    if (photoPosmUrl) {
+    // Hyperlink chuẩn Google Sheets mở trực tiếp ảnh trên Google Drive
+    if (photoPosmUrl && photoPosmUrl.indexOf("http") === 0) {
       var richTextPosm = SpreadsheetApp.newRichTextValue()
-        .setText("🔗 Xem Ảnh Tủ Đông")
+        .setText("🔗 Xem Ảnh Tủ Đông (GPS)")
         .setLinkUrl(photoPosmUrl)
         .build();
-      sheet.getRange(lastRow, 22).setRichTextValue(richTextPosm);
+      sheet.getRange(lastRow, 39).setRichTextValue(richTextPosm);
     }
 
-    // Gán Hyperlink native chuẩn cho Ảnh 2: Tổng Quan Cửa Hàng (Cột 23 / W)
-    if (photoOverviewUrl) {
+    if (photoOverviewUrl && photoOverviewUrl.indexOf("http") === 0) {
       var richTextOv = SpreadsheetApp.newRichTextValue()
         .setText("🔗 Xem Ảnh Tổng Quan CH")
         .setLinkUrl(photoOverviewUrl)
         .build();
-      sheet.getRange(lastRow, 23).setRichTextValue(richTextOv);
+      sheet.getRange(lastRow, 40).setRichTextValue(richTextOv);
     }
 
     return ContentService.createTextOutput(JSON.stringify({
       status: "success",
-      message: "Đã lưu thành công 2 hình ảnh & dữ liệu kiểm tra lên Google Sheets!",
+      message: "Đã lưu thành công dữ liệu kiểm tra và hình ảnh lên Google Sheets & Drive!",
       row: lastRow,
       photoPosmUrl: photoPosmUrl,
       photoOverviewUrl: photoOverviewUrl
@@ -225,101 +296,55 @@ function doPost(e) {
   }
 }
 
-/**
- * Tự động kiểm tra và nâng cấp tiêu đề bảng tính từ 1 ảnh sang 2 ảnh
- */
-function upgradeSheetHeader(sheet) {
-  try {
-    var valV = sheet.getRange(1, 22).getValue();
-    var valW = sheet.getRange(1, 23).getValue();
-    
-    // Nếu tiêu đề cột V đang là "Hình Ảnh Bằng Chứng" hoặc cột W là "Drive File ID"
-    if (valV === "Hình Ảnh Bằng Chứng" || valW === "Drive File ID") {
-      sheet.getRange(1, 22).setValue("Ảnh 1: Tủ Đông");
-      sheet.getRange(1, 23).setValue("Ảnh 2: Tổng Quan CH");
-      sheet.getRange(1, 24).setValue("Drive ID (Tủ Đông)");
-      sheet.getRange(1, 25).setValue("Drive ID (Tổng Quan)");
-
-      var hRange = sheet.getRange(1, 22, 1, 4);
-      hRange.setBackground("#c62828")
-            .setFontColor("#ffffff")
-            .setFontWeight("bold")
-            .setHorizontalAlignment("center")
-            .setVerticalAlignment("middle");
-
-      sheet.setColumnWidth(22, 160);
-      sheet.setColumnWidth(23, 170);
-      sheet.setColumnWidth(24, 150);
-      sheet.setColumnWidth(25, 150);
-    }
-  } catch (e) {
-    console.warn("Lỗi khi kiểm tra nâng cấp header:", e);
-  }
-}
-
-/**
- * Khởi tạo Header chuẩn 25 cột cho Google Sheet
- */
 function initSheetHeader(sheet) {
-  var headers = [
-    "Thời Gian Lưu",
-    "Mã NV",
-    "Tên Nhân Viên",
-    "Khu Vực",
-    "Mã Cửa Hàng",
-    "Tên Cửa Hàng",
-    "Địa Chỉ",
-    "Số Điện Thoại",
-    "Mã Tủ (Barcode/Serial)",
-    "Tên Tủ (Model)",
-    "Số Lượng Tủ",
-    "Tình Trạng Tủ",
-    "Ghi Chú Tình Trạng",
-    "Vệ Sinh Tủ",
-    "Hàng Hóa Trong Tủ",
-    "Vị Trí Trưng Bày",
-    "POSM & Nhãn Hiệu",
-    "Ghi Chú Chung",
-    "GPS Vĩ Độ",
-    "GPS Kinh Độ",
-    "Khoảng Cách (m)",
-    "Ảnh 1: Tủ Đông",
-    "Ảnh 2: Tổng Quan CH",
-    "Drive ID (Tủ Đông)",
-    "Drive ID (Tổng Quan)"
-  ];
-  
-  sheet.appendRow(headers);
-  var headerRange = sheet.getRange(1, 1, 1, headers.length);
-  headerRange.setBackground("#c62828") // CJ Foods Brand Red
+  sheet.appendRow(HEADERS);
+  var headerRange = sheet.getRange(1, 1, 1, HEADERS.length);
+  headerRange.setBackground("#c62828") // CJ Brand Red
              .setFontColor("#ffffff")
              .setFontWeight("bold")
              .setHorizontalAlignment("center")
              .setVerticalAlignment("middle");
-  sheet.setRowHeight(1, 36);
+  sheet.setRowHeight(1, 38);
   sheet.setFrozenRows(1);
   
-  // Set default column widths for readability
-  sheet.setColumnWidth(1, 150); // Time
-  sheet.setColumnWidth(2, 90);  // Code
-  sheet.setColumnWidth(3, 140); // Name
-  sheet.setColumnWidth(4, 90);  // Region
-  sheet.setColumnWidth(5, 110); // Cust Code
-  sheet.setColumnWidth(6, 200); // Cust Name
-  sheet.setColumnWidth(7, 260); // Address
-  sheet.setColumnWidth(8, 120); // Phone
-  sheet.setColumnWidth(9, 130); // Barcode
-  sheet.setColumnWidth(10, 160); // Model
-  sheet.setColumnWidth(12, 140); // Status
-  sheet.setColumnWidth(22, 160); // Photo 1 Link (Tủ đông)
-  sheet.setColumnWidth(23, 170); // Photo 2 Link (Tổng quan)
-  sheet.setColumnWidth(24, 150); // File ID 1
-  sheet.setColumnWidth(25, 150); // File ID 2
+  // Thiết lập độ rộng cột tối ưu
+  sheet.setColumnWidth(1, 150); // Thời gian
+  sheet.setColumnWidth(2, 100); // User
+  sheet.setColumnWidth(3, 140); // Tên người kiểm
+  sheet.setColumnWidth(4, 110); // Mã KH
+  sheet.setColumnWidth(5, 220); // Tên KH
+  sheet.setColumnWidth(6, 80);  // Kênh
+  sheet.setColumnWidth(7, 100); // Tuyến
+  sheet.setColumnWidth(8, 260); // Địa chỉ
+  sheet.setColumnWidth(9, 110); // SĐT
+  sheet.setColumnWidth(10, 140); // NVBH
+  sheet.setColumnWidth(11, 110); // SĐT NVBH
+  sheet.setColumnWidth(12, 130); // Barcode
+  sheet.setColumnWidth(13, 160); // Model
+  sheet.setColumnWidth(14, 150); // Tình trạng tủ
+  sheet.setColumnWidth(39, 180); // Ảnh Tủ Đông
+  sheet.setColumnWidth(40, 180); // Ảnh Tổng Quan
 }
 
-/**
- * Lưu ảnh chụp Base64 trực tiếp vào thư mục Google Drive chuyên biệt
- */
+function ensureComprehensiveHeaders(sheet) {
+  try {
+    var curCols = sheet.getLastColumn();
+    if (curCols < HEADERS.length) {
+      sheet.getRange(1, 1, 1, HEADERS.length).setValues([HEADERS]);
+      var headerRange = sheet.getRange(1, 1, 1, HEADERS.length);
+      headerRange.setBackground("#c62828")
+                 .setFontColor("#ffffff")
+                 .setFontWeight("bold")
+                 .setHorizontalAlignment("center")
+                 .setVerticalAlignment("middle");
+      sheet.setRowHeight(1, 38);
+      sheet.setFrozenRows(1);
+    }
+  } catch (e) {
+    console.warn("Lỗi đồng bộ headers:", e);
+  }
+}
+
 function savePhotoToDrive(base64Data, customerCode, userCode, typeTag) {
   var folder;
   var folders = DriveApp.getFoldersByName(FOLDER_NAME);
@@ -330,7 +355,6 @@ function savePhotoToDrive(base64Data, customerCode, userCode, typeTag) {
     folder.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
   }
 
-  // Tách base64 data
   var base64String = base64Data;
   if (base64Data.indexOf(",") !== -1) {
     base64String = base64Data.split(",")[1];
@@ -339,7 +363,7 @@ function savePhotoToDrive(base64Data, customerCode, userCode, typeTag) {
   var decoded = Utilities.base64Decode(base64String);
   var timeStr = Utilities.formatDate(new Date(), "GMT+7", "yyyyMMdd_HHmmss");
   var safeCust = (customerCode || "OUTLET").replace(/[^a-zA-Z0-9_-]/g, "");
-  var safeUser = (userCode || "SR").replace(/[^a-zA-Z0-9_-]/g, "");
+  var safeUser = (userCode || "NVBH").replace(/[^a-zA-Z0-9_-]/g, "");
   var prefix = typeTag ? (typeTag + "_") : "AUDIT_";
   var fileName = prefix + safeCust + "_" + safeUser + "_" + timeStr + ".jpg";
   
@@ -347,7 +371,6 @@ function savePhotoToDrive(base64Data, customerCode, userCode, typeTag) {
   var file = folder.createFile(blob);
   file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
   
-  // Link mở ảnh trực tiếp trên trình duyệt
   var viewUrl = "https://drive.google.com/file/d/" + file.getId() + "/view";
   
   return {
@@ -358,13 +381,4 @@ function savePhotoToDrive(base64Data, customerCode, userCode, typeTag) {
 
 function formatDate(date) {
   return Utilities.formatDate(date, "GMT+7", "yyyy-MM-dd HH:mm:ss");
-}
-
-/**
- * Hàm hỗ trợ chạy thủ công một lần để đổi tiêu đề bảng tính nếu cần
- */
-function chayNangCapHeaderThuCong() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var sheet = ss.getSheetByName(SHEET_NAME) || ss.getSheets()[0];
-  upgradeSheetHeader(sheet);
 }
