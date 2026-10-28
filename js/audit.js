@@ -1308,12 +1308,14 @@ const CJAudit = {
     const titles = {
       posm: "📸 Chụp hình 1: Tủ đông & Barcode",
       overview: "📸 Chụp hình 2: Tổng quan cửa hàng",
-      recall: "📸 Chụp hình: Hiện trạng tủ thu hồi"
+      recall: "📸 Chụp hình: Hiện trạng tủ thu hồi",
+      inactive: "📸 Chụp hình: Hiện trạng tủ đông (GPS)"
     };
     const helpers = {
       posm: "tủ đông, tem barcode & sản phẩm Bibigo",
       overview: "toàn cảnh mặt tiền & biển hiệu cửa hàng",
-      recall: "hiện trạng trầy xước/móp méo và bàn giao"
+      recall: "hiện trạng trầy xước/móp méo và bàn giao",
+      inactive: "tủ đông & mặt bằng điểm bán thực tế"
     };
 
     if (title) title.textContent = titles[photoType] || "Chụp ảnh kiểm tra thực địa";
@@ -1393,8 +1395,24 @@ const CJAudit = {
       this.closeLiveCamera();
 
       const metadata = this.buildWatermarkMetadata(this.currentCameraPhotoType);
-      const watermarkedDataUrl = await CJWatermark.processImage(rawDataUrl, metadata);
-      this.setPhotoPreview(this.currentCameraPhotoType, watermarkedDataUrl);
+      const watermarkedDataUrl = (typeof CJWatermark !== "undefined" && CJWatermark.processImage)
+        ? await CJWatermark.processImage(rawDataUrl, metadata)
+        : rawDataUrl;
+
+      if (this.currentCameraPhotoType === "inactive") {
+        this.inactiveAuditPhoto = watermarkedDataUrl;
+        this.inactivePhotoMetadata = metadata;
+        const previewBox = document.getElementById("inAuditPhotoPreviewBox");
+        const previewImg = document.getElementById("inAuditPhotoPreview");
+        const metaText = document.getElementById("inAuditPhotoMetadata");
+        if (previewImg) previewImg.src = watermarkedDataUrl;
+        const latVal = (typeof metadata.lat === "number") ? metadata.lat.toFixed(4) : (metadata.lat || "10.7769");
+        const lngVal = (typeof metadata.lng === "number") ? metadata.lng.toFixed(4) : (metadata.lng || "106.7009");
+        if (metaText) metaText.textContent = `GPS: ${latVal}, ${lngVal} | Giờ: ${new Date().toLocaleTimeString('vi-VN')}`;
+        if (previewBox) previewBox.classList.remove("hidden");
+      } else {
+        this.setPhotoPreview(this.currentCameraPhotoType, watermarkedDataUrl);
+      }
       this.showToast("Đã chụp và đóng dấu Watermark thành công!", "success");
     } catch (err) {
       console.error("Lỗi chụp ảnh từ live camera:", err);
@@ -1403,10 +1421,14 @@ const CJAudit = {
   },
 
   handleFallbackFile(event) {
-    const file = event.target.files[0];
+    const file = event.target.files && event.target.files[0];
     if (!file) return;
     this.closeLiveCamera();
-    this.handlePhotoUpload(event, this.currentCameraPhotoType);
+    if (this.currentCameraPhotoType === "inactive") {
+      this.handleInactivePhotoUpload(event);
+    } else {
+      this.handlePhotoUpload(event, this.currentCameraPhotoType);
+    }
   },
 
   async handlePhotoUpload(event, photoType) {
@@ -2071,7 +2093,9 @@ const CJAudit = {
   },
 
   triggerInactiveCamera() {
-    this.showToast("Đang kích hoạt Camera & định vị GPS...", "info");
+    this.showToast("Đang mở máy ảnh...", "info");
+
+    // 1. Lấy toạ độ GPS chạy ngầm song song (không chặn việc mở camera)
     if ("geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition(
         (pos) => {
@@ -2080,19 +2104,23 @@ const CJAudit = {
             lng: pos.coords.longitude,
             accuracy: pos.coords.accuracy
           };
-          const fileInput = document.getElementById("inAuditPhotoFileInput");
-          if (fileInput) fileInput.click();
         },
-        (err) => {
-          console.warn("GPS request warning:", err);
-          const fileInput = document.getElementById("inAuditPhotoFileInput");
-          if (fileInput) fileInput.click();
-        },
-        { enableHighAccuracy: true, timeout: 6000 }
+        (err) => console.warn("Lấy GPS chạy ngầm:", err),
+        { enableHighAccuracy: true, timeout: 8000 }
       );
-    } else {
-      const fileInput = document.getElementById("inAuditPhotoFileInput");
-      if (fileInput) fileInput.click();
+    }
+
+    // 2. Kích hoạt mở camera ĐỒNG BỘ NGAY LẬP TỨC trong User Gesture
+    const fileInput = document.getElementById("inAuditPhotoFileInput");
+    if (fileInput) {
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      if (!isMobile) {
+        fileInput.removeAttribute("capture");
+      } else {
+        fileInput.setAttribute("capture", "environment");
+      }
+      fileInput.value = "";
+      fileInput.click();
     }
   },
 
@@ -2106,14 +2134,17 @@ const CJAudit = {
     try {
       this.showToast("Đang đóng dấu Watermark GPS chống gian lận...", "info");
 
+      const latVal = (this.currentGPS && this.currentGPS.lat) ? Number(this.currentGPS.lat) : (Number(store?.lat) || 10.7769);
+      const lngVal = (this.currentGPS && this.currentGPS.lng) ? Number(this.currentGPS.lng) : (Number(store?.lng) || 106.7009);
+
       const metadata = {
-        storeName: store?.name || "Điểm bán CJ",
+        storeName: store?.originalStoreName || store?.name || "Điểm bán CJ",
         storeCode: store?.storeCode || store?.id || "STR01",
         freezerId: store?.serialNumber || store?.barcode || store?.freezerId || "TDO01",
         auditorName: currentUser?.name || "Người kiểm tra",
         auditorCode: currentUser?.username || "AUDIT",
-        lat: this.currentGPS?.lat || store?.lat || 10.7769,
-        lng: this.currentGPS?.lng || store?.lng || 106.7009,
+        lat: latVal,
+        lng: lngVal,
         temperature: "-18°C",
         statusText: document.getElementById("inAuditCondition")?.value || "Hoạt động"
       };
@@ -2130,7 +2161,7 @@ const CJAudit = {
       const metaText = document.getElementById("inAuditPhotoMetadata");
 
       if (previewImg) previewImg.src = watermarkedBase64;
-      if (metaText) metaText.textContent = `GPS: ${metadata.lat.toFixed(4)}, ${metadata.lng.toFixed(4)} | Giờ: ${new Date().toLocaleTimeString('vi-VN')}`;
+      if (metaText) metaText.textContent = `GPS: ${latVal.toFixed(4)}, ${lngVal.toFixed(4)} | Giờ: ${new Date().toLocaleTimeString('vi-VN')}`;
       if (previewBox) previewBox.classList.remove("hidden");
 
       this.showToast("✓ Đã gắn Watermark GPS thành công!", "success");
