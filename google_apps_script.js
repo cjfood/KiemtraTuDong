@@ -345,15 +345,33 @@ function ensureComprehensiveHeaders(sheet) {
   }
 }
 
-function savePhotoToDrive(base64Data, customerCode, userCode, typeTag) {
-  var folder;
-  var folders = DriveApp.getFoldersByName(FOLDER_NAME);
-  if (folders.hasNext()) {
-    folder = folders.next();
-  } else {
-    folder = DriveApp.createFolder(FOLDER_NAME);
-    folder.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+function getOrCreatePhotoFolder() {
+  try {
+    var ssId = SpreadsheetApp.getActiveSpreadsheet().getId();
+    var ssFile = DriveApp.getFileById(ssId);
+    var parentFolders = ssFile.getParents();
+    var parentFolder = parentFolders.hasNext() ? parentFolders.next() : DriveApp.getRootFolder();
+    
+    // Tự động tìm hoặc tạo thư mục con NGAY BÊN TRONG thư mục chứa file Google Sheet này
+    var subFolders = parentFolder.getFoldersByName(FOLDER_NAME);
+    if (subFolders.hasNext()) {
+      return subFolders.next();
+    } else {
+      var folder = parentFolder.createFolder(FOLDER_NAME);
+      folder.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+      return folder;
+    }
+  } catch (e) {
+    var folders = DriveApp.getFoldersByName(FOLDER_NAME);
+    if (folders.hasNext()) return folders.next();
+    var fallback = DriveApp.createFolder(FOLDER_NAME);
+    fallback.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+    return fallback;
   }
+}
+
+function savePhotoToDrive(base64Data, customerCode, userCode, typeTag) {
+  var folder = getOrCreatePhotoFolder();
 
   var base64String = base64Data;
   if (base64Data.indexOf(",") !== -1) {
