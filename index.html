@@ -39,7 +39,7 @@
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
   <!-- Custom CSS -->
-  <link rel="stylesheet" href="css/style.css?v=9.0" />
+  <link rel="stylesheet" href="css/style.css?v=9.1" />
 </head>
 <body class="bg-gray-100 min-h-screen flex flex-col antialiased">
 
@@ -648,11 +648,6 @@
             <!-- Mobile Subheader Bar: Back Button, Distributor Title & Sales Rep Dropdown -->
             <div class="bg-gradient-to-r from-[#14366e] to-[#184594] text-white px-3.5 py-2.5 flex items-center justify-between border-b border-blue-800/40 rounded-t-3xl">
               <div class="flex items-center gap-2">
-                <button type="button" onclick="CJApp.switchTab('dashboard')" class="p-1 text-white hover:text-blue-200 transition rounded-full active:scale-90" title="Quay lại Dashboard">
-                  <svg class="w-5 h-5 stroke-current stroke-2 fill-none" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
-                  </svg>
-                </button>
                 <div class="flex items-center gap-1.5">
                   <span class="text-xs bg-red-600 font-black px-1.5 py-0.5 rounded text-white tracking-wider">CJ</span>
                   <span class="text-xs font-black tracking-wide text-white">FOODS SYSTEM</span>
@@ -1767,19 +1762,9 @@
 
     <!-- ================= 3-TAB STREAMLINED MOBILE BOTTOM NAVIGATION BAR ================= -->
     <!-- Chỉ giữ 3 Menu chính theo yêu cầu: Trang chủ, Khách hàng, Cá nhân (Mục đích chủ yếu kiểm tra tủ đông) -->
-    <div id="mobileBottomNavBar" class="fixed sm:absolute bottom-0 left-0 right-0 z-30 bg-white/95 backdrop-blur border-t border-gray-200 shadow-lg px-3 py-1.5 flex items-center justify-around text-center select-none">
+    <div id="mobileBottomNavBar" class="fixed sm:absolute bottom-0 left-0 right-0 z-30 bg-white/95 backdrop-blur border-t border-gray-200 shadow-lg px-6 py-2 flex items-center justify-around text-center select-none">
       
-      <!-- Tab 1: Trang chủ (Màn hình 1 - Dashboard KT Tủ Đông GT) -->
-      <button 
-        type="button" 
-        onclick="CJApp.switchTab('dashboard')" 
-        class="mobile-dms-tab flex-1 flex flex-col items-center py-1 text-[#184594] font-black transition active:scale-95 cursor-pointer" 
-        data-tab="dashboard">
-        <span class="text-xl leading-none">🏠</span>
-        <span class="text-[11px] font-bold mt-1">Trang chủ</span>
-      </button>
-
-      <!-- Tab 2: Khách hàng (Màn hình 2 - Danh sách KH Cần KT Tủ Đông) -->
+      <!-- Tab 1: Khách hàng (Màn hình 2 - Danh sách KH Cần KT Tủ Đông) -->
       <button 
         type="button" 
         onclick="CJApp.switchTab('mobileAudit'); if (typeof CJAudit !== 'undefined' && CJAudit.switchViewMode) CJAudit.switchViewMode('list');" 
@@ -3429,14 +3414,14 @@
   <div id="appToast" class="fixed top-5 right-5 z-50 opacity-0 translate-y-[-20px] pointer-events-none transition-all duration-300"></div>
 
   <!-- ================= APPLICATION SCRIPTS ================= -->
-  <script src="js/data.js?v=9.0"></script>
-  <script src="js/auth.js?v=9.0"></script>
-  <script src="js/storage.js?v=9.0"></script>
-  <script src="js/watermark.js?v=9.0"></script>
-  <script src="js/cloud_sync.js?v=9.0"></script>
-  <script src="js/audit.js?v=9.0"></script>
-  <script src="js/dashboard.js?v=9.0"></script>
-  <script src="js/excel.js?v=9.0"></script>
-  <script src="js/app.js?v=9.0"></script>
+  <script src="js/data.js?v=9.1"></script>
+  <script src="js/auth.js?v=9.1"></script>
+  <script src="js/storage.js?v=9.1"></script>
+  <script src="js/watermark.js?v=9.1"></script>
+  <script src="js/cloud_sync.js?v=9.1"></script>
+  <script src="js/audit.js?v=9.1"></script>
+  <script src="js/dashboard.js?v=9.1"></script>
+  <script src="js/excel.js?v=9.1"></script>
+  <script src="js/app.js?v=9.1"></script>
 </body>
 </html>
