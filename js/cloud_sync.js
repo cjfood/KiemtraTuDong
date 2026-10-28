@@ -9,16 +9,43 @@ const CJCloudSync = (function () {
     const STORAGE_KEY = 'cj_google_sheet_url';
     const PENDING_SYNC_KEY = 'cj_pending_sync_queue';
     const DEFAULT_SYSTEM_URL = 'https://script.google.com/macros/s/AKfycbxTtQpinPeLMJksH-Jdo9HpU2sP_g4N2TflU97pMkGqUtHlDpWZ42xv-rM5iECnoVSWIQ/exec';
+    const OLD_SYSTEM_URL_PREFIX = 'AKfycbw4n6lsTKqsVXlrtyu2qx5GNFTksMmtoAyCcvgPpXfXD71nTP';
+
+    // Tự động xóa link cũ nếu còn lưu trong localStorage của trình duyệt
+    try {
+        const cached = localStorage.getItem(STORAGE_KEY);
+        if (cached && cached.includes(OLD_SYSTEM_URL_PREFIX)) {
+            localStorage.removeItem(STORAGE_KEY);
+            console.log("[CJCloudSync] Đã xóa URL Google cũ khỏi localStorage.");
+        }
+    } catch (e) {}
 
     /**
      * Lấy URL Google Apps Script đã lưu hoặc URL mặc định của hệ thống
      */
     function getScriptUrl() {
-        const customUrl = localStorage.getItem(STORAGE_KEY);
-        if (customUrl && customUrl.trim()) return customUrl.trim();
+        // Tự động dọn dẹp nếu URL cũ còn sót
+        try {
+            const cached = localStorage.getItem(STORAGE_KEY);
+            if (cached && cached.includes(OLD_SYSTEM_URL_PREFIX)) {
+                localStorage.removeItem(STORAGE_KEY);
+            }
+        } catch (e) {}
+
+        // 1. Ưu tiên cao nhất: URL chuẩn hệ thống từ data.js
         if (typeof CJ_SYSTEM_GOOGLE_SHEET_URL !== 'undefined' && CJ_SYSTEM_GOOGLE_SHEET_URL && CJ_SYSTEM_GOOGLE_SHEET_URL.trim()) {
-            return CJ_SYSTEM_GOOGLE_SHEET_URL.trim();
+            const sysUrl = CJ_SYSTEM_GOOGLE_SHEET_URL.trim();
+            if (!sysUrl.includes(OLD_SYSTEM_URL_PREFIX)) {
+                return sysUrl;
+            }
         }
+
+        // 2. Kiểm tra customUrl người dùng cấu hình thủ công (loại trừ URL cũ)
+        const customUrl = localStorage.getItem(STORAGE_KEY);
+        if (customUrl && customUrl.trim() && !customUrl.includes(OLD_SYSTEM_URL_PREFIX)) {
+            return customUrl.trim();
+        }
+
         return DEFAULT_SYSTEM_URL;
     }
 
