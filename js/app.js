@@ -650,7 +650,7 @@ const CJApp = {
     // 2. Group Sales Reps
     const allReps = CJAuth.getAllSalesReps();
     if (allReps.length > 0) {
-      options += `<optgroup label="👤 Nhân Viên Bán Hàng (Sales Rep - GT)">`;
+      options += `<optgroup label="👤 Nhân Viên Bán Hàng (NVBH - GT)">`;
       allReps.forEach(r => {
         options += `<option value="${r.username}">👤 NVBH: ${r.name} (${r.code} - ${r.username} - GSBH: ${r.gsbhName})</option>`;
       });
@@ -704,7 +704,7 @@ const CJApp = {
 
     const allReps = CJAuth.getAllSalesReps();
     if (allReps.length > 0) {
-      html += `<optgroup label="👤 Nhân Viên Bán Hàng (Sales Rep - GT)">`;
+      html += `<optgroup label="👤 Nhân Viên Bán Hàng (NVBH - GT)">`;
       allReps.forEach(r => {
         const storeCount = getCount(r.username) || getCount(r.code);
         html += `<option value="${r.username}">👤 NVBH ${r.name} (${r.code} - ${storeCount} KH)</option>`;
