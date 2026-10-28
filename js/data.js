@@ -7,7 +7,7 @@
 
 const CJ_DATA_TIMESTAMP = "20261028_100552";
 
-const CJ_SYSTEM_GOOGLE_SHEET_URL = "https://script.google.com/macros/s/AKfycbw4n6lsTKqsVXlrtyu2qx5GNFTksMmtoAyCcvgPpXfXD71nTP-pga_B2a2uAoSKRxOdOw/exec";
+const CJ_SYSTEM_GOOGLE_SHEET_URL = "https://script.google.com/macros/s/AKfycbxTtQpinPeLMJksH-Jdo9HpU2sP_g4N2TflU97pMkGqUtHlDpWZ42xv-rM5iECnoVSWIQ/exec";
 
 const GSBH_ACCOUNTS = [
   {
