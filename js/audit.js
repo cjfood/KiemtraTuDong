@@ -2058,16 +2058,26 @@ const CJAudit = {
       document.getElementById("inAuditActionResult").value = existing?.actionResult || "";
       document.getElementById("inAuditFollowUpDate").value = existing?.followUpDate || followUpDate.toISOString().split("T")[0];
 
-      // Photo preview
-      const previewBox = document.getElementById("inAuditPhotoPreviewBox");
-      const previewImg = document.getElementById("inAuditPhotoPreview");
-      if (existing?.photoUrl) {
-        this.inactiveAuditPhoto = existing.photoUrl;
-        if (previewImg) previewImg.src = existing.photoUrl;
-        if (previewBox) previewBox.classList.remove("hidden");
-      } else {
-        if (previewBox) previewBox.classList.add("hidden");
+      // Photo preview initialization (Multi-photo array)
+      this.inactivePhotos = [];
+      if (existing?.photos && Array.isArray(existing.photos) && existing.photos.length > 0) {
+        this.inactivePhotos = existing.photos.map((p, idx) => ({
+          dataUrl: typeof p === 'string' ? p : p.dataUrl,
+          type: idx === 0 ? "TUDONG" : "TONGQUAN"
+        }));
+      } else if (existing?.photoUrl || existing?.photoPosm) {
+        this.inactivePhotos.push({
+          dataUrl: existing.photoUrl || existing.photoPosm,
+          type: "TUDONG"
+        });
+        if (existing?.photoOverview && existing.photoOverview !== "Không có ảnh") {
+          this.inactivePhotos.push({
+            dataUrl: existing.photoOverview,
+            type: "TONGQUAN"
+          });
+        }
       }
+      this.renderInactivePhotosGrid();
     } catch (err) {
       console.error("Lỗi khi mở form 23 tiêu chí:", err);
     }
@@ -2095,7 +2105,7 @@ const CJAudit = {
   triggerInactiveCamera() {
     this.showToast("Đang mở máy ảnh...", "info");
 
-    // 1. Lấy toạ độ GPS chạy ngầm song song (không chặn việc mở camera)
+    // 1. Quét toạ độ GPS chạy ngầm song song
     if ("geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition(
         (pos) => {
@@ -2110,7 +2120,7 @@ const CJAudit = {
       );
     }
 
-    // 2. Kích hoạt mở camera ĐỒNG BỘ NGAY LẬP TỨC trong User Gesture
+    // 2. Kích hoạt mở camera đồng bộ NGAY LẬP TỨC trong User Gesture
     const fileInput = document.getElementById("inAuditPhotoFileInput");
     if (fileInput) {
       const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
@@ -2137,6 +2147,11 @@ const CJAudit = {
       const latVal = (this.currentGPS && this.currentGPS.lat) ? Number(this.currentGPS.lat) : (Number(store?.lat) || 10.7769);
       const lngVal = (this.currentGPS && this.currentGPS.lng) ? Number(this.currentGPS.lng) : (Number(store?.lng) || 106.7009);
 
+      if (!this.inactivePhotos) this.inactivePhotos = [];
+      const photoIdx = this.inactivePhotos.length;
+      const typeTag = photoIdx === 0 ? "TUDONG" : "TONGQUAN";
+      const reasonLabel = photoIdx === 0 ? "HÌNH ẢNH HIỆN TRẠNG TỦ ĐÔNG" : "HÌNH ẢNH TOÀN CẢNH ĐIỂM BÁN";
+
       const metadata = {
         storeName: store?.originalStoreName || store?.name || "Điểm bán CJ",
         storeCode: store?.storeCode || store?.id || "STR01",
@@ -2146,28 +2161,85 @@ const CJAudit = {
         lat: latVal,
         lng: lngVal,
         temperature: "-18°C",
-        statusText: document.getElementById("inAuditCondition")?.value || "Hoạt động"
+        statusText: document.getElementById("inAuditCondition")?.value || "Hoạt động",
+        photoReason: reasonLabel
       };
 
       const watermarkedBase64 = (typeof CJWatermark !== "undefined" && CJWatermark.processImage) 
         ? await CJWatermark.processImage(file, metadata) 
         : await this.readFileAsDataURL(file);
 
-      this.inactiveAuditPhoto = watermarkedBase64;
-      this.inactivePhotoMetadata = metadata;
+      this.inactivePhotos.push({
+        dataUrl: watermarkedBase64,
+        metadata: metadata,
+        type: typeTag
+      });
 
-      const previewBox = document.getElementById("inAuditPhotoPreviewBox");
-      const previewImg = document.getElementById("inAuditPhotoPreview");
-      const metaText = document.getElementById("inAuditPhotoMetadata");
+      this.renderInactivePhotosGrid();
 
-      if (previewImg) previewImg.src = watermarkedBase64;
-      if (metaText) metaText.textContent = `GPS: ${latVal.toFixed(4)}, ${lngVal.toFixed(4)} | Giờ: ${new Date().toLocaleTimeString('vi-VN')}`;
-      if (previewBox) previewBox.classList.remove("hidden");
-
-      this.showToast("✓ Đã gắn Watermark GPS thành công!", "success");
+      if (this.inactivePhotos.length < 2) {
+        this.showToast("✓ Đã chụp Tấm 1 (Tủ đông)! Vui lòng bấm 'Chụp hình' thêm Tấm 2 (Toàn cảnh)", "info");
+      } else {
+        this.showToast(`✓ Đã chụp đủ ${this.inactivePhotos.length} tấm ảnh có Watermark GPS!`, "success");
+      }
     } catch (err) {
       console.error("Lỗi khi xử lý ảnh Watermark:", err);
       alert("Không thể đóng dấu ảnh: " + err.message);
+    }
+  },
+
+  renderInactivePhotosGrid() {
+    const grid = document.getElementById("inAuditPhotosGrid");
+    const badge = document.getElementById("inAuditPhotoCountBadge");
+    if (!grid) return;
+
+    const count = this.inactivePhotos ? this.inactivePhotos.length : 0;
+    if (badge) {
+      if (count === 0) {
+        badge.className = "text-[11px] font-black px-2.5 py-0.5 rounded-full bg-red-100 text-red-700 border border-red-300";
+        badge.innerHTML = "⚠️ Tối thiểu 2 tấm (0/2)";
+      } else if (count === 1) {
+        badge.className = "text-[11px] font-black px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-300 animate-pulse";
+        badge.innerHTML = "📸 Đã chụp 1/2 tấm (Cần thêm 1 tấm)";
+      } else {
+        badge.className = "text-[11px] font-black px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300";
+        badge.innerHTML = `✓ Đã đủ tiêu chuẩn (${count} tấm)`;
+      }
+    }
+
+    if (count === 0) {
+      grid.classList.add("hidden");
+      grid.innerHTML = "";
+      return;
+    }
+
+    grid.classList.remove("hidden");
+    grid.innerHTML = this.inactivePhotos.map((photo, idx) => {
+      const label = idx === 0 ? "Tấm 1: Tủ đông & hàng CJ" : (idx === 1 ? "Tấm 2: Toàn cảnh điểm bán" : `Tấm ${idx + 1}`);
+      return `
+        <div class="relative bg-gray-50 rounded-xl border border-gray-200 p-2 space-y-1.5 shadow-sm">
+          <div class="relative aspect-video rounded-lg overflow-hidden bg-black/10 flex items-center justify-center">
+            <img src="${photo.dataUrl}" alt="${label}" class="w-full h-full object-cover" />
+            <button type="button" onclick="event.preventDefault(); event.stopPropagation(); CJAudit.removeInactivePhoto(${idx})" class="absolute top-1 right-1 w-6 h-6 rounded-full bg-red-600 hover:bg-red-700 text-white font-black text-xs flex items-center justify-center shadow z-10 active:scale-90" title="Xóa ảnh này để chụp lại">
+              ✕
+            </button>
+          </div>
+          <div class="flex items-center justify-between text-[11px]">
+            <span class="font-bold text-gray-800 truncate">${label}</span>
+            <span class="text-[10px] text-emerald-600 font-extrabold flex items-center gap-0.5">
+              <span>✓</span> GPS
+            </span>
+          </div>
+        </div>
+      `;
+    }).join("");
+  },
+
+  removeInactivePhoto(idx) {
+    if (this.inactivePhotos && this.inactivePhotos.length > idx) {
+      this.inactivePhotos.splice(idx, 1);
+      this.renderInactivePhotosGrid();
+      this.showToast("Đã xóa ảnh. Vui lòng bấm 'Chụp hình' để bổ sung đủ tối thiểu 2 tấm.", "info");
     }
   },
 
@@ -2175,8 +2247,17 @@ const CJAudit = {
     const store = this.currentInactiveStore;
     if (!store) return;
 
-    if (!this.inactiveAuditPhoto) {
-      alert("⚠️ BẮT BUỘC CHỤP ẢNH TỦ ĐÔNG CÓ GPS:\n\nQuy định kiểm tra thực địa bắt buộc phải chụp ảnh trực tiếp tại điểm bán có đóng dấu GPS. Vui lòng bấm nút [📸 CHỤP ẢNH TRỰC TIẾP] trước khi Lưu!");
+    if (!this.inactivePhotos || this.inactivePhotos.length < 2) {
+      const currentCount = this.inactivePhotos ? this.inactivePhotos.length : 0;
+      alert(`⚠️ BẮT BUỘC CHỤP TỐI THIỂU 2 TẤM ẢNH:
+
+Bạn mới chụp ${currentCount}/2 tấm.
+
+Quy định kiểm tra bắt buộc phải có tối thiểu 2 tấm có GPS:
+• Tấm 1: Hiện trạng tủ đông & hàng hóa CJ
+• Tấm 2: Toàn cảnh mặt bằng / biển hiệu điểm bán
+
+Vui lòng bấm nút [Chụp hình] để chụp đủ tối thiểu 2 tấm trước khi Lưu phiếu!`);
       return;
     }
 
@@ -2207,6 +2288,9 @@ const CJAudit = {
     const followUpDate = document.getElementById("inAuditFollowUpDate").value;
 
     const nowStr = new Date().toLocaleString("vi-VN");
+
+    const photoPosm = (this.inactivePhotos[0] && this.inactivePhotos[0].dataUrl) ? this.inactivePhotos[0].dataUrl : "";
+    const photoOverview = (this.inactivePhotos[1] && this.inactivePhotos[1].dataUrl) ? this.inactivePhotos[1].dataUrl : "";
 
     const auditRecord = {
       id: "AUDIT-" + Date.now(),
@@ -2240,8 +2324,11 @@ const CJAudit = {
       actionStatus,
       actionResult,
       followUpDate,
-      photoUrl: this.inactiveAuditPhoto || "",
-      photoMetadata: this.inactivePhotoMetadata,
+      photoUrl: photoPosm,
+      photoPosm: photoPosm,
+      photoOverview: photoOverview,
+      photos: this.inactivePhotos.map(p => p.dataUrl),
+      photoMetadata: this.inactivePhotos[0]?.metadata,
       auditorUser: currentUser?.username || "audit",
       auditorName: currentUser?.name || "Người kiểm tra",
       auditTime: nowStr,
@@ -2268,7 +2355,7 @@ const CJAudit = {
     this.closeInactiveAuditModal();
     this.renderStoreList();
 
-    this.showToast("✓ Đã lưu phiếu kiểm tra 23 tiêu chí thành công!", "success");
+    this.showToast("✓ Đã lưu phiếu kiểm tra thành công!", "success");
 
     // Background Cloud Sync to Google Sheets
     if (typeof CJCloudSync !== "undefined" && CJCloudSync.syncAuditRecord) {
