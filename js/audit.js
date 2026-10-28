@@ -13,6 +13,7 @@ const CJAudit = {
   },
   currentGPS: { lat: 10.801522, lng: 106.708215 },
   selectedSalesRep: "ALL",
+  displayLimit: 40,
 
   init() {
     this.requestGPS();
@@ -504,6 +505,7 @@ const CJAudit = {
 
   setStatusFilter(filter) {
     this.statusFilter = filter;
+    this.displayLimit = 40;
     const pills = [
       { id: "pillAllStores", key: "all" },
       { id: "pillActiveStores", key: "active" },
@@ -530,6 +532,7 @@ const CJAudit = {
 
   onSalesRepChange(val) {
     this.selectedSalesRep = val;
+    this.displayLimit = 40;
     this.renderStoreList();
   },
 
@@ -537,6 +540,7 @@ const CJAudit = {
     const input = document.getElementById("storeSearchInput");
     if (input) input.value = "";
     this.searchQuery = "";
+    this.displayLimit = 40;
     const clearBtn = document.getElementById("btnClearSearch");
     if (clearBtn) clearBtn.classList.add("hidden");
     this.renderStoreList();
@@ -711,7 +715,11 @@ const CJAudit = {
 
 // auditMap initialized at beginning of renderStoreList
 
-    container.innerHTML = stores.map((store, idx) => {
+    const limit = this.displayLimit || 40;
+    const visibleStores = stores.slice(0, limit);
+    const hasMore = stores.length > visibleStores.length;
+
+    let cardsHtml = visibleStores.map((store, idx) => {
       const freezer = CJStorage.getFreezerById(store.freezerId);
       const storeAudit = auditMap.get(store.id);
       const isAudited = Boolean(store.isAudited || storeAudit || (store.lastAuditDate && store.lastAuditDate !== "Chưa kiểm tra"));
@@ -889,14 +897,38 @@ const CJAudit = {
         </div>
       `;
     }).join("");
+
+    if (hasMore) {
+      cardsHtml += `
+        <div class="pt-3 pb-8 text-center space-y-2">
+          <button 
+            type="button" 
+            onclick="CJAudit.loadMoreStores()" 
+            class="w-full py-3.5 px-4 bg-gradient-to-r from-blue-700 via-indigo-700 to-blue-800 hover:from-blue-800 hover:to-indigo-900 text-white font-extrabold text-xs sm:text-sm rounded-2xl shadow-lg transition active:scale-98 flex items-center justify-center gap-2">
+            <span>⬇️ XEM THÊM 50 ĐIỂM BÁN TIẾP THEO</span>
+            <span class="bg-white/20 px-2.5 py-0.5 rounded-full text-xs font-mono font-bold">Đang hiện ${visibleStores.length}/${stores.length}</span>
+          </button>
+          <p class="text-[11px] text-gray-500 font-medium">💡 Gợi ý: Gõ Tên quán, Mã KH, SĐT hoặc Tuyến vào ô tìm kiếm để lọc ngay lập tức.</p>
+        </div>
+      `;
+    }
+
+    container.innerHTML = cardsHtml;
+  },
+
+  loadMoreStores() {
+    this.displayLimit = (this.displayLimit || 40) + 50;
+    this.renderStoreList();
   },
 
   filterStores(query) {
     this.searchQuery = query || "";
+    this.displayLimit = 40;
     this.renderStoreList();
   },
 
   filterStoresByChannel(channel) {
+    this.displayLimit = 40;
     let stores = CJStorage.getStoresForCurrentGSBH(this.selectedSalesRep);
     if (!channel || channel === "ALL") {
       this.renderStoreList(stores);
