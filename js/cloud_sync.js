@@ -8,7 +8,7 @@
 const CJCloudSync = (function () {
     const STORAGE_KEY = 'cj_google_sheet_url';
     const PENDING_SYNC_KEY = 'cj_pending_sync_queue';
-    const DEFAULT_SYSTEM_URL = 'https://script.google.com/macros/s/AKfycbw4n6lsTKqsVXlrtyu2qx5GNFTksMmtoAyCcvgPpXfXD71nTP-pga_B2a2uAoSKRxOdOw/exec';
+    const DEFAULT_SYSTEM_URL = 'https://script.google.com/macros/s/AKfycbxTtQpinPeLMJksH-Jdo9HpU2sP_g4N2TflU97pMkGqUtHlDpWZ42xv-rM5iECnoVSWIQ/exec';
 
     /**
      * Lấy URL Google Apps Script đã lưu hoặc URL mặc định của hệ thống
