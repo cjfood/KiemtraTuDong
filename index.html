@@ -1025,7 +1025,7 @@
                             id="photo_input_posm" 
                             accept="image/*" 
                             capture="environment" 
-                            style="position: absolute; opacity: 0; width: 1px; height: 1px; pointer-events: none;" 
+                            class="sr-only" 
                             onclick="this.value = null;" 
                             onchange="CJAudit.handlePhotoUpload(event, 'posm')" />
 
@@ -1067,7 +1067,7 @@
                             id="photo_input_overview" 
                             accept="image/*" 
                             capture="environment" 
-                            style="position: absolute; opacity: 0; width: 1px; height: 1px; pointer-events: none;" 
+                            class="sr-only" 
                             onclick="this.value = null;" 
                             onchange="CJAudit.handlePhotoUpload(event, 'overview')" />
 
@@ -2744,7 +2744,7 @@
               id="photo_input_recall" 
               accept="image/*" 
               capture="environment" 
-              style="position: absolute; opacity: 0; width: 1px; height: 1px; pointer-events: none;" 
+              class="sr-only" 
               onclick="this.value = null;" 
               onchange="CJAudit.handlePhotoUpload(event, 'recall')" />
             <button type="button" id="btnRemoveRecallPhoto" onclick="event.preventDefault(); event.stopPropagation(); CJAudit.removePhoto('recall')" class="hidden absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-red-600 text-white font-bold text-xs flex items-center justify-center shadow z-30 active:scale-90">✕</button>
@@ -3380,16 +3380,22 @@
           <div class="border-t border-gray-100 pt-3 space-y-2">
             <label class="block font-bold text-gray-800">21. Ảnh chụp hiện trạng tủ đông (Đóng dấu Watermark GPS) *</label>
             <div class="space-y-2">
-              <button type="button" onclick="CJAudit.triggerInactiveCamera()" class="w-full sm:w-auto bg-gradient-to-r from-blue-700 via-indigo-700 to-blue-800 hover:from-blue-800 hover:to-indigo-900 text-white font-black px-5 py-3 rounded-xl flex items-center justify-center gap-2 shadow-lg transition active:scale-95 text-xs sm:text-sm">
-                <span>📸</span>
-                <span>CHỤP ẢNH TRỰC TIẾP TẠI ĐIỂM BÁN (BẮT BUỘC GPS)</span>
-              </button>
+              <div class="flex flex-wrap items-center gap-2">
+                <button type="button" onclick="CJAudit.triggerInactiveCamera()" class="flex-1 sm:flex-none bg-gradient-to-r from-blue-700 via-indigo-700 to-blue-800 hover:from-blue-800 hover:to-indigo-900 text-white font-black px-5 py-3 rounded-xl flex items-center justify-center gap-2 shadow-lg transition active:scale-95 text-xs sm:text-sm cursor-pointer">
+                  <span>📸</span>
+                  <span>CHỤP ẢNH CAMERA (GPS)</span>
+                </button>
+                <button type="button" onclick="CJAudit.openLiveCamera('inactive')" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-3 rounded-xl flex items-center justify-center gap-1.5 shadow transition active:scale-95 text-xs sm:text-sm cursor-pointer" title="Mở ống ngắm live stream camera trực tiếp">
+                  <span>📹</span>
+                  <span>Ống Ngắm Live Camera</span>
+                </button>
+                <!-- Native direct camera input -->
+                <input type="file" id="inAuditPhotoFileInput" accept="image/*" capture="environment" class="hidden" onchange="CJAudit.handleInactivePhotoUpload(event)" />
+              </div>
               <p class="text-[11px] text-amber-700 font-semibold flex items-center gap-1">
                 <span>⚠️</span>
-                <span>Quy định: Không cho phép chọn ảnh từ thư viện. Bắt buộc bật máy ảnh chụp trực tiếp có tọa độ GPS.</span>
+                <span>Quy định: Không chọn ảnh từ thư viện. Bắt buộc chụp trực tiếp có đóng dấu GPS & ngày giờ.</span>
               </p>
-              <!-- Native direct camera input only: capture="environment" prevents opening gallery -->
-              <input type="file" id="inAuditPhotoFileInput" accept="image/*" capture="environment" class="hidden" onchange="CJAudit.handleInactivePhotoUpload(event)" />
             </div>
 
             <!-- Image Preview Box -->
