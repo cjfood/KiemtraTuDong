@@ -39,7 +39,7 @@
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
   <!-- Custom CSS -->
-  <link rel="stylesheet" href="css/style.css?v=8.9" />
+  <link rel="stylesheet" href="css/style.css?v=9.0" />
 </head>
 <body class="bg-gray-100 min-h-screen flex flex-col antialiased">
 
@@ -3376,37 +3376,35 @@
             </div>
           </div>
 
-          <!-- 21. Ảnh hiện trạng (Chống gian lận Watermark GPS) -->
-          <div class="border-t border-gray-100 pt-3 space-y-2">
-            <label class="block font-bold text-gray-800">21. Ảnh chụp hiện trạng tủ đông (Đóng dấu Watermark GPS) *</label>
-            <div class="space-y-2">
-              <div class="flex flex-wrap items-center gap-2">
-                <button type="button" onclick="CJAudit.triggerInactiveCamera()" class="flex-1 sm:flex-none bg-gradient-to-r from-blue-700 via-indigo-700 to-blue-800 hover:from-blue-800 hover:to-indigo-900 text-white font-black px-5 py-3 rounded-xl flex items-center justify-center gap-2 shadow-lg transition active:scale-95 text-xs sm:text-sm cursor-pointer">
-                  <span>📸</span>
-                  <span>CHỤP ẢNH CAMERA (GPS)</span>
-                </button>
-                <button type="button" onclick="CJAudit.openLiveCamera('inactive')" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-3 rounded-xl flex items-center justify-center gap-1.5 shadow transition active:scale-95 text-xs sm:text-sm cursor-pointer" title="Mở ống ngắm live stream camera trực tiếp">
-                  <span>📹</span>
-                  <span>Ống Ngắm Live Camera</span>
-                </button>
-                <!-- Native direct camera input -->
-                <input type="file" id="inAuditPhotoFileInput" accept="image/*" capture="environment" class="hidden" onchange="CJAudit.handleInactivePhotoUpload(event)" />
-              </div>
-              <p class="text-[11px] text-amber-700 font-semibold flex items-center gap-1">
-                <span>⚠️</span>
-                <span>Quy định: Không chọn ảnh từ thư viện. Bắt buộc chụp trực tiếp có đóng dấu GPS & ngày giờ.</span>
+          <!-- 21. Ảnh chụp kiểm tra thực địa (Chụp trực tiếp tại điểm bán có GPS) -->
+          <div class="border-t border-gray-100 pt-3 space-y-2.5">
+            <div class="flex items-center justify-between">
+              <label class="block font-bold text-gray-800 text-xs sm:text-sm">21. Ảnh chụp kiểm tra thực địa (Bắt buộc tối thiểu 2 tấm) *</label>
+              <span id="inAuditPhotoCountBadge" class="text-[11px] font-black px-2.5 py-0.5 rounded-full bg-red-100 text-red-700 border border-red-300">
+                ⚠️ Tối thiểu 2 tấm (0/2)
+              </span>
+            </div>
+
+            <!-- Single Button as requested: "Chụp hình" -->
+            <div class="space-y-1.5">
+              <button type="button" onclick="CJAudit.triggerInactiveCamera()" class="w-full bg-gradient-to-r from-blue-700 via-indigo-700 to-blue-800 hover:from-blue-800 hover:to-indigo-900 text-white font-black px-5 py-3 rounded-xl flex items-center justify-center gap-2 shadow-lg transition active:scale-95 text-sm sm:text-base cursor-pointer">
+                <span class="text-xl">📸</span>
+                <span>Chụp hình</span>
+                <span class="text-xs font-normal opacity-90">(Tối thiểu 2 tấm)</span>
+              </button>
+              
+              <!-- Native direct camera input -->
+              <input type="file" id="inAuditPhotoFileInput" accept="image/*" capture="environment" class="hidden" onchange="CJAudit.handleInactivePhotoUpload(event)" />
+
+              <p class="text-[11px] text-gray-500 font-medium flex items-center gap-1.5">
+                <span>📌</span>
+                <span>Quy định: Chụp trực tiếp tại cửa hàng có GPS: <b>Tấm 1: Tủ đông & hàng CJ</b> | <b>Tấm 2: Toàn cảnh điểm bán</b>.</span>
               </p>
             </div>
 
-            <!-- Image Preview Box -->
-            <div id="inAuditPhotoPreviewBox" class="hidden mt-2 p-2 bg-gray-50 rounded-xl border border-gray-200 flex items-center gap-3">
-              <img id="inAuditPhotoPreview" src="" alt="Ảnh hiện trạng" class="w-20 h-20 object-cover rounded-lg border border-gray-300" />
-              <div>
-                <span class="text-xs font-bold text-emerald-700 flex items-center gap-1">
-                  <span>✓</span> Đã đóng dấu Watermark GPS & Giờ thực tế
-                </span>
-                <p class="text-[10px] text-gray-500 mt-0.5" id="inAuditPhotoMetadata">Lat: ... | Lon: ...</p>
-              </div>
+            <!-- Multi-photo Grid Preview Box -->
+            <div id="inAuditPhotosGrid" class="hidden grid grid-cols-2 gap-2.5 pt-1">
+              <!-- Dynamically populated photo cards -->
             </div>
           </div>
         </div>
@@ -3431,14 +3429,14 @@
   <div id="appToast" class="fixed top-5 right-5 z-50 opacity-0 translate-y-[-20px] pointer-events-none transition-all duration-300"></div>
 
   <!-- ================= APPLICATION SCRIPTS ================= -->
-  <script src="js/data.js?v=8.9"></script>
-  <script src="js/auth.js?v=8.9"></script>
-  <script src="js/storage.js?v=8.9"></script>
-  <script src="js/watermark.js?v=8.9"></script>
-  <script src="js/cloud_sync.js?v=8.9"></script>
-  <script src="js/audit.js?v=8.9"></script>
-  <script src="js/dashboard.js?v=8.9"></script>
-  <script src="js/excel.js?v=8.9"></script>
-  <script src="js/app.js?v=8.9"></script>
+  <script src="js/data.js?v=9.0"></script>
+  <script src="js/auth.js?v=9.0"></script>
+  <script src="js/storage.js?v=9.0"></script>
+  <script src="js/watermark.js?v=9.0"></script>
+  <script src="js/cloud_sync.js?v=9.0"></script>
+  <script src="js/audit.js?v=9.0"></script>
+  <script src="js/dashboard.js?v=9.0"></script>
+  <script src="js/excel.js?v=9.0"></script>
+  <script src="js/app.js?v=9.0"></script>
 </body>
 </html>
