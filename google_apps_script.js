@@ -72,6 +72,28 @@ function doGet(e) {
       timestamp: new Date().toISOString()
     })).setMimeType(ContentService.MimeType.JSON);
   }
+
+  if (action === "clearAudits") {
+    try {
+      var ss = SpreadsheetApp.getActiveSpreadsheet();
+      var sheet = ss.getSheetByName(SHEET_NAME) || ss.getSheets()[0];
+      var deleted = 0;
+      if (sheet && sheet.getLastRow() > 1) {
+        deleted = sheet.getLastRow() - 1;
+        sheet.deleteRows(2, deleted);
+      }
+      return ContentService.createTextOutput(JSON.stringify({
+        status: "success",
+        message: "Đã xóa toàn bộ " + deleted + " dòng dữ liệu kiểm tra cũ trên Google Sheet!",
+        deletedRows: deleted
+      })).setMimeType(ContentService.MimeType.JSON);
+    } catch (err) {
+      return ContentService.createTextOutput(JSON.stringify({
+        status: "error",
+        message: err.toString()
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
+  }
   
   if (action === "getAudits" || !action) {
     try {
@@ -183,11 +205,18 @@ function doPost(e) {
     var sheet = ss.getSheetByName(SHEET_NAME);
 
     if (!sheet) {
-      sheet = ss.insertSheet(SHEET_NAME);
+      var firstSheet = ss.getSheets()[0];
+      if (firstSheet && firstSheet.getLastRow() <= 1 && firstSheet.getName() !== SHEET_NAME) {
+        firstSheet.setName(SHEET_NAME);
+        sheet = firstSheet;
+      } else {
+        sheet = ss.insertSheet(SHEET_NAME, 0);
+      }
       initSheetHeader(sheet);
     } else {
       ensureComprehensiveHeaders(sheet);
     }
+    ss.setActiveSheet(sheet);
 
     // 1. Lưu ảnh 1: Tủ đông (Watermark GPS)
     var photoPosmBase64 = data.photoPosm || data.photo || data.photoUrl || "";
