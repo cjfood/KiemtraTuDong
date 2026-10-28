@@ -295,7 +295,8 @@ const CJDashboard = {
     this.mapMarkers.forEach(m => m.remove());
     this.mapMarkers = [];
 
-    const stores = CJStorage.getStoresForCurrentGSBH();
+    const allStores = CJStorage.getStoresForCurrentGSBH();
+    const stores = allStores.length > 150 ? allStores.slice(0, 150) : allStores;
     const bounds = [];
 
     stores.forEach(store => {
@@ -646,7 +647,8 @@ const CJDashboard = {
     const tbody = document.getElementById("dashStoreTableBody");
     if (!tbody) return;
 
-    const stores = CJStorage.getStoresForCurrentGSBH();
+    const allStores = CJStorage.getStoresForCurrentGSBH();
+    const stores = allStores.length > 100 ? allStores.slice(0, 100) : allStores;
 
     tbody.innerHTML = stores.map(s => {
       const freezer = CJStorage.getFreezerById(s.freezerId);
@@ -679,7 +681,13 @@ const CJDashboard = {
           </td>
         </tr>
       `;
-    }).join("");
+    }).join("") + (allStores.length > 100 ? `
+      <tr class="bg-blue-50/50 text-center text-xs text-blue-900 font-bold border-t">
+        <td colspan="8" class="py-3">
+          Đang hiển thị 100/${allStores.length} điểm bán trên bảng quản lý. Dùng ô tìm kiếm để lọc nhanh theo tên hoặc mã.
+        </td>
+      </tr>
+    ` : "");
   },
 
   applyFilters() {
