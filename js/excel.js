@@ -72,7 +72,7 @@ const CJExcel = {
           "Điểm Bán Hiện Tại": store ? store.name : "Kho CJ",
           "Mã Điểm Bán": f.assignedStoreId || "",
           "Kênh Phân Phối": store ? store.channel : "",
-          "Sales Phụ Trách": store ? `${store.salesRep} (${store.assignedUser})` : "",
+          "NVBH Phụ Trách": store ? `${store.salesRep} (${store.assignedUser})` : "",
           "Nhiệt Độ Gần Nhất (°C)": f.lastTemperature,
           "Trạng Thái Tủ": f.status === "good" ? "Hoạt động tốt" : f.status === "warning" ? "Cảnh báo" : "Sự cố nguy cấp"
         };
@@ -766,7 +766,7 @@ const CJExcel = {
         "User Kiểm Tra": a.auditorUser || s.auditorUser || "",
         "Tên Người Kiểm Tra": a.auditorName || s.auditorName || "",
         // 23 TIÊU CHÍ CHI TIẾT CHUẨN FMCG/RTM
-        "Tình trạng tủ": a.condition || s.posmCondition || "Chưa thẩm định",
+        "Tình trạng tủ": a.condition || s.posmCondition || "Chưa kiểm tra",
         "Tủ cắm điện / hoạt động?": a.powerStatus || (s.isAudited ? "Có" : "Chưa kiểm"),
         "Tủ có hàng CJ?": a.hasCjGoods || "Chưa kiểm",
         "Đơn hàng CJ 30 ngày?": a.orders30d !== undefined ? a.orders30d : "",
