@@ -353,7 +353,7 @@ const CJDashboard = {
             <a href="${gmapsUrl}" target="_blank" class="bg-blue-600 text-white font-bold py-1 px-2 rounded text-center text-[10px]">
               📍 Chỉ Đường
             </a>
-            <button onclick="CJAudit.selectStore('${store.id}'); CJApp.switchTab('mobileAudit');" class="bg-cj-red text-white font-bold py-1 px-2 rounded text-[10px]">
+            <button onclick="CJAudit.openInactiveAuditModal('${store.id}');" class="bg-cj-red text-white font-bold py-1 px-2 rounded text-[10px]">
               🔍 Kiểm Tra
             </button>
           </div>
@@ -677,7 +677,7 @@ const CJDashboard = {
           </td>
           <td class="py-3 px-3">${statusBadge}</td>
           <td class="py-3 px-3 text-right">
-            <button onclick="CJAudit.selectStore('${s.id}'); CJApp.switchTab('mobileAudit');" class="text-cj-red font-semibold hover:underline">Kiểm tra ngay</button>
+            <button onclick="CJAudit.openInactiveAuditModal('${s.id}');" class="text-cj-red font-semibold hover:underline">Kiểm tra ngay</button>
           </td>
         </tr>
       `;
