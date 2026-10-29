@@ -419,7 +419,7 @@ const CJApp = {
   startAuditFromDashboard(storeId) {
     this.switchTab("mobileAudit");
     setTimeout(() => {
-      CJAudit.selectStore(storeId);
+      CJAudit.openInactiveAuditModal(storeId);
     }, 120);
   },
 
