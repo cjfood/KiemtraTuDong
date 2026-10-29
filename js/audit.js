@@ -20,6 +20,9 @@ const CJAudit = {
     this.bindEvents();
     this.populateSalesRepFilter();
     this.renderStoreList();
+    if (this.gsbhMap) {
+      this.renderGsbhMapPins();
+    }
   },
 
   requestGPS() {
@@ -96,6 +99,9 @@ const CJAudit = {
     filterEl.onchange = (e) => {
       this.selectedSalesRep = e.target.value;
       this.renderStoreList();
+    if (this.gsbhMap) {
+      this.renderGsbhMapPins();
+    }
     };
   },
 
@@ -375,7 +381,9 @@ const CJAudit = {
       bounds.push([store.lat, store.lng]);
 
       const freezer = CJStorage.getFreezerById(store.freezerId);
-      const markerColor = store.status === 'good' ? '#10B981' : (store.status === 'warning' ? '#F59E0B' : '#EF4444');
+      const allAudits = (typeof CJStorage !== "undefined" && CJStorage.getAudits) ? CJStorage.getAudits() : [];
+      const isAudited = store.isAudited || allAudits.some(a => a.storeId === store.id || a.customerCode === store.storeCode);
+      const markerColor = isAudited ? '#10B981' : (store.status === 'good' ? '#10B981' : (store.status === 'warning' ? '#F59E0B' : '#EF4444'));
 
       const icon = L.divIcon({
         className: 'custom-gsbh-pin',
@@ -414,8 +422,8 @@ const CJAudit = {
             <a href="${gmapsUrl}" target="_blank" rel="noopener noreferrer" style="background: #2563EB; color: white; padding: 8px 4px; border-radius: 8px; text-decoration: none; font-size: 11px; font-weight: bold; text-align: center; display: block; box-shadow: 0 1px 2px rgba(0,0,0,0.1);">
               📍 Dẫn Đường
             </a>
-            <button onclick="CJAudit.selectStore('${store.id}')" style="background: #E31837; color: white; border: none; padding: 8px 4px; border-radius: 8px; font-size: 11px; font-weight: bold; cursor: pointer; text-align: center; box-shadow: 0 1px 2px rgba(0,0,0,0.1);">
-              🔍 Kiểm Tra Tủ
+            <button onclick="CJAudit.openInactiveAuditModal('${store.id}')" style="background: ${isAudited ? '#059669' : '#E31837'}; color: white; border: none; padding: 8px 4px; border-radius: 8px; font-size: 11px; font-weight: bold; cursor: pointer; text-align: center; box-shadow: 0 1px 2px rgba(0,0,0,0.1);">
+              ${isAudited ? '🔄 Xem / Sửa' : '🔍 Kiểm Tra Tủ'}
             </button>
           </div>
         </div>
@@ -528,12 +536,18 @@ const CJAudit = {
     });
 
     this.renderStoreList();
+    if (this.gsbhMap) {
+      this.renderGsbhMapPins();
+    }
   },
 
   onSalesRepChange(val) {
     this.selectedSalesRep = val;
     this.displayLimit = 40;
     this.renderStoreList();
+    if (this.gsbhMap) {
+      this.renderGsbhMapPins();
+    }
   },
 
   clearSearch() {
@@ -544,6 +558,9 @@ const CJAudit = {
     const clearBtn = document.getElementById("btnClearSearch");
     if (clearBtn) clearBtn.classList.add("hidden");
     this.renderStoreList();
+    if (this.gsbhMap) {
+      this.renderGsbhMapPins();
+    }
   },
 
   toggleMapView() {
@@ -607,6 +624,9 @@ const CJAudit = {
     if (guideEl) guideEl.textContent = info.guide;
 
     this.renderStoreList();
+    if (this.gsbhMap) {
+      this.renderGsbhMapPins();
+    }
   },
 
   clearActiveCategoryFilter() {
@@ -614,6 +634,9 @@ const CJAudit = {
     const banner = document.getElementById("activeAuditCategoryBanner");
     if (banner) banner.classList.add("hidden");
     this.renderStoreList();
+    if (this.gsbhMap) {
+      this.renderGsbhMapPins();
+    }
   },
 
   /**
@@ -919,12 +942,18 @@ const CJAudit = {
   loadMoreStores() {
     this.displayLimit = (this.displayLimit || 40) + 50;
     this.renderStoreList();
+    if (this.gsbhMap) {
+      this.renderGsbhMapPins();
+    }
   },
 
   filterStores(query) {
     this.searchQuery = query || "";
     this.displayLimit = 40;
     this.renderStoreList();
+    if (this.gsbhMap) {
+      this.renderGsbhMapPins();
+    }
   },
 
   filterStoresByChannel(channel) {
@@ -1683,6 +1712,9 @@ const CJAudit = {
       CJDashboard.refresh();
     }
     this.renderStoreList();
+    if (this.gsbhMap) {
+      this.renderGsbhMapPins();
+    }
 
     // Hiển thị ngay màn hình biên lai thành công (Không chờ mạng, không đóng băng ứng dụng)
     this.showAuditSuccessModal(auditData);
@@ -1902,6 +1934,9 @@ const CJAudit = {
     }
     this.backToStoreList();
     this.renderStoreList();
+    if (this.gsbhMap) {
+      this.renderGsbhMapPins();
+    }
   },
 
   showToast(message, type = "info") {
@@ -2354,6 +2389,9 @@ Vui lòng bấm nút [Chụp hình] để chụp đủ tối thiểu 2 tấm tr�
     // Close modal & refresh store list
     this.closeInactiveAuditModal();
     this.renderStoreList();
+    if (this.gsbhMap) {
+      this.renderGsbhMapPins();
+    }
 
     this.showToast("✓ Đã lưu phiếu kiểm tra thành công!", "success");
 
