@@ -2113,6 +2113,7 @@ const CJAudit = {
         }
       }
       this.renderInactivePhotosGrid();
+      this.refreshInactiveGps();
     } catch (err) {
       console.error("Lỗi khi mở form 23 tiêu chí:", err);
     }
@@ -2137,33 +2138,137 @@ const CJAudit = {
     }
   },
 
-  triggerInactiveCamera() {
-    this.showToast("Đang mở máy ảnh...", "info");
+  /**
+   * Reverse Geocode GPS (lat, lng) into actual current street address in Vietnamese
+   */
+  async fetchReverseGeocodeAddress(lat, lng, fallbackAddress = "") {
+    const numLat = Number(lat);
+    const numLng = Number(lng);
+    if (!numLat || !numLng) {
+      return fallbackAddress || this.currentInactiveStore?.address || "Việt Nam";
+    }
 
-    // 1. Quét toạ độ GPS chạy ngầm song song
+    // Return cached address if coordinates haven't moved more than ~30m
+    if (
+      this._lastGeocodedAddress &&
+      this._lastGeocodedLat &&
+      this._lastGeocodedLng &&
+      Math.abs(this._lastGeocodedLat - numLat) < 0.0003 &&
+      Math.abs(this._lastGeocodedLng - numLng) < 0.0003
+    ) {
+      return this._lastGeocodedAddress;
+    }
+
+    // 1. Try OpenStreetMap Nominatim (detailed street & ward in Vietnam)
+    try {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 3500);
+      const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${numLat}&lon=${numLng}&zoom=18&addressdetails=1&accept-language=vi`;
+      const res = await fetch(url, {
+        signal: controller.signal,
+        headers: { "Accept": "application/json" }
+      });
+      clearTimeout(timer);
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.display_name) {
+          let addr = String(data.display_name)
+            .replace(/,\s*\d{5,6}\s*,/g, ",")
+            .replace(/,\s*Việt Nam$/i, "")
+            .trim();
+          if (addr) {
+            this._lastGeocodedLat = numLat;
+            this._lastGeocodedLng = numLng;
+            this._lastGeocodedAddress = addr;
+            this.currentGPSAddress = addr;
+            return addr;
+          }
+        }
+      }
+    } catch (e) {
+      console.warn("Nominatim reverse geocode fallback:", e);
+    }
+
+    // 2. Fallback: BigDataCloud Client Reverse Geocode
+    try {
+      const controller2 = new AbortController();
+      const timer2 = setTimeout(() => controller2.abort(), 2500);
+      const url2 = `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${numLat}&longitude=${numLng}&localityLanguage=vi`;
+      const res2 = await fetch(url2, { signal: controller2.signal });
+      clearTimeout(timer2);
+      if (res2.ok) {
+        const data2 = await res2.json();
+        const parts = [data2.locality, data2.city, data2.principalSubdivision].filter(Boolean);
+        if (parts.length > 0) {
+          const uniqueParts = [...new Set(parts)];
+          const addr2 = uniqueParts.join(", ");
+          this._lastGeocodedLat = numLat;
+          this._lastGeocodedLng = numLng;
+          this._lastGeocodedAddress = addr2;
+          this.currentGPSAddress = addr2;
+          return addr2;
+        }
+      }
+    } catch (e2) {}
+
+    return fallbackAddress || this.currentInactiveStore?.address || "Việt Nam";
+  },
+
+  /**
+   * Refresh live GPS position & current street address for the active modal
+   */
+  refreshInactiveGps() {
+    const coordsEl = document.getElementById("inAuditLiveGpsCoords");
+    const addrEl = document.getElementById("inAuditLiveGpsAddress");
+    const store = this.currentInactiveStore;
+
+    if (coordsEl) coordsEl.textContent = "Đang định vị tọa độ GPS...";
+    if (addrEl) addrEl.textContent = "Đang xác định địa chỉ hiện tại...";
+
+    const updateUIWithCoords = async (lat, lng, acc, isRealtime = true) => {
+      const numLat = Number(lat) || Number(store?.lat) || 10.7769;
+      const numLng = Number(lng) || Number(store?.lng) || 106.7009;
+      this.currentGPS = { lat: numLat, lng: numLng, accuracy: acc || 12, isRealtime };
+
+      if (coordsEl) {
+        const accStr = acc ? ` (±${Math.round(acc)}m)` : "";
+        coordsEl.textContent = `Vị trí GPS: ${numLat.toFixed(6)}, ${numLng.toFixed(6)}${accStr}`;
+      }
+
+      const resolvedAddr = await this.fetchReverseGeocodeAddress(numLat, numLng, store?.address);
+      this.currentGPSAddress = resolvedAddr;
+      if (addrEl) {
+        addrEl.textContent = `Địa chỉ hiện tại: ${resolvedAddr}`;
+      }
+    };
+
     if ("geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition(
         (pos) => {
-          this.currentGPS = {
-            lat: pos.coords.latitude,
-            lng: pos.coords.longitude,
-            accuracy: pos.coords.accuracy
-          };
+          updateUIWithCoords(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy, true);
         },
-        (err) => console.warn("Lấy GPS chạy ngầm:", err),
-        { enableHighAccuracy: true, timeout: 8000 }
+        (err) => {
+          console.warn("Không lấy được GPS thiết bị, dùng tọa độ điểm bán:", err);
+          updateUIWithCoords(store?.lat, store?.lng, null, false);
+        },
+        { enableHighAccuracy: true, timeout: 7000, maximumAge: 0 }
       );
+    } else {
+      updateUIWithCoords(store?.lat, store?.lng, null, false);
     }
+  },
 
-    // 2. Kích hoạt mở camera đồng bộ NGAY LẬP TỨC trong User Gesture
+  triggerInactiveCamera() {
+    this.showToast("Đang mở máy ảnh chụp trực tiếp...", "info");
+
+    // 1. Quét toạ độ GPS & địa chỉ hiện tại chạy ngầm song song
+    this.refreshInactiveGps();
+
+    // 2. Bắt buộc mở Camera trực tiếp (capture="environment"), tuyệt đối không mở thư viện ảnh
     const fileInput = document.getElementById("inAuditPhotoFileInput");
     if (fileInput) {
-      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-      if (!isMobile) {
-        fileInput.removeAttribute("capture");
-      } else {
-        fileInput.setAttribute("capture", "environment");
-      }
+      fileInput.setAttribute("accept", "image/*");
+      fileInput.setAttribute("capture", "environment");
       fileInput.value = "";
       fileInput.click();
     }
@@ -2177,24 +2282,67 @@ const CJAudit = {
     const currentUser = (typeof CJAuth !== "undefined" && CJAuth.getCurrentUser) ? CJAuth.getCurrentUser() : null;
 
     try {
-      this.showToast("Đang đóng dấu Watermark GPS chống gian lận...", "info");
+      this.showToast("Đang lấy tọa độ GPS & đóng dấu Địa chỉ hiện tại lên ảnh...", "info");
+
+      // Nếu chưa có GPS thực tế, thử lấy nhanh trong 2.5s trước khi đóng dấu
+      if ((!this.currentGPS || !this.currentGPS.isRealtime) && "geolocation" in navigator) {
+        await new Promise((resolve) => {
+          navigator.geolocation.getCurrentPosition(
+            (pos) => {
+              this.currentGPS = {
+                lat: pos.coords.latitude,
+                lng: pos.coords.longitude,
+                accuracy: pos.coords.accuracy,
+                isRealtime: true
+              };
+              resolve();
+            },
+            () => resolve(),
+            { enableHighAccuracy: true, timeout: 2500, maximumAge: 10000 }
+          );
+        });
+      }
 
       const latVal = (this.currentGPS && this.currentGPS.lat) ? Number(this.currentGPS.lat) : (Number(store?.lat) || 10.7769);
       const lngVal = (this.currentGPS && this.currentGPS.lng) ? Number(this.currentGPS.lng) : (Number(store?.lng) || 106.7009);
+      const accVal = this.currentGPS?.accuracy ? Math.round(this.currentGPS.accuracy) : null;
+
+      // Lấy địa chỉ hiện tại thực tế tại tọa độ chụp hình
+      const currentPhotoAddress = await this.fetchReverseGeocodeAddress(latVal, lngVal, store?.address);
+      this.currentGPSAddress = currentPhotoAddress;
+
+      // Cập nhật hiển thị trên hộp trạng thái GPS của form
+      const coordsEl = document.getElementById("inAuditLiveGpsCoords");
+      const addrEl = document.getElementById("inAuditLiveGpsAddress");
+      if (coordsEl) {
+        coordsEl.textContent = `Vị trí GPS: ${latVal.toFixed(6)}, ${lngVal.toFixed(6)}${accVal ? ` (±${accVal}m)` : ""}`;
+      }
+      if (addrEl) {
+        addrEl.textContent = `Địa chỉ hiện tại: ${currentPhotoAddress}`;
+      }
 
       if (!this.inactivePhotos) this.inactivePhotos = [];
       const photoIdx = this.inactivePhotos.length;
       const typeTag = photoIdx === 0 ? "TUDONG" : "TONGQUAN";
-      const reasonLabel = photoIdx === 0 ? "HÌNH ẢNH HIỆN TRẠNG TỦ ĐÔNG" : "HÌNH ẢNH TOÀN CẢNH ĐIỂM BÁN";
+      const reasonLabel = photoIdx === 0 ? "TẤM 1: TỦ ĐÔNG & HÀNG CJ" : "TẤM 2: TOÀN CẢNH ĐIỂM BÁN";
+      const nowStr = new Date().toLocaleString("vi-VN");
 
       const metadata = {
         storeName: store?.originalStoreName || store?.name || "Điểm bán CJ",
+        storeId: store?.storeCode || store?.id || "STR01",
         storeCode: store?.storeCode || store?.id || "STR01",
+        address: currentPhotoAddress,
+        storeAddress: store?.address || "",
+        assetTag: store?.serialNumber || store?.barcode || store?.freezerId || "TDO01",
         freezerId: store?.serialNumber || store?.barcode || store?.freezerId || "TDO01",
+        auditor: `${currentUser?.name || "Người kiểm tra"} (${currentUser?.username || "NV"})`,
         auditorName: currentUser?.name || "Người kiểm tra",
         auditorCode: currentUser?.username || "AUDIT",
+        channel: store?.channel || "GT",
         lat: latVal,
         lng: lngVal,
+        accuracy: accVal,
+        timestamp: nowStr,
         temperature: "-18°C",
         statusText: document.getElementById("inAuditCondition")?.value || "Hoạt động",
         photoReason: reasonLabel
@@ -2213,9 +2361,9 @@ const CJAudit = {
       this.renderInactivePhotosGrid();
 
       if (this.inactivePhotos.length < 2) {
-        this.showToast("✓ Đã chụp Tấm 1 (Tủ đông)! Vui lòng bấm 'Chụp hình' thêm Tấm 2 (Toàn cảnh)", "info");
+        this.showToast("✓ Đã chụp Tấm 1 (Đã in GPS & Địa chỉ hiện tại lên hình)! Hãy chụp tiếp Tấm 2", "info");
       } else {
-        this.showToast(`✓ Đã chụp đủ ${this.inactivePhotos.length} tấm ảnh có Watermark GPS!`, "success");
+        this.showToast(`✓ Đã chụp đủ ${this.inactivePhotos.length} tấm ảnh kèm GPS & Địa chỉ hiện tại!`, "success");
       }
     } catch (err) {
       console.error("Lỗi khi xử lý ảnh Watermark:", err);
@@ -2251,6 +2399,9 @@ const CJAudit = {
     grid.classList.remove("hidden");
     grid.innerHTML = this.inactivePhotos.map((photo, idx) => {
       const label = idx === 0 ? "Tấm 1: Tủ đông & hàng CJ" : (idx === 1 ? "Tấm 2: Toàn cảnh điểm bán" : `Tấm ${idx + 1}`);
+      const pLat = photo.metadata?.lat ? Number(photo.metadata.lat).toFixed(6) : (this.currentGPS?.lat ? Number(this.currentGPS.lat).toFixed(6) : "");
+      const pLng = photo.metadata?.lng ? Number(photo.metadata.lng).toFixed(6) : (this.currentGPS?.lng ? Number(this.currentGPS.lng).toFixed(6) : "");
+      const pAddr = photo.metadata?.address || this.currentGPSAddress || this.currentInactiveStore?.address || "";
       return `
         <div class="relative bg-gray-50 rounded-xl border border-gray-200 p-2 space-y-1.5 shadow-sm">
           <div class="relative aspect-video rounded-lg overflow-hidden bg-black/10 flex items-center justify-center">
@@ -2261,9 +2412,13 @@ const CJAudit = {
           </div>
           <div class="flex items-center justify-between text-[11px]">
             <span class="font-bold text-gray-800 truncate">${label}</span>
-            <span class="text-[10px] text-emerald-600 font-extrabold flex items-center gap-0.5">
-              <span>✓</span> GPS
+            <span class="text-[10px] text-emerald-600 font-extrabold flex items-center gap-0.5 shrink-0">
+              <span>✓</span> Đã in GPS
             </span>
+          </div>
+          <div class="bg-white rounded-lg border border-gray-100 p-1.5 text-[10px] leading-snug space-y-0.5">
+            ${pLat && pLng ? `<div class="font-bold text-blue-700">🌐 GPS: ${pLat}, ${pLng}</div>` : ""}
+            ${pAddr ? `<div class="text-gray-600 line-clamp-2" title="${pAddr}">📍 Đ/c chụp: ${pAddr}</div>` : ""}
           </div>
         </div>
       `;
@@ -2364,6 +2519,9 @@ Vui lòng bấm nút [Chụp hình] để chụp đủ tối thiểu 2 tấm tr�
       photoOverview: photoOverview,
       photos: this.inactivePhotos.map(p => p.dataUrl),
       photoMetadata: this.inactivePhotos[0]?.metadata,
+      gpsLat: this.inactivePhotos[0]?.metadata?.lat || this.currentGPS?.lat || store.lat || "",
+      gpsLng: this.inactivePhotos[0]?.metadata?.lng || this.currentGPS?.lng || store.lng || "",
+      gpsAddress: this.inactivePhotos[0]?.metadata?.address || this.currentGPSAddress || store.address || "", 
       auditorUser: currentUser?.username || "audit",
       auditorName: currentUser?.name || "Người kiểm tra",
       auditTime: nowStr,
