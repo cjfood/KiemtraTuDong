@@ -39,7 +39,7 @@
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
   <!-- Custom CSS -->
-  <link rel="stylesheet" href="css/style.css?v=8.6" />
+  <link rel="stylesheet" href="css/style.css?v=9.1" />
 </head>
 <body class="bg-gray-100 min-h-screen flex flex-col antialiased">
 
@@ -619,7 +619,7 @@
           </div>
 
           <div class="flex flex-wrap items-center gap-2">
-            <button onclick="CJExcel.exportInactiveTurnaroundReport()" class="bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white text-xs font-bold px-2.5 py-1.5 rounded-xl shadow flex items-center gap-1 transition active:scale-95 cursor-pointer" title="Xuất Báo Cáo Thẩm Định 23 Tiêu Chí RTM">
+            <button onclick="CJExcel.exportInactiveTurnaroundReport()" class="bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white text-xs font-bold px-2.5 py-1.5 rounded-xl shadow flex items-center gap-1 transition active:scale-95 cursor-pointer" title="Xuất Báo Cáo Kiểm Tra 23 Tiêu Chí RTM">
               <span>📑</span>
               <span class="hidden sm:inline">Xuất BC 23 Tiêu Chí</span>
             </button>
@@ -648,11 +648,6 @@
             <!-- Mobile Subheader Bar: Back Button, Distributor Title & Sales Rep Dropdown -->
             <div class="bg-gradient-to-r from-[#14366e] to-[#184594] text-white px-3.5 py-2.5 flex items-center justify-between border-b border-blue-800/40 rounded-t-3xl">
               <div class="flex items-center gap-2">
-                <button type="button" onclick="CJApp.switchTab('dashboard')" class="p-1 text-white hover:text-blue-200 transition rounded-full active:scale-90" title="Quay lại Dashboard">
-                  <svg class="w-5 h-5 stroke-current stroke-2 fill-none" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
-                  </svg>
-                </button>
                 <div class="flex items-center gap-1.5">
                   <span class="text-xs bg-red-600 font-black px-1.5 py-0.5 rounded text-white tracking-wider">CJ</span>
                   <span class="text-xs font-black tracking-wide text-white">FOODS SYSTEM</span>
@@ -669,7 +664,7 @@
               </div>
             </div>
 
-            <!-- BẢNG TỔNG HỢP TIẾN ĐỘ THẨM ĐỊNH TỦ ĐÔNG (AUDIT DASHBOARD WIDGET) -->
+            <!-- BẢNG TỔNG HỢP TIẾN ĐỘ KIỂM TRA TỦ ĐÔNG (AUDIT DASHBOARD WIDGET) -->
             <div id="auditorSummaryWidget" class="bg-gradient-to-br from-slate-900 via-blue-950 to-indigo-950 text-white p-3.5 sm:p-4 rounded-b-2xl border-b border-blue-500/30 shadow-lg space-y-3">
               
               <!-- Header: User Greeting & Route summary -->
@@ -678,7 +673,7 @@
                   <span class="text-xl">📊</span>
                   <div>
                     <h3 class="text-xs sm:text-sm font-black tracking-wide text-yellow-300 uppercase" id="widgetAuditTitle">
-                      TIẾN ĐỘ THẨM ĐỊNH THỊ TRƯỜNG
+                      TIẾN ĐỘ KIỂM TRA THỊ TRƯỜNG
                     </h3>
                     <p class="text-[11px] text-blue-200" id="widgetAuditSub">
                       Tuyến phụ trách: <b id="widgetUserRoute" class="text-white">Toàn Quốc</b>
@@ -999,11 +994,9 @@
                             <span>1. Tủ đông</span>
                             <span class="text-red-500">*</span>
                           </span>
-                          <label for="gallery_input_posm" class="text-[10px] text-blue-600 hover:text-blue-800 font-bold cursor-pointer flex items-center gap-0.5 active:scale-95">
-                            <span>📁</span>
-                            <span>Thư viện</span>
-                            <input type="file" id="gallery_input_posm" accept="image/*" style="display: none;" onclick="this.value = null;" onchange="CJAudit.handlePhotoUpload(event, 'posm')" />
-                          </label>
+                          <span class="text-[10px] text-blue-700 font-extrabold bg-blue-100 px-2 py-0.5 rounded-full">
+                            📸 Camera GPS
+                          </span>
                         </div>
                         <label for="photo_input_posm" class="relative w-full h-36 rounded-2xl border-2 border-dashed border-blue-400 bg-blue-50/20 hover:bg-blue-50/50 shadow-sm flex flex-col items-center justify-center cursor-pointer transition overflow-hidden group active:scale-[0.99]">
                           <!-- Preview Image (If captured) -->
@@ -1027,7 +1020,7 @@
                             id="photo_input_posm" 
                             accept="image/*" 
                             capture="environment" 
-                            style="position: absolute; opacity: 0; width: 1px; height: 1px; pointer-events: none;" 
+                            class="sr-only" 
                             onclick="this.value = null;" 
                             onchange="CJAudit.handlePhotoUpload(event, 'posm')" />
 
@@ -1043,11 +1036,9 @@
                             <span>2. Tổng quan CH</span>
                             <span class="text-red-500">*</span>
                           </span>
-                          <label for="gallery_input_overview" class="text-[10px] text-emerald-600 hover:text-emerald-800 font-bold cursor-pointer flex items-center gap-0.5 active:scale-95">
-                            <span>📁</span>
-                            <span>Thư viện</span>
-                            <input type="file" id="gallery_input_overview" accept="image/*" style="display: none;" onclick="this.value = null;" onchange="CJAudit.handlePhotoUpload(event, 'overview')" />
-                          </label>
+                          <span class="text-[10px] text-emerald-700 font-extrabold bg-emerald-100 px-2 py-0.5 rounded-full">
+                            📸 Camera GPS
+                          </span>
                         </div>
                         <label for="photo_input_overview" class="relative w-full h-36 rounded-2xl border-2 border-dashed border-emerald-400 bg-emerald-50/20 hover:bg-emerald-50/50 shadow-sm flex flex-col items-center justify-center cursor-pointer transition overflow-hidden group active:scale-[0.99]">
                           <!-- Preview Image (If captured) -->
@@ -1071,7 +1062,7 @@
                             id="photo_input_overview" 
                             accept="image/*" 
                             capture="environment" 
-                            style="position: absolute; opacity: 0; width: 1px; height: 1px; pointer-events: none;" 
+                            class="sr-only" 
                             onclick="this.value = null;" 
                             onchange="CJAudit.handlePhotoUpload(event, 'overview')" />
 
@@ -1771,19 +1762,9 @@
 
     <!-- ================= 3-TAB STREAMLINED MOBILE BOTTOM NAVIGATION BAR ================= -->
     <!-- Chỉ giữ 3 Menu chính theo yêu cầu: Trang chủ, Khách hàng, Cá nhân (Mục đích chủ yếu kiểm tra tủ đông) -->
-    <div id="mobileBottomNavBar" class="fixed sm:absolute bottom-0 left-0 right-0 z-30 bg-white/95 backdrop-blur border-t border-gray-200 shadow-lg px-3 py-1.5 flex items-center justify-around text-center select-none">
+    <div id="mobileBottomNavBar" class="fixed sm:absolute bottom-0 left-0 right-0 z-30 bg-white/95 backdrop-blur border-t border-gray-200 shadow-lg px-6 py-2 flex items-center justify-around text-center select-none">
       
-      <!-- Tab 1: Trang chủ (Màn hình 1 - Dashboard KT Tủ Đông GT) -->
-      <button 
-        type="button" 
-        onclick="CJApp.switchTab('dashboard')" 
-        class="mobile-dms-tab flex-1 flex flex-col items-center py-1 text-[#184594] font-black transition active:scale-95 cursor-pointer" 
-        data-tab="dashboard">
-        <span class="text-xl leading-none">🏠</span>
-        <span class="text-[11px] font-bold mt-1">Trang chủ</span>
-      </button>
-
-      <!-- Tab 2: Khách hàng (Màn hình 2 - Danh sách KH Cần KT Tủ Đông) -->
+      <!-- Tab 1: Khách hàng (Màn hình 2 - Danh sách KH Cần KT Tủ Đông) -->
       <button 
         type="button" 
         onclick="CJApp.switchTab('mobileAudit'); if (typeof CJAudit !== 'undefined' && CJAudit.switchViewMode) CJAudit.switchViewMode('list');" 
@@ -2607,7 +2588,7 @@
             <label class="block font-bold text-gray-700">Vai Trò Hệ Thống:</label>
             <select id="editUserRole" class="w-full border border-gray-300 rounded-xl p-2.5 font-semibold text-gray-800 outline-none focus:ring-2 focus:ring-blue-600 bg-white cursor-pointer">
               <option value="gsbh_gt">👮‍♂️ GSBH - Giám sát bán hàng Kênh GT</option>
-              <option value="sales_rep">👤 NVBH - Nhân viên bán hàng đi tuyến (SR)</option>
+              <option value="sales_rep">👤 NVBH - Nhân viên bán hàng đi tuyến</option>
               <option value="asm">👔 ASM - Quản lý vùng</option>
               <option value="admin">👑 Quản Trị Viên (Admin RTM)</option>
             </select>
@@ -2748,7 +2729,7 @@
               id="photo_input_recall" 
               accept="image/*" 
               capture="environment" 
-              style="position: absolute; opacity: 0; width: 1px; height: 1px; pointer-events: none;" 
+              class="sr-only" 
               onclick="this.value = null;" 
               onchange="CJAudit.handlePhotoUpload(event, 'recall')" />
             <button type="button" id="btnRemoveRecallPhoto" onclick="event.preventDefault(); event.stopPropagation(); CJAudit.removePhoto('recall')" class="hidden absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-red-600 text-white font-bold text-xs flex items-center justify-center shadow z-30 active:scale-90">✕</button>
@@ -3076,7 +3057,7 @@
     </div>
   </div>
 
-  <!-- ================= MODAL: THẨM ĐỊNH TỦ ĐÔNG KÉM HIỆU QUẢ (23 TIÊU CHÍ RTM) ================= -->
+  <!-- ================= MODAL: KIỂM TRA TỦ ĐÔNG (23 TIÊU CHÍ RTM) ================= -->
   <div id="modalInactiveFreezerAudit" class="hidden fixed inset-0 bg-black/80 z-[9999] flex items-center justify-center p-2.5 sm:p-4 overflow-y-auto font-sans">
     <div class="bg-white rounded-3xl max-w-2xl w-full p-4 sm:p-6 space-y-4 shadow-2xl animate-fade-in border border-gray-200 max-h-[92vh] overflow-y-auto relative">
       
@@ -3088,7 +3069,7 @@
           </div>
           <div>
             <div class="flex flex-wrap items-center gap-1.5 mb-0.5">
-              <span class="text-[10px] font-black px-2 py-0.5 rounded-full bg-red-100 text-cj-red uppercase tracking-wider">Turnaround Audit</span>
+              <span class="text-[10px] font-black px-2 py-0.5 rounded-full bg-red-100 text-cj-red uppercase tracking-wider">Kiểm Tra Thực Địa</span>
               <span class="text-xs font-bold text-gray-500" id="inAuditStoreCode">STR00000</span>
             </div>
             <h3 class="font-black text-base sm:text-lg text-gray-900 leading-tight" id="inAuditStoreName">Tên Điểm Bán</h3>
@@ -3279,7 +3260,7 @@
 
             <!-- 14. Tần suất giao hàng -->
             <div class="sm:col-span-2 lg:col-span-3">
-              <label class="block font-bold text-gray-700 mb-1">14. Tần suất giao hàng của NPP / SR *</label>
+              <label class="block font-bold text-gray-700 mb-1">14. Tần suất giao hàng của NPP / NVBH *</label>
               <select id="inAuditDeliveryFrequency" required class="w-full p-2.5 rounded-xl border border-gray-300 font-medium bg-gray-50 focus:bg-white focus:border-blue-500 outline-none">
                 <option value="Hàng ngày (Daily)">Hàng ngày (Daily)</option>
                 <option value="2-3 lần/tuần">2-3 lần / tuần (Đúng lịch MCP)</option>
@@ -3305,7 +3286,7 @@
               <select id="inAuditRootCause" required class="w-full p-2.5 rounded-xl border border-gray-300 font-bold text-blue-900 bg-gray-50 focus:bg-white focus:border-blue-500 outline-none">
                 <option value="Hàng CJ bán chậm, không có khách hỏi mua">Hàng CJ bán chậm, không có khách hỏi mua</option>
                 <option value="Giá nhập cao, lợi nhuận thấp hơn đối thủ">Giá nhập cao, lợi nhuận thấp hơn đối thủ</option>
-                <option value="NPP/SR không chăm sóc tuyến, không ghé chào hàng">NPP/SR không chăm sóc tuyến, không ghé chào hàng</option>
+                <option value="NPP/NVBH không chăm sóc tuyến, không ghé chào hàng">NPP/NVBH không chăm sóc tuyến, không ghé chào hàng</option>
                 <option value="Tồn kho date cũ chưa được NPP thu hồi/đổi date">Tồn kho date cũ chưa được NPP thu hồi/đổi date</option>
                 <option value="Chủ tiệm đổi ngành nghề / chuẩn bị đóng cửa">Chủ tiệm đổi ngành nghề / chuẩn bị đóng cửa</option>
                 <option value="Khách chuộng sản phẩm đối thủ (CP, San Hà, Vissan)">Khách chuộng sản phẩm đối thủ (CP, San Hà, Vissan)</option>
@@ -3337,7 +3318,7 @@
                 <option value="Thu hồi tủ về kho (Không hiệu quả)">🚨 Thu hồi tủ về kho (Không hiệu quả)</option>
                 <option value="Đổi sang loại tủ nhỏ hơn (Tiết kiệm điện)">🔄 Đổi sang loại tủ nhỏ hơn (Tiết kiệm điện)</option>
                 <option value="Hỗ trợ CTKM Sell-out kích cầu (Kích hoạt lại)">🎯 Hỗ trợ CTKM Sell-out kích cầu (Kích hoạt lại)</option>
-                <option value="Yêu cầu NPP/SR tuyến ghé viếng thăm lại định kỳ">🤝 Yêu cầu NPP/SR tuyến ghé viếng thăm lại định kỳ</option>
+                <option value="Yêu cầu NPP/NVBH tuyến ghé viếng thăm lại định kỳ">🤝 Yêu cầu NPP/NVBH tuyến ghé viếng thăm lại định kỳ</option>
                 <option value="Chuyển điểm bán sang NPP khác phụ trách">🚚 Chuyển điểm bán sang NPP khác phụ trách</option>
                 <option value="Yêu cầu dọn dẹp chuyển tủ ra mặt tiền">📍 Yêu cầu dọn dẹp chuyển tủ ra mặt tiền</option>
                 <option value="Giữ nguyên theo dõi thêm 1 tháng">⏳ Giữ nguyên theo dõi thêm 1 tháng</option>
@@ -3380,30 +3361,50 @@
             </div>
           </div>
 
-          <!-- 21. Ảnh hiện trạng (Chống gian lận Watermark GPS) -->
-          <div class="border-t border-gray-100 pt-3 space-y-2">
-            <label class="block font-bold text-gray-800">21. Ảnh chụp hiện trạng tủ đông (Đóng dấu Watermark GPS) *</label>
-            <div class="flex flex-wrap items-center gap-2">
-              <button type="button" onclick="CJAudit.triggerInactiveCamera()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-3.5 py-2 rounded-xl flex items-center gap-1.5 shadow transition active:scale-95">
-                <span>📷</span>
-                <span>Bật Camera Chụp Ngay</span>
-              </button>
-              <label class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold px-3 py-2 rounded-xl flex items-center gap-1.5 cursor-pointer transition active:scale-95">
-                <span>📁</span>
-                <span>Chọn từ thư viện ảnh</span>
-                <input type="file" id="inAuditPhotoFileInput" accept="image/*" class="hidden" onchange="CJAudit.handleInactivePhotoUpload(event)" />
-              </label>
+          <!-- 21. Ảnh chụp kiểm tra thực địa (Chụp trực tiếp tại điểm bán có GPS) -->
+          <div class="border-t border-gray-100 pt-3 space-y-2.5">
+            <div class="flex items-center justify-between">
+              <label class="block font-bold text-gray-800 text-xs sm:text-sm">21. Ảnh chụp kiểm tra thực địa (Bắt buộc tối thiểu 2 tấm) *</label>
+              <span id="inAuditPhotoCountBadge" class="text-[11px] font-black px-2.5 py-0.5 rounded-full bg-red-100 text-red-700 border border-red-300">
+                ⚠️ Tối thiểu 2 tấm (0/2)
+              </span>
             </div>
 
-            <!-- Image Preview Box -->
-            <div id="inAuditPhotoPreviewBox" class="hidden mt-2 p-2 bg-gray-50 rounded-xl border border-gray-200 flex items-center gap-3">
-              <img id="inAuditPhotoPreview" src="" alt="Ảnh hiện trạng" class="w-20 h-20 object-cover rounded-lg border border-gray-300" />
-              <div>
-                <span class="text-xs font-bold text-emerald-700 flex items-center gap-1">
-                  <span>✓</span> Đã đóng dấu Watermark GPS & Giờ thực tế
-                </span>
-                <p class="text-[10px] text-gray-500 mt-0.5" id="inAuditPhotoMetadata">Lat: ... | Lon: ...</p>
+            <!-- Single Button as requested: "Chụp hình" -->
+            <div class="space-y-1.5">
+              <button type="button" onclick="CJAudit.triggerInactiveCamera()" class="w-full bg-gradient-to-r from-blue-700 via-indigo-700 to-blue-800 hover:from-blue-800 hover:to-indigo-900 text-white font-black px-5 py-3 rounded-xl flex items-center justify-center gap-2 shadow-lg transition active:scale-95 text-sm sm:text-base cursor-pointer">
+                <span class="text-xl">📸</span>
+                <span>Chụp hình</span>
+                <span class="text-xs font-normal opacity-90">(Tối thiểu 2 tấm)</span>
+              </button>
+              
+              <!-- Native direct camera input -->
+              <input type="file" id="inAuditPhotoFileInput" accept="image/*" capture="environment" class="hidden" onchange="CJAudit.handleInactivePhotoUpload(event)" />
+
+              <!-- Live GPS & Current Address Box -->
+              <div id="inAuditLiveGpsBox" class="bg-blue-50/80 border border-blue-200 rounded-xl p-2.5 text-[11px] text-gray-700 space-y-1">
+                <div class="flex items-center justify-between gap-2">
+                  <span class="font-bold text-blue-900 flex items-center gap-1">
+                    <span>🌐</span>
+                    <span id="inAuditLiveGpsCoords">Đang lấy tọa độ GPS hiện tại...</span>
+                  </span>
+                  <button type="button" onclick="CJAudit.refreshInactiveGps()" class="text-[10px] font-bold text-blue-600 hover:text-blue-800 underline cursor-pointer shrink-0">🔄 Làm mới GPS</button>
+                </div>
+                <div class="text-gray-700 flex items-start gap-1 leading-snug">
+                  <span class="shrink-0">📍</span>
+                  <span id="inAuditLiveGpsAddress" class="font-medium">Đang xác định địa chỉ hiện tại của thiết bị...</span>
+                </div>
               </div>
+
+              <p class="text-[11px] text-gray-500 font-medium flex items-center gap-1.5">
+                <span>📌</span>
+                <span>Quy định: Chụp trực tiếp tại cửa hàng có GPS: <b>Tấm 1: Tủ đông & hàng CJ</b> | <b>Tấm 2: Toàn cảnh điểm bán</b>.</span>
+              </p>
+            </div>
+
+            <!-- Multi-photo Grid Preview Box -->
+            <div id="inAuditPhotosGrid" class="hidden grid grid-cols-2 gap-2.5 pt-1">
+              <!-- Dynamically populated photo cards -->
             </div>
           </div>
         </div>
@@ -3415,7 +3416,7 @@
           </button>
           <button type="submit" class="bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white font-black px-6 py-2.5 rounded-xl shadow-lg flex items-center gap-2 transition active:scale-95 text-xs sm:text-sm">
             <span>💾</span>
-            <span>LƯU PHIẾU THẨM ĐỊNH (SAVE AUDIT)</span>
+            <span>LƯU PHIẾU KIỂM TRA (SAVE AUDIT)</span>
           </button>
         </div>
 
@@ -3428,14 +3429,14 @@
   <div id="appToast" class="fixed top-5 right-5 z-50 opacity-0 translate-y-[-20px] pointer-events-none transition-all duration-300"></div>
 
   <!-- ================= APPLICATION SCRIPTS ================= -->
-  <script src="js/data.js?v=9.4"></script>
-  <script src="js/auth.js?v=9.4"></script>
-  <script src="js/storage.js?v=9.4"></script>
-  <script src="js/watermark.js?v=9.4"></script>
-  <script src="js/cloud_sync.js?v=9.4"></script>
-  <script src="js/audit.js?v=9.4"></script>
-  <script src="js/dashboard.js?v=9.4"></script>
-  <script src="js/excel.js?v=9.4"></script>
-  <script src="js/app.js?v=9.4"></script>
+  <script src="js/data.js?v=9.5"></script>
+  <script src="js/auth.js?v=9.5"></script>
+  <script src="js/storage.js?v=9.5"></script>
+  <script src="js/watermark.js?v=9.5"></script>
+  <script src="js/cloud_sync.js?v=9.5"></script>
+  <script src="js/audit.js?v=9.5"></script>
+  <script src="js/dashboard.js?v=9.5"></script>
+  <script src="js/excel.js?v=9.5"></script>
+  <script src="js/app.js?v=9.5"></script>
 </body>
 </html>
