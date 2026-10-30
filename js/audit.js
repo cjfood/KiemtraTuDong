@@ -2096,7 +2096,9 @@ const CJAudit = {
       document.getElementById("inAuditBusinessCategory").value = existing?.businessCategory || "Thực phẩm đông lạnh, Tạp hóa";
       document.getElementById("inAuditMatchCjTarget").value = existing?.matchCjTarget || "Rất phù hợp";
       document.getElementById("inAuditFreezerLocation").value = existing?.freezerLocation || "Mặt tiền đắc địa";
-      document.getElementById("inAuditFreezerVisibility").value = existing?.freezerVisibility || "Rõ ràng bắt mắt";
+      if (document.getElementById("inAuditFreezerVisibility")) {
+        document.getElementById("inAuditFreezerVisibility").value = existing?.freezerVisibility || "Rõ ràng bắt mắt";
+      }
       document.getElementById("inAuditTruckAccessible").value = existing?.truckAccessible || "Có xe tải vào tận nơi";
       document.getElementById("inAuditDeliveryFrequency").value = existing?.deliveryFrequency || "2-3 lần/tuần";
 
@@ -2106,7 +2108,9 @@ const CJAudit = {
       // Action plan pre-fill
       const defaultProposal = (store.assetStatus === "3T Ko Mua" || store.salesTier === "= 0") ? "Thu hồi tủ về kho (Không hiệu quả)" : "Hỗ trợ CTKM Sell-out kích cầu (Kích hoạt lại)";
       document.getElementById("inAuditActionProposal").value = existing?.actionProposal || defaultProposal;
-      document.getElementById("inAuditActionPic").value = existing?.actionPic || currentUser?.name || store.salesRep || "GSBH Khu Vực";
+      if (document.getElementById("inAuditActionPic")) {
+        document.getElementById("inAuditActionPic").value = existing?.actionPic || currentUser?.name || store.salesRep || "GSBH Khu Vực";
+      }
 
       // Dates
       const now = new Date();
@@ -2114,8 +2118,12 @@ const CJAudit = {
       const followUpDate = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
 
       document.getElementById("inAuditDeadline").value = existing?.deadline || deadlineDate.toISOString().split("T")[0];
-      document.getElementById("inAuditActionStatus").value = existing?.actionStatus || "Chờ xử lý";
-      document.getElementById("inAuditActionResult").value = existing?.actionResult || "";
+      if (document.getElementById("inAuditActionStatus")) {
+        document.getElementById("inAuditActionStatus").value = existing?.actionStatus || "Chờ xử lý";
+      }
+      if (document.getElementById("inAuditActionResult")) {
+        document.getElementById("inAuditActionResult").value = existing?.actionResult || "";
+      }
       document.getElementById("inAuditFollowUpDate").value = existing?.followUpDate || followUpDate.toISOString().split("T")[0];
 
       // Photo preview initialization (Multi-photo array)
@@ -2497,16 +2505,16 @@ Vui lòng bấm nút [Chụp hình] để chụp đủ tối thiểu 2 tấm tr�
     const businessCategory = document.getElementById("inAuditBusinessCategory").value;
     const matchCjTarget = document.getElementById("inAuditMatchCjTarget").value;
     const freezerLocation = document.getElementById("inAuditFreezerLocation").value;
-    const freezerVisibility = document.getElementById("inAuditFreezerVisibility").value;
+    const freezerVisibility = document.getElementById("inAuditFreezerVisibility")?.value || "";
     const truckAccessible = document.getElementById("inAuditTruckAccessible").value;
     const deliveryFrequency = document.getElementById("inAuditDeliveryFrequency").value;
     const rootCause = document.getElementById("inAuditRootCause").value;
     const rootCauseDetail = document.getElementById("inAuditRootCauseDetail").value;
     const actionProposal = document.getElementById("inAuditActionProposal").value;
-    const actionPic = document.getElementById("inAuditActionPic").value;
+    const actionPic = document.getElementById("inAuditActionPic")?.value || currentUser?.name || store.salesRep || "GSBH Khu Vực";
     const deadline = document.getElementById("inAuditDeadline").value;
-    const actionStatus = document.getElementById("inAuditActionStatus").value;
-    const actionResult = document.getElementById("inAuditActionResult").value;
+    const actionStatus = document.getElementById("inAuditActionStatus")?.value || "Chờ xử lý";
+    const actionResult = document.getElementById("inAuditActionResult")?.value || "";
     const followUpDate = document.getElementById("inAuditFollowUpDate").value;
 
     const nowStr = new Date().toLocaleString("vi-VN");
