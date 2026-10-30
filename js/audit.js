@@ -738,11 +738,23 @@ const CJAudit = {
 
 // auditMap initialized at beginning of renderStoreList
 
+    // Authoritative mapping of store ID to Map Pin Index (1-based, matches renderGsbhMapPins exactly)
+    const storeMapIndex = new Map();
+    rawStores.forEach((s, i) => {
+      if (s.id && !storeMapIndex.has(s.id)) {
+        storeMapIndex.set(s.id, i + 1);
+      }
+      if (s.storeCode && !storeMapIndex.has(s.storeCode)) {
+        storeMapIndex.set(s.storeCode, i + 1);
+      }
+    });
+
     const limit = this.displayLimit || 40;
     const visibleStores = stores.slice(0, limit);
     const hasMore = stores.length > visibleStores.length;
 
     let cardsHtml = visibleStores.map((store, idx) => {
+      const mapSeq = storeMapIndex.get(store.id) || storeMapIndex.get(store.storeCode) || (idx + 1);
       const freezer = CJStorage.getFreezerById(store.freezerId);
       const storeAudit = auditMap.get(store.id);
       const isAudited = Boolean(store.isAudited || storeAudit || (store.lastAuditDate && store.lastAuditDate !== "Chưa kiểm tra"));
@@ -763,6 +775,10 @@ const CJAudit = {
           <div class="flex items-start justify-between gap-2">
             <div class="flex-1">
               <div class="flex flex-wrap items-center gap-1.5 mb-0.5">
+                <!-- Sequence number matching Map pin -->
+                <span onclick="CJAudit.focusStoreOnMap('${store.id}')" class="min-w-[26px] h-[22px] px-1.5 rounded-lg ${isAudited ? 'bg-emerald-600' : 'bg-blue-700'} text-white font-black text-xs inline-flex items-center justify-center shadow-xs cursor-pointer hover:opacity-90 active:scale-95 transition" title="Bấm để xem vị trí #${mapSeq} trên bản đồ">
+                  #${mapSeq}
+                </span>
                 <span class="text-[10px] bg-red-100 text-cj-red font-black px-1.5 py-0.5 rounded">GT</span>
                 <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${store.isActive !== false ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-600'}">
                   ${store.isActive !== false ? 'Hoạt động' : 'Ngừng'}
@@ -2042,7 +2058,15 @@ const CJAudit = {
       const statusEl = document.getElementById("inAuditAssetStatus");
       const avgSalesEl = document.getElementById("inAuditAvgSales");
 
-      if (codeEl) codeEl.textContent = store.storeCode || store.id;
+      // Sequence number matching Map pin
+      const currentStores = (typeof CJStorage !== "undefined" && CJStorage.getStoresForCurrentGSBH) 
+        ? CJStorage.getStoresForCurrentGSBH(this.selectedSalesRep) 
+        : [];
+      const storeIdx = currentStores.findIndex(s => s.id === store.id || s.storeCode === store.storeCode);
+      const storeSeqNum = storeIdx >= 0 ? (storeIdx + 1) : "";
+      const storeSeqPrefix = storeSeqNum ? `#${storeSeqNum} • ` : "";
+
+      if (codeEl) codeEl.textContent = `${storeSeqPrefix}${store.storeCode || store.id}`;
       if (nameEl) nameEl.textContent = store.originalStoreName || store.name;
       if (addrEl) addrEl.textContent = `📍 ${store.address || 'Việt Nam'}`;
       if (fzIdEl) fzIdEl.textContent = store.serialNumber || store.barcode || store.freezerId || 'TDO-001';
@@ -2321,6 +2345,13 @@ const CJAudit = {
         addrEl.textContent = `Địa chỉ hiện tại: ${currentPhotoAddress}`;
       }
 
+      const currentStores = (typeof CJStorage !== "undefined" && CJStorage.getStoresForCurrentGSBH) 
+        ? CJStorage.getStoresForCurrentGSBH(this.selectedSalesRep) 
+        : [];
+      const storeIdx = currentStores.findIndex(s => s.id === store?.id || s.storeCode === store?.storeCode);
+      const storeSeqNum = storeIdx >= 0 ? (storeIdx + 1) : "";
+      const storeSeqPrefix = storeSeqNum ? `#${storeSeqNum} • ` : "";
+
       if (!this.inactivePhotos) this.inactivePhotos = [];
       const photoIdx = this.inactivePhotos.length;
       const typeTag = photoIdx === 0 ? "TUDONG" : "TONGQUAN";
@@ -2329,7 +2360,7 @@ const CJAudit = {
 
       const metadata = {
         storeName: store?.originalStoreName || store?.name || "Điểm bán CJ",
-        storeId: store?.storeCode || store?.id || "STR01",
+        storeId: `${storeSeqPrefix || ''}${store?.storeCode || store?.id || 'STR01'}`,
         storeCode: store?.storeCode || store?.id || "STR01",
         address: currentPhotoAddress,
         storeAddress: store?.address || "",
