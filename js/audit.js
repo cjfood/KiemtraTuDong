@@ -405,7 +405,7 @@ const CJAudit = {
       const popupHtml = `
         <div style="font-family: system-ui, -apple-system, sans-serif; min-width: 250px; padding: 4px;" class="space-y-2">
           <div style="border-bottom: 1px solid #E5E7EB; padding-bottom: 6px;">
-            <div style="font-size: 11px; font-weight: 800; color: #E31837;">#${idx + 1} • ${store.id} (${store.channel})</div>
+            <div style="font-size: 11px; font-weight: 800; color: #E31837;">${idx + 1} • ${store.id} (${store.channel})</div>
             <div style="font-size: 14px; font-weight: 900; color: #111827; line-height: 1.25; margin-top: 2px;">${store.name}</div>
             <div style="font-size: 11px; color: #4B5563; margin-top: 3px;">📍 ${store.address}</div>
           </div>
@@ -771,36 +771,37 @@ const CJAudit = {
       return `
         <div class="bg-white rounded-2xl border ${isAudited ? 'border-2 border-emerald-500/80 bg-emerald-50/10' : 'border-gray-200'} p-3.5 sm:p-4 shadow-sm space-y-2.5 hover:border-blue-300 transition">
           
-          <!-- Header: Store Name + Status Pill + GT Badge + Audited Status Badge -->
+          <!-- Header: [Số thứ tự] + Tên KH + Mã KH + Trạng thái kiểm tra -->
           <div class="flex items-start justify-between gap-2">
             <div class="flex-1">
-              <div class="flex flex-wrap items-center gap-1.5 mb-0.5">
-                <!-- Sequence number matching Map pin -->
-                <span onclick="CJAudit.focusStoreOnMap('${store.id}')" class="min-w-[26px] h-[22px] px-1.5 rounded-lg ${isAudited ? 'bg-emerald-600' : 'bg-blue-700'} text-white font-black text-xs inline-flex items-center justify-center shadow-xs cursor-pointer hover:opacity-90 active:scale-95 transition" title="Bấm để xem vị trí #${mapSeq} trên bản đồ">
-                  #${mapSeq}
+              <h3 class="font-black text-gray-900 text-sm sm:text-base leading-snug flex items-center flex-wrap gap-1.5">
+                <!-- Số thứ tự không có dấu #, đứng trước tên KH -->
+                <span onclick="CJAudit.focusStoreOnMap('${store.id}')" class="min-w-[24px] h-[22px] px-1.5 rounded-lg ${isAudited ? 'bg-emerald-600' : 'bg-blue-700'} text-white font-black text-xs inline-flex items-center justify-center shadow-xs cursor-pointer hover:opacity-90 active:scale-95 transition shrink-0" title="Bấm để xem vị trí ${mapSeq} trên bản đồ">
+                  ${mapSeq}
                 </span>
-                <span class="text-[10px] bg-red-100 text-cj-red font-black px-1.5 py-0.5 rounded">GT</span>
-                <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${store.isActive !== false ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-600'}">
-                  ${store.isActive !== false ? 'Hoạt động' : 'Ngừng'}
+                <span>${store.name}</span>
+                <!-- Mã KH đứng ngay sau tên KH -->
+                <span class="text-[11px] font-bold text-gray-600 bg-gray-100 px-1.5 py-0.5 rounded border border-gray-200 shrink-0">
+                  ${store.storeCode || store.id}
                 </span>
-                <span class="text-[10px] text-gray-500 font-bold">${store.storeCode || store.id}</span>
                 ${store.freezerTotal > 1 ? `
-                <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-blue-100 text-blue-900 border border-blue-200">
+                <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-blue-100 text-blue-900 border border-blue-200 shrink-0">
                   ❄️ Tủ ${store.freezerIndex}/${store.freezerTotal}
                 </span>
                 ` : ''}
-                ${isAudited ? `
-                <span class="text-[10px] font-black px-2 py-0.5 rounded-full bg-emerald-600 text-white shadow-xs flex items-center gap-1 ml-auto">
-                  <span>✓</span>
-                  <span>ĐÃ KIỂM TRA</span>
-                </span>
-                ` : `
-                <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-300 ml-auto">
-                  Chưa kiểm
-                </span>
-                `}
-              </div>
-              <h3 class="font-black text-gray-900 text-sm sm:text-base leading-tight">${store.name}</h3>
+              </h3>
+            </div>
+            ${isAudited ? `
+            <span class="text-[10px] font-black px-2 py-0.5 rounded-full bg-emerald-600 text-white shadow-xs flex items-center gap-1 shrink-0">
+              <span>✓</span>
+              <span>ĐÃ KIỂM TRA</span>
+            </span>
+            ` : `
+            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-300 shrink-0">
+              Chưa kiểm
+            </span>
+            `}
+          </div>
               
               <!-- Rich POSM Status & Sales Badges -->
               <div class="flex flex-wrap items-center gap-1.5 mt-1 text-[11px]">
@@ -2064,7 +2065,7 @@ const CJAudit = {
         : [];
       const storeIdx = currentStores.findIndex(s => s.id === store.id || s.storeCode === store.storeCode);
       const storeSeqNum = storeIdx >= 0 ? (storeIdx + 1) : "";
-      const storeSeqPrefix = storeSeqNum ? `#${storeSeqNum} • ` : "";
+      const storeSeqPrefix = storeSeqNum ? `${storeSeqNum} • ` : "";
 
       if (codeEl) codeEl.textContent = `${storeSeqPrefix}${store.storeCode || store.id}`;
       if (nameEl) nameEl.textContent = store.originalStoreName || store.name;
@@ -2350,7 +2351,7 @@ const CJAudit = {
         : [];
       const storeIdx = currentStores.findIndex(s => s.id === store?.id || s.storeCode === store?.storeCode);
       const storeSeqNum = storeIdx >= 0 ? (storeIdx + 1) : "";
-      const storeSeqPrefix = storeSeqNum ? `#${storeSeqNum} • ` : "";
+      const storeSeqPrefix = storeSeqNum ? `${storeSeqNum} • ` : "";
 
       if (!this.inactivePhotos) this.inactivePhotos = [];
       const photoIdx = this.inactivePhotos.length;
