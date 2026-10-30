@@ -847,7 +847,6 @@
 
           </div>
 
-
           <!-- STEP 2: AUDIT CHECKLIST THEO GIAO DIỆN DI ĐỘNG CHUẨN DMS / POSM (KHỚP 100% ẢNH MẪU) -->
           <div id="stepAuditForm" class="hidden">
             
@@ -2902,7 +2901,6 @@
     </div>
   </div>
 
-
   <!-- ================= GOOGLE SHEETS POPUP DIRECT SCRIPT ================= -->
   <script>
     function openGoogleSheetConfigDirect() {
@@ -3239,20 +3237,18 @@
               </select>
             </div>
 
-
-
-            <!-- 13. Tuyến có xe tải giao? -->
+            <!-- 12. Tuyến có xe tải giao? -->
             <div>
-              <label class="block font-bold text-gray-700 mb-1">13. Tuyến có xe tải giao? *</label>
+              <label class="block font-bold text-gray-700 mb-1">12. Tuyến có xe tải giao? *</label>
               <select id="inAuditTruckAccessible" required class="w-full p-2.5 rounded-xl border border-gray-300 font-medium bg-gray-50 focus:bg-white focus:border-blue-500 outline-none">
                 <option value="Có xe tải vào tận nơi">Có - Xe tải vào tận nơi giao hàng</option>
                 <option value="Hẻm nhỏ chỉ xe máy vào được">Không - Hẻm nhỏ chỉ xe máy vào được</option>
               </select>
             </div>
 
-            <!-- 14. Tần suất giao hàng -->
+            <!-- 13. Tần suất giao hàng -->
             <div class="sm:col-span-2 lg:col-span-3">
-              <label class="block font-bold text-gray-700 mb-1">14. Tần suất giao hàng của NPP / NVBH *</label>
+              <label class="block font-bold text-gray-700 mb-1">13. Tần suất giao hàng của NPP / NVBH *</label>
               <select id="inAuditDeliveryFrequency" required class="w-full p-2.5 rounded-xl border border-gray-300 font-medium bg-gray-50 focus:bg-white focus:border-blue-500 outline-none">
                 <option value="Hàng ngày (Daily)">Hàng ngày (Daily)</option>
                 <option value="2-3 lần/tuần">2-3 lần / tuần (Đúng lịch MCP)</option>
@@ -3272,9 +3268,9 @@
           </div>
 
           <div class="space-y-3">
-            <!-- 15. Nguyên nhân chính không lấy hàng -->
+            <!-- 14. Nguyên nhân chính không lấy hàng -->
             <div>
-              <label class="block font-bold text-gray-700 mb-1">15. Nguyên nhân chính không lấy hàng *</label>
+              <label class="block font-bold text-gray-700 mb-1">14. Nguyên nhân chính không lấy hàng *</label>
               <select id="inAuditRootCause" required class="w-full p-2.5 rounded-xl border border-gray-300 font-bold text-blue-900 bg-gray-50 focus:bg-white focus:border-blue-500 outline-none">
                 <option value="Hàng CJ bán chậm, không có khách hỏi mua">Hàng CJ bán chậm, không có khách hỏi mua</option>
                 <option value="Giá nhập cao, lợi nhuận thấp hơn đối thủ">Giá nhập cao, lợi nhuận thấp hơn đối thủ</option>
@@ -3287,9 +3283,9 @@
               </select>
             </div>
 
-            <!-- 16. Nguyên nhân chi tiết / ghi chú -->
+            <!-- 15. Nguyên nhân chi tiết / ghi chú -->
             <div>
-              <label class="block font-bold text-gray-700 mb-1">16. Nguyên nhân chi tiết & Ý kiến chủ điểm bán *</label>
+              <label class="block font-bold text-gray-700 mb-1">15. Nguyên nhân chi tiết & Ý kiến chủ điểm bán *</label>
               <textarea id="inAuditRootCauseDetail" rows="2" required class="w-full p-2.5 rounded-xl border border-gray-300 font-medium text-gray-900 outline-none focus:border-blue-500" placeholder="Ghi nhận trung thực phản hồi của chủ tiệm (VD: Chủ quán phàn nàn giá Mandu cao hơn sủi cảo đối thủ 4k/gói, SR 2 tháng nay không ghé...)"></textarea>
             </div>
           </div>
@@ -3303,9 +3299,9 @@
           </div>
 
           <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-            <!-- 17. Đề xuất xử lý -->
+            <!-- 16. Đề xuất xử lý -->
             <div class="sm:col-span-2">
-              <label class="block font-bold text-gray-700 mb-1">17. Đề xuất xử lý *</label>
+              <label class="block font-bold text-gray-700 mb-1">16. Đề xuất xử lý *</label>
               <select id="inAuditActionProposal" required class="w-full p-2.5 rounded-xl border border-gray-300 font-black text-cj-red bg-red-50/50 focus:bg-white focus:border-blue-500 outline-none">
                 <option value="Thu hồi tủ về kho (Không hiệu quả)">🚨 Thu hồi tủ về kho (Không hiệu quả)</option>
                 <option value="Đổi sang loại tủ nhỏ hơn (Tiết kiệm điện)">🔄 Đổi sang loại tủ nhỏ hơn (Tiết kiệm điện)</option>
@@ -3317,27 +3313,23 @@
               </select>
             </div>
 
-
-
-            <!-- 19. Hạn hoàn thành -->
+            <!-- 17. Hạn hoàn thành -->
             <div>
-              <label class="block font-bold text-gray-700 mb-1">19. Hạn hoàn thành (Deadline) *</label>
+              <label class="block font-bold text-gray-700 mb-1">17. Hạn hoàn thành (Deadline) *</label>
               <input type="date" id="inAuditDeadline" required class="w-full p-2.5 rounded-xl border border-gray-300 font-bold text-gray-900 bg-gray-50 focus:bg-white focus:border-blue-500 outline-none" />
             </div>
 
-
-
-            <!-- 23. Ngày Follow-up -->
+            <!-- 18. Ngày Follow-up -->
             <div class="sm:col-span-2">
-              <label class="block font-bold text-gray-700 mb-1">23. Ngày Follow-up (Tái kiểm tra) *</label>
+              <label class="block font-bold text-gray-700 mb-1">18. Ngày Follow-up (Tái kiểm tra) *</label>
               <input type="date" id="inAuditFollowUpDate" required class="w-full p-2.5 rounded-xl border border-gray-300 font-bold text-gray-900 bg-gray-50 focus:bg-white focus:border-blue-500 outline-none" />
             </div>
           </div>
 
-          <!-- 21. Ảnh chụp kiểm tra thực địa (Chụp trực tiếp tại điểm bán có GPS) -->
+          <!-- 19. Ảnh chụp kiểm tra thực địa (Chụp trực tiếp tại điểm bán có GPS) -->
           <div class="border-t border-gray-100 pt-3 space-y-2.5">
             <div class="flex items-center justify-between">
-              <label class="block font-bold text-gray-800 text-xs sm:text-sm">21. Ảnh chụp kiểm tra thực địa (Bắt buộc tối thiểu 2 tấm) *</label>
+              <label class="block font-bold text-gray-800 text-xs sm:text-sm">19. Ảnh chụp kiểm tra thực địa (Bắt buộc tối thiểu 2 tấm) *</label>
               <span id="inAuditPhotoCountBadge" class="text-[11px] font-black px-2.5 py-0.5 rounded-full bg-red-100 text-red-700 border border-red-300">
                 ⚠️ Tối thiểu 2 tấm (0/2)
               </span>
@@ -3402,14 +3394,14 @@
   <div id="appToast" class="fixed top-5 right-5 z-50 opacity-0 translate-y-[-20px] pointer-events-none transition-all duration-300"></div>
 
   <!-- ================= APPLICATION SCRIPTS ================= -->
-  <script src="js/data.js?v=9.8"></script>
-  <script src="js/auth.js?v=9.8"></script>
-  <script src="js/storage.js?v=9.8"></script>
-  <script src="js/watermark.js?v=9.8"></script>
-  <script src="js/cloud_sync.js?v=9.8"></script>
-  <script src="js/audit.js?v=9.8"></script>
-  <script src="js/dashboard.js?v=9.8"></script>
-  <script src="js/excel.js?v=9.8"></script>
-  <script src="js/app.js?v=9.8"></script>
+  <script src="js/data.js?v=9.9"></script>
+  <script src="js/auth.js?v=9.9"></script>
+  <script src="js/storage.js?v=9.9"></script>
+  <script src="js/watermark.js?v=9.9"></script>
+  <script src="js/cloud_sync.js?v=9.9"></script>
+  <script src="js/audit.js?v=9.9"></script>
+  <script src="js/dashboard.js?v=9.9"></script>
+  <script src="js/excel.js?v=9.9"></script>
+  <script src="js/app.js?v=9.9"></script>
 </body>
 </html>
