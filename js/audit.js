@@ -370,8 +370,20 @@ const CJAudit = {
     this.gsbhMarkers.forEach(m => this.gsbhMap.removeLayer(m));
     this.gsbhMarkers = [];
 
-    const stores = CJStorage.getStoresForCurrentGSBH(this.selectedSalesRep);
+    let stores = CJStorage.getStoresForCurrentGSBH(this.selectedSalesRep);
     if (!stores || stores.length === 0) return;
+
+    if (this.statusFilter === "1t") {
+      stores = stores.filter(s => {
+        const st = String(s.assetStatus || "").toLowerCase().trim();
+        return st === "chưa mua" || st === "chua mua" || st.includes("1t") || st === "chưa_mua";
+      });
+    } else if (this.statusFilter === "3t") {
+      stores = stores.filter(s => {
+        const st = String(s.assetStatus || "").toLowerCase().trim();
+        return st === "3t ko mua" || st === "3t" || st.includes("3t");
+      });
+    }
 
     const bounds = [];
 
@@ -516,6 +528,8 @@ const CJAudit = {
     this.displayLimit = 40;
     const pills = [
       { id: "pillAllStores", key: "all" },
+      { id: "pill1TStores", key: "1t" },
+      { id: "pill3TStores", key: "3t" },
       { id: "pillActiveStores", key: "active" },
       { id: "pillInactiveStores", key: "inactive" },
       { id: "pillPendingStores", key: "pending" },
@@ -651,11 +665,24 @@ const CJAudit = {
 
     const rawStores = filteredStores || CJStorage.getStoresForCurrentGSBH(this.selectedSalesRep);
 
+    const is1T = (s) => {
+      const st = String(s.assetStatus || "").toLowerCase().trim();
+      return st === "chưa mua" || st === "chua mua" || st.includes("1t") || st === "chưa_mua";
+    };
+    const is3T = (s) => {
+      const st = String(s.assetStatus || "").toLowerCase().trim();
+      return st === "3t ko mua" || st === "3t" || st.includes("3t");
+    };
+
     const allCount = rawStores.length;
+    const count1T = rawStores.filter(is1T).length;
+    const count3T = rawStores.filter(is3T).length;
     const activeCount = rawStores.filter(s => s.isActive !== false).length;
     const inactiveCount = rawStores.filter(s => s.isActive === false).length;
 
     const pAll = document.getElementById("pillCountAll");
+    const p1T = document.getElementById("pillCount1T");
+    const p3T = document.getElementById("pillCount3T");
     const pActive = document.getElementById("pillCountActive");
     const pInactive = document.getElementById("pillCountInactive");
     const bannerBadge = document.getElementById("customerBannerBadge");
@@ -663,6 +690,8 @@ const CJAudit = {
 
     const uniqueStoresCount = new Set(rawStores.map(s => s.storeCode || s.id)).size;
     if (pAll) pAll.textContent = allCount;
+    if (p1T) p1T.textContent = count1T;
+    if (p3T) p3T.textContent = count3T;
     if (pActive) pActive.textContent = activeCount;
     if (pInactive) pInactive.textContent = inactiveCount;
     if (bannerBadge) bannerBadge.textContent = `GT: ${allCount} Tủ (${uniqueStoresCount} KH)`;
@@ -685,7 +714,11 @@ const CJAudit = {
     this.updateAuditorWidget();
 
     let stores = rawStores;
-    if (this.statusFilter === "active") {
+    if (this.statusFilter === "1t") {
+      stores = stores.filter(is1T);
+    } else if (this.statusFilter === "3t") {
+      stores = stores.filter(is3T);
+    } else if (this.statusFilter === "active") {
       stores = stores.filter(s => s.isActive !== false);
     } else if (this.statusFilter === "inactive") {
       stores = stores.filter(s => s.isActive === false);
@@ -694,7 +727,7 @@ const CJAudit = {
     } else if (this.statusFilter === "audited") {
       stores = stores.filter(s => auditMap.has(s.id) || auditMap.has(s.storeCode) || (s.lastAuditDate && s.lastAuditDate !== "Chưa kiểm tra"));
     } else if (this.statusFilter === "underperforming") {
-      stores = stores.filter(s => s.isUnderperforming || s.assetStatus === "3T Ko Mua" || s.assetStatus === "Chưa mua" || s.salesTier === "= 0" || s.salesAvg3M === 0);
+      stores = stores.filter(s => s.isUnderperforming || is3T(s) || is1T(s) || s.salesTier === "= 0" || s.salesAvg3M === 0);
     } else if (this.statusFilter === "retract") {
       stores = stores.filter(s => {
         const a = auditMap.get(s.id) || auditMap.get(s.storeCode);
@@ -806,8 +839,12 @@ const CJAudit = {
               <!-- Rich POSM Status & Sales Badges -->
               <div class="flex flex-wrap items-center gap-1.5 mt-1 text-[11px]">
                 ${store.assetStatus ? `
-                  <span class="px-2 py-0.5 rounded-full font-bold ${store.assetStatus === 'Active' ? 'bg-emerald-100 text-emerald-800' : store.assetStatus === '3T Ko Mua' ? 'bg-rose-100 text-rose-800 border border-rose-300' : 'bg-amber-100 text-amber-900 border border-amber-300'}">
-                    ${store.assetStatus === '3T Ko Mua' ? '🚨' : store.assetStatus === 'Chưa mua' ? '⚠️' : '🟢'} ${store.assetStatus}
+                  <span class="px-2 py-0.5 rounded-full font-bold ${
+                    store.assetStatus === 'Active' ? 'bg-emerald-100 text-emerald-800' : 
+                    is3T(store) ? 'bg-rose-100 text-rose-800 border border-rose-300' : 
+                    'bg-amber-100 text-amber-900 border border-amber-300'
+                  }">
+                    ${is3T(store) ? '🚨 3T Ko Mua' : is1T(store) ? '⚠️ 1T Ko Mua' : '🟢 ' + store.assetStatus}
                   </span>
                 ` : ''}
                 ${store.salesTier ? `
@@ -2013,7 +2050,23 @@ const CJAudit = {
       }
       if (elPower) elPower.textContent = stats.audited > 0 ? `${stats.powerRate}%` : "--%";
       if (elGoods) elGoods.textContent = stats.audited > 0 ? `${stats.goodsRate}%` : "--%";
-      if (elZero) elZero.textContent = `${stats.underperformingCount} tủ`;
+      
+      const elStat1T = document.getElementById("stat1TCount");
+      const elStat3T = document.getElementById("stat3TCount");
+      const rawStores = CJStorage.getStoresForCurrentGSBH(this.selectedSalesRep);
+      const is1TWidget = (s) => {
+        const st = String(s.assetStatus || "").toLowerCase().trim();
+        return st === "chưa mua" || st === "chua mua" || st.includes("1t") || st === "chưa_mua";
+      };
+      const is3TWidget = (s) => {
+        const st = String(s.assetStatus || "").toLowerCase().trim();
+        return st === "3t ko mua" || st === "3t" || st.includes("3t");
+      };
+      const count1T = rawStores.filter(is1TWidget).length;
+      const count3T = rawStores.filter(is3TWidget).length;
+      if (elStat1T) elStat1T.textContent = `${count1T} tủ`;
+      if (elStat3T) elStat3T.textContent = `${count3T} tủ`;
+      if (elZero) elZero.textContent = `${count3T} tủ`;
 
       if (elRoute) {
         elRoute.textContent = `${currentUser.name} • ${currentUser.area || "Toàn Quốc"}`;
