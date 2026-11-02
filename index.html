@@ -724,9 +724,14 @@
                   <span>❄️ Có hàng CJ:</span>
                   <b class="text-blue-400 font-black" id="statGoodsRate">--%</b>
                 </div>
-                <div class="flex items-center gap-1">
-                  <span>⚠️ Tủ 3T Ko Mua:</span>
-                  <b class="text-amber-400 font-black" id="statZeroSales">0 tủ</b>
+                <div class="flex items-center gap-1 cursor-pointer hover:underline" onclick="CJAudit.setStatusFilter('1t')" title="Lọc tủ 1T ko mua (Chưa mua)">
+                  <span>⚠️ 1T Ko Mua:</span>
+                  <b class="text-amber-400 font-black" id="stat1TCount">0 tủ</b>
+                </div>
+                <div class="flex items-center gap-1 cursor-pointer hover:underline" onclick="CJAudit.setStatusFilter('3t')" title="Lọc tủ 3T ko mua">
+                  <span>🚨 3T Ko Mua:</span>
+                  <b class="text-rose-400 font-black" id="stat3TCount">0 tủ</b>
+                  <b class="hidden" id="statZeroSales">0 tủ</b>
                 </div>
               </div>
             </div>
@@ -758,34 +763,34 @@
               </div>
             </div>
 
-            <!-- Quick Status Filter Pills (Tất cả, Hoạt động, Ngừng - Khớp 100% Ảnh Mẫu 3) -->
+            <!-- Quick Status Filter Pills: Tất cả tủ, Tủ 1T ko mua, Tủ 3T ko mua -->
             <div class="bg-gray-100/90 px-3 py-2.5 border-b border-gray-200 flex items-center justify-between gap-1.5 overflow-x-auto select-none">
               <div class="flex items-center gap-1.5 flex-1 min-w-max">
-                <!-- Pill 1: Tất cả -->
+                <!-- Nút 1: Tất cả tủ -->
                 <button 
                   type="button" 
                   id="pillAllStores" 
                   onclick="CJAudit.setStatusFilter('all')" 
                   class="pill-filter-btn px-3 py-1.5 rounded-full text-xs font-black transition shadow-sm bg-[#184594] text-white border border-[#184594]">
-                  Tất cả (<span id="pillCountAll">13</span>)
+                  Tất cả tủ (<span id="pillCountAll">0</span>)
                 </button>
 
-                <!-- Pill 2: Hoạt động -->
+                <!-- Nút 2: Tủ 1T ko mua (Chưa mua) -->
                 <button 
                   type="button" 
-                  id="pillActiveStores" 
-                  onclick="CJAudit.setStatusFilter('active')" 
-                  class="pill-filter-btn px-3 py-1.5 rounded-full text-xs font-bold transition bg-white text-gray-700 hover:bg-gray-50 border border-gray-300">
-                  Hoạt động (<span id="pillCountActive">13</span>)
+                  id="pill1TStores" 
+                  onclick="CJAudit.setStatusFilter('1t')" 
+                  class="pill-filter-btn px-3 py-1.5 rounded-full text-xs font-bold transition bg-white text-gray-700 hover:bg-amber-50 border border-gray-300">
+                  Tủ 1T ko mua (<span id="pillCount1T">0</span>)
                 </button>
 
-                <!-- Pill 3: Ngừng -->
+                <!-- Nút 3: Tủ 3T ko mua -->
                 <button 
                   type="button" 
-                  id="pillInactiveStores" 
-                  onclick="CJAudit.setStatusFilter('inactive')" 
-                  class="pill-filter-btn px-3 py-1.5 rounded-full text-xs font-bold transition bg-white text-gray-700 hover:bg-gray-50 border border-gray-300">
-                  Ngừng (<span id="pillCountInactive">0</span>)
+                  id="pill3TStores" 
+                  onclick="CJAudit.setStatusFilter('3t')" 
+                  class="pill-filter-btn px-3 py-1.5 rounded-full text-xs font-bold transition bg-white text-gray-700 hover:bg-rose-50 border border-gray-300">
+                  Tủ 3T ko mua (<span id="pillCount3T">0</span>)
                 </button>
               </div>
 
@@ -3364,14 +3369,14 @@
   <div id="appToast" class="fixed top-5 right-5 z-50 opacity-0 translate-y-[-20px] pointer-events-none transition-all duration-300"></div>
 
   <!-- ================= APPLICATION SCRIPTS ================= -->
-  <script src="js/data.js?v=10.6"></script>
-  <script src="js/auth.js?v=10.6"></script>
-  <script src="js/storage.js?v=10.6"></script>
-  <script src="js/watermark.js?v=10.6"></script>
-  <script src="js/cloud_sync.js?v=10.6"></script>
-  <script src="js/audit.js?v=10.6"></script>
-  <script src="js/dashboard.js?v=10.6"></script>
-  <script src="js/excel.js?v=10.6"></script>
-  <script src="js/app.js?v=10.6"></script>
+  <script src="js/data.js?v=10.7"></script>
+  <script src="js/auth.js?v=10.7"></script>
+  <script src="js/storage.js?v=10.7"></script>
+  <script src="js/watermark.js?v=10.7"></script>
+  <script src="js/cloud_sync.js?v=10.7"></script>
+  <script src="js/audit.js?v=10.7"></script>
+  <script src="js/dashboard.js?v=10.7"></script>
+  <script src="js/excel.js?v=10.7"></script>
+  <script src="js/app.js?v=10.7"></script>
 </body>
 </html>
