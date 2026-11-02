@@ -741,6 +741,7 @@ const CJAudit = {
         (s.name && s.name.toLowerCase().includes(q)) ||
         (s.id && s.id.toLowerCase().includes(q)) ||
         (s.storeCode && s.storeCode.toLowerCase().includes(q)) ||
+        (s.qrCode && s.qrCode.toLowerCase().includes(q)) ||
         (s.serialNumber && s.serialNumber.toLowerCase().includes(q)) ||
         (s.barcode && s.barcode.toLowerCase().includes(q)) ||
         (s.model && s.model.toLowerCase().includes(q)) ||
@@ -899,8 +900,8 @@ const CJAudit = {
             </div>
             <div class="flex flex-wrap items-center justify-between gap-1 text-[11px] text-gray-700 pt-0.5 border-t border-blue-100/60">
               <div class="flex items-center gap-1">
-                <span>🏷️ Barcode (Serial):</span>
-                <b class="font-mono text-gray-900 bg-white px-1.5 py-0.5 rounded border border-blue-200 font-extrabold">${store.serialNumber || store.barcode || (freezer && (freezer.serialNumber || freezer.barcode || freezer.assetTag)) || store.freezerId || 'Chưa có barcode'}</b>
+                <span>🏷️ Mã QR:</span>
+                <b class="font-mono text-gray-900 bg-white px-1.5 py-0.5 rounded border border-blue-200 font-extrabold">${store.qrCode || (freezer && freezer.qrCode) || store.serialNumber || store.barcode || store.freezerId || 'Chưa có Mã QR'}</b>
               </div>
               ${store.capacity ? `<span class="text-gray-500 font-medium">Dung tích: <b class="text-gray-700">${store.capacity}</b></span>` : ''}
             </div>
@@ -2123,7 +2124,7 @@ const CJAudit = {
       if (codeEl) codeEl.textContent = `${storeSeqPrefix}${store.storeCode || store.id}`;
       if (nameEl) nameEl.textContent = store.originalStoreName || store.name;
       if (addrEl) addrEl.textContent = `📍 ${store.address || 'Việt Nam'}`;
-      if (fzIdEl) fzIdEl.textContent = store.serialNumber || store.barcode || store.freezerId || 'TDO-001';
+      if (fzIdEl) fzIdEl.textContent = store.qrCode || store.serialNumber || store.barcode || store.freezerId || 'TDO-001';
       if (fzModEl) fzModEl.textContent = store.model || store.modelTu || store.freezerModel || 'Alaska 300L';
       if (statusEl) statusEl.textContent = store.assetStatus || (store.isActive !== false ? 'Active' : 'Ngừng');
       if (avgSalesEl) avgSalesEl.textContent = store.salesAvg3M ? `${Math.round(store.salesAvg3M).toLocaleString('vi-VN')} đ` : '0 đ';
