@@ -2093,13 +2093,17 @@ const CJAudit = {
 
       document.getElementById("inAuditRevenuePotential").value = existing?.revenuePotential || "1M ~ 3M";
       document.getElementById("inAuditStoreType").value = existing?.storeType || store.channel || "Tiệm tạp hóa truyền thống";
-      document.getElementById("inAuditBusinessCategory").value = existing?.businessCategory || "Thực phẩm đông lạnh, Tạp hóa";
+      if (document.getElementById("inAuditBusinessCategory")) {
+        document.getElementById("inAuditBusinessCategory").value = existing?.businessCategory || "Thực phẩm đông lạnh, Tạp hóa";
+      }
       document.getElementById("inAuditMatchCjTarget").value = existing?.matchCjTarget || "Rất phù hợp";
       document.getElementById("inAuditFreezerLocation").value = existing?.freezerLocation || "Mặt tiền đắc địa";
       if (document.getElementById("inAuditFreezerVisibility")) {
         document.getElementById("inAuditFreezerVisibility").value = existing?.freezerVisibility || "Rõ ràng bắt mắt";
       }
-      document.getElementById("inAuditTruckAccessible").value = existing?.truckAccessible || "Có xe tải vào tận nơi";
+      if (document.getElementById("inAuditTruckAccessible")) {
+        document.getElementById("inAuditTruckAccessible").value = existing?.truckAccessible || "Có xe tải vào tận nơi";
+      }
       document.getElementById("inAuditDeliveryFrequency").value = existing?.deliveryFrequency || "2-3 lần/tuần";
 
       document.getElementById("inAuditRootCause").value = existing?.rootCause || (store.salesTier === "= 0" ? "Hàng CJ bán chậm, không có khách hỏi mua" : "NPP/NVBH không chăm sóc tuyến, không ghé chào hàng");
@@ -2502,11 +2506,11 @@ Vui lòng bấm nút [Chụp hình] để chụp đủ tối thiểu 2 tấm tr�
     const competitorDetail = document.getElementById("inAuditCompetitorDetail").value;
     const revenuePotential = document.getElementById("inAuditRevenuePotential").value;
     const storeType = document.getElementById("inAuditStoreType").value;
-    const businessCategory = document.getElementById("inAuditBusinessCategory").value;
+    const businessCategory = document.getElementById("inAuditBusinessCategory")?.value || "Thực phẩm đông lạnh, Tạp hóa";
     const matchCjTarget = document.getElementById("inAuditMatchCjTarget").value;
     const freezerLocation = document.getElementById("inAuditFreezerLocation").value;
     const freezerVisibility = document.getElementById("inAuditFreezerVisibility")?.value || "";
-    const truckAccessible = document.getElementById("inAuditTruckAccessible").value;
+    const truckAccessible = document.getElementById("inAuditTruckAccessible")?.value || "Có xe tải vào tận nơi";
     const deliveryFrequency = document.getElementById("inAuditDeliveryFrequency").value;
     const rootCause = document.getElementById("inAuditRootCause").value;
     const rootCauseDetail = document.getElementById("inAuditRootCauseDetail").value;
