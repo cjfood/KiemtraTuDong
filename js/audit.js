@@ -19,7 +19,7 @@ const CJAudit = {
     this.requestGPS();
     this.bindEvents();
     this.populateSalesRepFilter();
-    this.renderStoreList();
+    this.setStatusFilter("3t");
     if (this.gsbhMap) {
       this.renderGsbhMapPins();
     }
@@ -518,7 +518,7 @@ const CJAudit = {
     this.gsbhMap.fitBounds(group.getBounds(), { padding: [40, 40], maxZoom: 15 });
   },
 
-  statusFilter: "all",
+  statusFilter: "3t",
   searchQuery: "",
   orderCart: {},
   currentOrderStore: null,
