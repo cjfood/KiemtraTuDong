@@ -714,26 +714,7 @@
                 </div>
               </div>
 
-              <!-- Cold Chain & Sales Quality Progress Indicators -->
-              <div class="bg-white/5 rounded-xl px-2.5 py-1.5 flex flex-wrap items-center justify-between gap-2 text-[11px] text-gray-300 border border-white/5">
-                <div class="flex items-center gap-1">
-                  <span>⚡ Cắm điện:</span>
-                  <b class="text-emerald-400 font-black" id="statPowerRate">--%</b>
-                </div>
-                <div class="flex items-center gap-1">
-                  <span>❄️ Có hàng CJ:</span>
-                  <b class="text-blue-400 font-black" id="statGoodsRate">--%</b>
-                </div>
-                <div class="flex items-center gap-1 cursor-pointer hover:underline" onclick="CJAudit.setStatusFilter('1t')" title="Lọc tủ 1T ko mua (Chưa mua)">
-                  <span>⚠️ 1T Ko Mua:</span>
-                  <b class="text-amber-400 font-black" id="stat1TCount">0 tủ</b>
-                </div>
-                <div class="flex items-center gap-1 cursor-pointer hover:underline" onclick="CJAudit.setStatusFilter('3t')" title="Lọc tủ 3T ko mua">
-                  <span>🚨 3T Ko Mua:</span>
-                  <b class="text-rose-400 font-black" id="stat3TCount">0 tủ</b>
-                  <b class="hidden" id="statZeroSales">0 tủ</b>
-                </div>
-              </div>
+
             </div>
 
             <!-- Royal Blue Header Banner: 👥 Khách hàng của tôi + Embedded Search Bar -->
@@ -771,7 +752,7 @@
                   type="button" 
                   id="pillAllStores" 
                   onclick="CJAudit.setStatusFilter('all')" 
-                  class="pill-filter-btn px-3 py-1.5 rounded-full text-xs font-black transition shadow-sm bg-[#184594] text-white border border-[#184594]">
+                  class="pill-filter-btn px-3 py-1.5 rounded-full text-xs font-bold transition bg-white text-gray-700 hover:bg-gray-50 border border-gray-300">
                   Tất cả tủ (<span id="pillCountAll">0</span>)
                 </button>
 
@@ -784,12 +765,12 @@
                   Tủ 1T ko mua (<span id="pillCount1T">0</span>)
                 </button>
 
-                <!-- Nút 3: Tủ 3T ko mua -->
+                <!-- Nút 3: Tủ 3T ko mua (Mặc định chọn khi đăng nhập) -->
                 <button 
                   type="button" 
                   id="pill3TStores" 
                   onclick="CJAudit.setStatusFilter('3t')" 
-                  class="pill-filter-btn px-3 py-1.5 rounded-full text-xs font-bold transition bg-white text-gray-700 hover:bg-rose-50 border border-gray-300">
+                  class="pill-filter-btn px-3 py-1.5 rounded-full text-xs font-black transition shadow-sm bg-[#184594] text-white border border-[#184594]">
                   Tủ 3T ko mua (<span id="pillCount3T">0</span>)
                 </button>
               </div>
@@ -3369,14 +3350,14 @@
   <div id="appToast" class="fixed top-5 right-5 z-50 opacity-0 translate-y-[-20px] pointer-events-none transition-all duration-300"></div>
 
   <!-- ================= APPLICATION SCRIPTS ================= -->
-  <script src="js/data.js?v=10.7"></script>
-  <script src="js/auth.js?v=10.7"></script>
-  <script src="js/storage.js?v=10.7"></script>
-  <script src="js/watermark.js?v=10.7"></script>
-  <script src="js/cloud_sync.js?v=10.7"></script>
-  <script src="js/audit.js?v=10.7"></script>
-  <script src="js/dashboard.js?v=10.7"></script>
-  <script src="js/excel.js?v=10.7"></script>
-  <script src="js/app.js?v=10.7"></script>
+  <script src="js/data.js?v=10.8"></script>
+  <script src="js/auth.js?v=10.8"></script>
+  <script src="js/storage.js?v=10.8"></script>
+  <script src="js/watermark.js?v=10.8"></script>
+  <script src="js/cloud_sync.js?v=10.8"></script>
+  <script src="js/audit.js?v=10.8"></script>
+  <script src="js/dashboard.js?v=10.8"></script>
+  <script src="js/excel.js?v=10.8"></script>
+  <script src="js/app.js?v=10.8"></script>
 </body>
 </html>
