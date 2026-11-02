@@ -2121,7 +2121,9 @@ const CJAudit = {
       const deadlineDate = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);
       const followUpDate = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
 
-      document.getElementById("inAuditDeadline").value = existing?.deadline || deadlineDate.toISOString().split("T")[0];
+      if (document.getElementById("inAuditDeadline")) {
+        document.getElementById("inAuditDeadline").value = existing?.deadline || deadlineDate.toISOString().split("T")[0];
+      }
       if (document.getElementById("inAuditActionStatus")) {
         document.getElementById("inAuditActionStatus").value = existing?.actionStatus || "Chờ xử lý";
       }
@@ -2516,7 +2518,7 @@ Vui lòng bấm nút [Chụp hình] để chụp đủ tối thiểu 2 tấm tr�
     const rootCauseDetail = document.getElementById("inAuditRootCauseDetail").value;
     const actionProposal = document.getElementById("inAuditActionProposal").value;
     const actionPic = document.getElementById("inAuditActionPic")?.value || currentUser?.name || store.salesRep || "GSBH Khu Vực";
-    const deadline = document.getElementById("inAuditDeadline").value;
+    const deadline = document.getElementById("inAuditDeadline")?.value || "";
     const actionStatus = document.getElementById("inAuditActionStatus")?.value || "Chờ xử lý";
     const actionResult = document.getElementById("inAuditActionResult")?.value || "";
     const followUpDate = document.getElementById("inAuditFollowUpDate").value;
