@@ -2111,7 +2111,36 @@ const CJAudit = {
 
       // Action plan pre-fill
       const defaultProposal = (store.assetStatus === "3T Ko Mua" || store.salesTier === "= 0") ? "Thu hồi tủ về kho (Không hiệu quả)" : "Hỗ trợ CTKM Sell-out kích cầu (Kích hoạt lại)";
-      document.getElementById("inAuditActionProposal").value = existing?.actionProposal || defaultProposal;
+      const proposalEl = document.getElementById("inAuditActionProposal");
+      const proposalDetailEl = document.getElementById("inAuditActionProposalDetail");
+      
+      let pVal = existing?.actionProposal || defaultProposal;
+      let pDetail = existing?.actionProposalDetail || "";
+      
+      if (pVal && pVal.startsWith("Đề xuất khác")) {
+        proposalEl.value = "Đề xuất khác";
+        if (!pDetail) {
+          pDetail = pVal.replace(/^Đề xuất khác\s*[:(]?\s*/i, "").replace(/\)$/, "").trim();
+        }
+      } else {
+        let optionFound = false;
+        for (let i = 0; i < proposalEl.options.length; i++) {
+          if (proposalEl.options[i].value === pVal) {
+            optionFound = true;
+            break;
+          }
+        }
+        if (optionFound) {
+          proposalEl.value = pVal;
+        } else {
+          proposalEl.value = "Đề xuất khác";
+          pDetail = pDetail || pVal;
+        }
+      }
+      if (proposalDetailEl) {
+        proposalDetailEl.value = pDetail;
+      }
+      this.onActionProposalChange(proposalEl.value);
       if (document.getElementById("inAuditActionPic")) {
         document.getElementById("inAuditActionPic").value = existing?.actionPic || currentUser?.name || store.salesRep || "GSBH Khu Vực";
       }
@@ -2169,11 +2198,24 @@ const CJAudit = {
   onCompetitorChange(val) {
     const box = document.getElementById("inAuditCompetitorDetailBox");
     if (box) {
-      if (val === "Có") {
+      if (val === "Có" || val === "SP khác (không phải đối thủ)") {
         box.classList.remove("hidden");
       } else {
         box.classList.add("hidden");
       }
+    }
+  },
+
+  onActionProposalChange(val) {
+    const detailInput = document.getElementById("inAuditActionProposalDetail");
+    if (!detailInput) return;
+    if (val === "Đề xuất khác") {
+      detailInput.placeholder = "Nhập cụ thể nội dung đề xuất xử lý khác (Bắt buộc)...";
+      detailInput.required = true;
+      detailInput.focus();
+    } else {
+      detailInput.placeholder = "Nhập chi tiết / ghi chú đề xuất xử lý...";
+      detailInput.required = false;
     }
   },
 
@@ -2517,6 +2559,17 @@ Vui lòng bấm nút [Chụp hình] để chụp đủ tối thiểu 2 tấm tr�
     const rootCause = document.getElementById("inAuditRootCause").value;
     const rootCauseDetail = document.getElementById("inAuditRootCauseDetail").value;
     const actionProposal = document.getElementById("inAuditActionProposal").value;
+    const actionProposalDetail = document.getElementById("inAuditActionProposalDetail")?.value?.trim() || "";
+
+    if (actionProposal === "Đề xuất khác" && !actionProposalDetail) {
+      alert("Vui lòng nhập chi tiết đề xuất xử lý khác!");
+      document.getElementById("inAuditActionProposalDetail")?.focus();
+      return;
+    }
+
+    const finalActionProposal = (actionProposal === "Đề xuất khác" && actionProposalDetail) 
+      ? `Đề xuất khác (${actionProposalDetail})` 
+      : actionProposal;
     const actionPic = document.getElementById("inAuditActionPic")?.value || currentUser?.name || store.salesRep || "GSBH Khu Vực";
     const deadline = document.getElementById("inAuditDeadline")?.value || "";
     const actionStatus = document.getElementById("inAuditActionStatus")?.value || "Chờ xử lý";
@@ -2554,7 +2607,8 @@ Vui lòng bấm nút [Chụp hình] để chụp đủ tối thiểu 2 tấm tr�
       deliveryFrequency,
       rootCause,
       rootCauseDetail,
-      actionProposal,
+      actionProposal: finalActionProposal,
+      actionProposalDetail: actionProposalDetail,
       actionPic,
       deadline,
       actionStatus,
