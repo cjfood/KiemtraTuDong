@@ -3285,17 +3285,16 @@
 
           <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             <!-- 14. Đề xuất xử lý -->
-            <div class="sm:col-span-2">
+            <div class="sm:col-span-2 space-y-2">
               <label class="block font-bold text-gray-700 mb-1">14. Đề xuất xử lý *</label>
-              <select id="inAuditActionProposal" required class="w-full p-2.5 rounded-xl border border-gray-300 font-black text-cj-red bg-red-50/50 focus:bg-white focus:border-blue-500 outline-none">
+              <select id="inAuditActionProposal" onchange="CJAudit.onActionProposalChange(this.value)" required class="w-full p-2.5 rounded-xl border border-gray-300 font-black text-cj-red bg-red-50/50 focus:bg-white focus:border-blue-500 outline-none">
                 <option value="Thu hồi tủ về kho (Không hiệu quả)">🚨 Thu hồi tủ về kho (Không hiệu quả)</option>
-                <option value="Đổi sang loại tủ nhỏ hơn (Tiết kiệm điện)">🔄 Đổi sang loại tủ nhỏ hơn (Tiết kiệm điện)</option>
                 <option value="Hỗ trợ CTKM Sell-out kích cầu (Kích hoạt lại)">🎯 Hỗ trợ CTKM Sell-out kích cầu (Kích hoạt lại)</option>
                 <option value="Yêu cầu NPP/NVBH tuyến ghé viếng thăm lại định kỳ">🤝 Yêu cầu NPP/NVBH tuyến ghé viếng thăm lại định kỳ</option>
-                <option value="Chuyển điểm bán sang NPP khác phụ trách">🚚 Chuyển điểm bán sang NPP khác phụ trách</option>
-                <option value="Yêu cầu dọn dẹp chuyển tủ ra mặt tiền">📍 Yêu cầu dọn dẹp chuyển tủ ra mặt tiền</option>
                 <option value="Giữ nguyên theo dõi thêm 1 tháng">⏳ Giữ nguyên theo dõi thêm 1 tháng</option>
+                <option value="Đề xuất khác">💡 Đề xuất khác</option>
               </select>
+              <input type="text" id="inAuditActionProposalDetail" class="w-full p-2.5 rounded-xl border border-gray-300 font-medium text-gray-900 bg-white focus:border-blue-500 outline-none text-xs sm:text-sm" placeholder="Nhập chi tiết / ghi chú đề xuất xử lý..." />
             </div>
 
             <!-- 15. Ngày Follow-up -->
@@ -3373,14 +3372,14 @@
   <div id="appToast" class="fixed top-5 right-5 z-50 opacity-0 translate-y-[-20px] pointer-events-none transition-all duration-300"></div>
 
   <!-- ================= APPLICATION SCRIPTS ================= -->
-  <script src="js/data.js?v=10.3"></script>
-  <script src="js/auth.js?v=10.3"></script>
-  <script src="js/storage.js?v=10.3"></script>
-  <script src="js/watermark.js?v=10.3"></script>
-  <script src="js/cloud_sync.js?v=10.3"></script>
-  <script src="js/audit.js?v=10.3"></script>
-  <script src="js/dashboard.js?v=10.3"></script>
-  <script src="js/excel.js?v=10.3"></script>
-  <script src="js/app.js?v=10.3"></script>
+  <script src="js/data.js?v=10.4"></script>
+  <script src="js/auth.js?v=10.4"></script>
+  <script src="js/storage.js?v=10.4"></script>
+  <script src="js/watermark.js?v=10.4"></script>
+  <script src="js/cloud_sync.js?v=10.4"></script>
+  <script src="js/audit.js?v=10.4"></script>
+  <script src="js/dashboard.js?v=10.4"></script>
+  <script src="js/excel.js?v=10.4"></script>
+  <script src="js/app.js?v=10.4"></script>
 </body>
 </html>
