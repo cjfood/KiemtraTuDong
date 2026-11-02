@@ -370,20 +370,22 @@ const CJAudit = {
     this.gsbhMarkers.forEach(m => this.gsbhMap.removeLayer(m));
     this.gsbhMarkers = [];
 
-    let stores = CJStorage.getStoresForCurrentGSBH(this.selectedSalesRep);
-    if (!stores || stores.length === 0) return;
-
-    if (this.statusFilter === "1t") {
-      stores = stores.filter(s => {
-        const st = String(s.assetStatus || "").toLowerCase().trim();
-        return st === "chưa mua" || st === "chua mua" || st.includes("1t") || st === "chưa_mua";
-      });
-    } else if (this.statusFilter === "3t") {
-      stores = stores.filter(s => {
-        const st = String(s.assetStatus || "").toLowerCase().trim();
-        return st === "3t ko mua" || st === "3t" || st.includes("3t");
-      });
+    let stores = this.currentFilteredStores;
+    if (!stores) {
+      stores = CJStorage.getStoresForCurrentGSBH(this.selectedSalesRep);
+      if (this.statusFilter === "1t") {
+        stores = stores.filter(s => {
+          const st = String(s.assetStatus || "").toLowerCase().trim();
+          return st === "chưa mua" || st === "chua mua" || st.includes("1t") || st === "chưa_mua";
+        });
+      } else if (this.statusFilter === "3t") {
+        stores = stores.filter(s => {
+          const st = String(s.assetStatus || "").toLowerCase().trim();
+          return st === "3t ko mua" || st === "3t" || st.includes("3t");
+        });
+      }
     }
+    if (!stores || stores.length === 0) return;
 
     const bounds = [];
 
@@ -754,6 +756,9 @@ const CJAudit = {
       );
     }
 
+    // Lưu danh sách sau lọc để map pin, popup và modal dùng đồng bộ số thứ tự
+    this.currentFilteredStores = stores;
+
     // Refresh map pins if map view is currently open
     if (this.currentViewMode === "map" && this.gsbhMap) {
       this.renderGsbhMapPins();
@@ -772,9 +777,9 @@ const CJAudit = {
 
 // auditMap initialized at beginning of renderStoreList
 
-    // Authoritative mapping of store ID to Map Pin Index (1-based, matches renderGsbhMapPins exactly)
+    // Authoritative mapping of store ID to current filtered sequence (1-based theo bộ lọc đang chọn)
     const storeMapIndex = new Map();
-    rawStores.forEach((s, i) => {
+    stores.forEach((s, i) => {
       if (s.id && !storeMapIndex.has(s.id)) {
         storeMapIndex.set(s.id, i + 1);
       }
@@ -2113,10 +2118,10 @@ const CJAudit = {
       const statusEl = document.getElementById("inAuditAssetStatus");
       const avgSalesEl = document.getElementById("inAuditAvgSales");
 
-      // Sequence number matching Map pin
-      const currentStores = (typeof CJStorage !== "undefined" && CJStorage.getStoresForCurrentGSBH) 
+      // Sequence number matching current filtered view
+      const currentStores = this.currentFilteredStores || ((typeof CJStorage !== "undefined" && CJStorage.getStoresForCurrentGSBH) 
         ? CJStorage.getStoresForCurrentGSBH(this.selectedSalesRep) 
-        : [];
+        : []);
       const storeIdx = currentStores.findIndex(s => s.id === store.id || s.storeCode === store.storeCode);
       const storeSeqNum = storeIdx >= 0 ? (storeIdx + 1) : "";
       const storeSeqPrefix = storeSeqNum ? `${storeSeqNum} • ` : "";
@@ -2456,9 +2461,9 @@ const CJAudit = {
         addrEl.textContent = `Địa chỉ hiện tại: ${currentPhotoAddress}`;
       }
 
-      const currentStores = (typeof CJStorage !== "undefined" && CJStorage.getStoresForCurrentGSBH) 
+      const currentStores = this.currentFilteredStores || ((typeof CJStorage !== "undefined" && CJStorage.getStoresForCurrentGSBH) 
         ? CJStorage.getStoresForCurrentGSBH(this.selectedSalesRep) 
-        : [];
+        : []);
       const storeIdx = currentStores.findIndex(s => s.id === store?.id || s.storeCode === store?.storeCode);
       const storeSeqNum = storeIdx >= 0 ? (storeIdx + 1) : "";
       const storeSeqPrefix = storeSeqNum ? `${storeSeqNum} • ` : "";
