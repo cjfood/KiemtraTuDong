@@ -1100,10 +1100,22 @@ const CJStorage = {
 
       // Upsert store: 1 dòng cho mỗi tủ đông
       const existingStoreIdx = stores.findIndex(s => s.id === uniqueStoreId);
+      const rawAssetStatus = getVal(row, ["Trạng Thái", "Trang_Thai", "TrangThai", "Asset_Status", "Trạng Thái Gốc", "assetStatus"]) || "Active";
+      let assetStatus = "Active";
+      if (/3T/i.test(rawAssetStatus) || /3\s*tháng/i.test(rawAssetStatus)) {
+        assetStatus = "3T Ko Mua";
+      } else if (/chưa\s*mua|chua\s*mua|1T/i.test(rawAssetStatus)) {
+        assetStatus = "Chưa mua";
+      } else {
+        assetStatus = rawAssetStatus;
+      }
+
       const storeData = {
         id: uniqueStoreId,
         storeCode: storeId,
         customerCode: storeId,
+        assetStatus: assetStatus,
+        isUnderperforming: (assetStatus === "3T Ko Mua" || assetStatus === "Chưa mua"),
         name: displayStoreName,
         originalStoreName: storeName,
         freezerIndex: fzIdx,
