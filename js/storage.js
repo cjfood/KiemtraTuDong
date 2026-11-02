@@ -27,7 +27,7 @@ const CJStorage = {
   },
 
   init(force = false) {
-    const DATA_VERSION = "2026.10.27_DIRECT_MASTER_V8_5";
+    const DATA_VERSION = "2026.11.02_MASTER_V9";
     const currentVer = localStorage.getItem("cj_market_audit_data_ver");
     const dataTimestamp = (typeof CJ_DATA_TIMESTAMP !== "undefined") ? CJ_DATA_TIMESTAMP : "";
     const lastSyncTs = localStorage.getItem("cj_market_audit_sync_timestamp");
