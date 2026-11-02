@@ -1049,6 +1049,7 @@ const CJStorage = {
       const capacity = getVal(row, ["Dung_Tich", "Dung Tích", "Capacity"], 10) || "350L";
 
       // ĐÂY LÀ ĐIỂM QUAN TRỌNG NHẤT: LẤY CHÍNH XÁC DATA TRONG CỘT L (So_Serial)
+      const qrCode = getVal(row, ["Mã QR", "Ma_QR", "MaQR", "QR_Code", "Mã_QR", "QR Code", "QRCode"], 19) || "";
       const serial = getVal(row, [
         "So_Serial", "So_serial", "so_serial", "Số_Serial", "Số Serial", 
         "SoSerial", "Serial", "Serial_Number", "SerialNumber", "Mã Serial", 
@@ -1084,6 +1085,7 @@ const CJStorage = {
         modelTu: model,
         freezerModel: model,
         capacity: capacity,
+        qrCode: qrCode,
         assignedStoreId: uniqueStoreId,
         storeCode: storeId,
         assignedStoreName: displayStoreName,
@@ -1141,6 +1143,7 @@ const CJStorage = {
         modelTu: model,
         freezerModel: model,
         capacity: capacity,
+        qrCode: qrCode,
         status: "good",
         lastAuditDate: "Chưa kiểm tra",
         lastTemp: -18,
