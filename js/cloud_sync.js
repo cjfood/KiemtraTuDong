@@ -336,12 +336,84 @@ const CJCloudSync = (function () {
     /**
      * Tự động kéo từ Google Sheet và nạp thẳng vào Storage + cập nhật toàn bộ UI
      */
+    
+    /**
+     * Gửi toàn bộ dữ liệu phân công kiểm tra lên Google Apps Script
+     */
+    async function sendAssignmentsToCloud(assignmentsMap) {
+        const scriptUrl = getScriptUrl();
+        if (!scriptUrl) return { success: false, reason: 'no_url' };
+
+        const payload = {
+            action: 'saveAssignments',
+            updatedAt: new Date().toISOString(),
+            assignments: assignmentsMap
+        };
+
+        try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 20000);
+
+            await fetch(scriptUrl, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'text/plain' },
+                body: JSON.stringify(payload),
+                signal: controller.signal
+            });
+            clearTimeout(timeoutId);
+
+            console.log('[CJCloudSync] Đã gửi thông tin phân công lên Google Sheets');
+            return { success: true };
+        } catch (err) {
+            console.warn('[CJCloudSync] Lỗi khi gửi phân công lên Google Sheets:', err);
+            return { success: false, error: err.toString() };
+        }
+    }
+
+    /**
+     * Kéo danh sách phân công kiểm tra từ Google Sheet (GET ?action=getAssignments)
+     */
+    async function pullAssignmentsFromCloud() {
+        const scriptUrl = getScriptUrl();
+        if (!scriptUrl) return { success: false, reason: 'no_url' };
+
+        const fetchUrl = scriptUrl + (scriptUrl.includes('?') ? '&' : '?') + 'action=getAssignments&t=' + Date.now();
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+        try {
+            const response = await fetch(fetchUrl, {
+                method: 'GET',
+                signal: controller.signal
+            });
+            clearTimeout(timeoutId);
+
+            if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
+            const data = await response.json();
+            if (data && data.status === 'success' && data.assignments) {
+                if (typeof CJStorage !== 'undefined' && CJStorage.syncAssignmentsFromCloud) {
+                    const count = CJStorage.syncAssignmentsFromCloud(data.assignments);
+                    return { success: true, count: count };
+                }
+            }
+            return { success: false };
+        } catch (err) {
+            clearTimeout(timeoutId);
+            console.warn('[CJCloudSync] Không thể lấy phân công từ Google Sheet:', err);
+            return { success: false, error: err.toString() };
+        }
+    }
+
     async function syncAllFromCloud(silent = false) {
         try {
             if (!silent && typeof CJAudit !== 'undefined' && CJAudit.showToast) {
                 CJAudit.showToast('🔄 Đang đồng bộ dữ liệu kiểm tra từ Google Sheet...', 'info');
             }
 
+            try {
+                await pullAssignmentsFromCloud();
+            } catch (eAssign) {}
             const res = await pullAuditsFromGoogleSheet();
             if (!res.success || !Array.isArray(res.audits)) {
                 throw new Error('Dữ liệu trả về không đúng định dạng!');
@@ -387,6 +459,8 @@ const CJCloudSync = (function () {
         syncAuditRecord: sendAuditToGoogleSheet,
         pullAuditsFromGoogleSheet: pullAuditsFromGoogleSheet,
         syncAllFromCloud: syncAllFromCloud,
+        sendAssignmentsToCloud: sendAssignmentsToCloud,
+        pullAssignmentsFromCloud: pullAssignmentsFromCloud,
         syncPendingQueue: syncPendingQueue,
         getPendingQueueCount: getPendingQueueCount
     };
