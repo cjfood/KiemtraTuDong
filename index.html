@@ -773,6 +773,24 @@
                   class="pill-filter-btn px-3 py-1.5 rounded-full text-xs font-black transition shadow-sm bg-[#184594] text-white border border-[#184594]">
                   Tủ 3T ko mua (<span id="pillCount3T">0</span>)
                 </button>
+
+                <!-- Nút 4: Chưa phân công (Dành riêng cho Admin) -->
+                <button 
+                  type="button" 
+                  id="pillUnassignedStores" 
+                  onclick="CJAudit.setStatusFilter('unassigned')" 
+                  class="pill-filter-btn px-3 py-1.5 rounded-full text-xs font-bold transition bg-white text-gray-700 hover:bg-amber-50 border border-gray-300 hidden">
+                  Chưa phân (<span id="pillCountUnassigned">0</span>)
+                </button>
+
+                <!-- Nút 5: Đã phân công (Dành riêng cho Admin) -->
+                <button 
+                  type="button" 
+                  id="pillAssignedStores" 
+                  onclick="CJAudit.setStatusFilter('assigned')" 
+                  class="pill-filter-btn px-3 py-1.5 rounded-full text-xs font-bold transition bg-white text-gray-700 hover:bg-purple-50 border border-gray-300 hidden">
+                  Đã phân (<span id="pillCountAssigned">0</span>)
+                </button>
               </div>
 
               <!-- Map Toggle Icon Button -->
@@ -785,6 +803,32 @@
                 <span>🗺️</span>
                 <span class="text-[11px]" id="mapToggleLabel">Bản đồ</span>
               </button>
+            </div>
+
+            <!-- Admin Assignment Toolbar: Bật/Tắt chế độ chọn nhiều & phân công -->
+            <div id="adminAssignmentToolbar" class="hidden bg-gradient-to-r from-[#0f244a] via-[#184594] to-[#1e3a8a] text-white px-3 py-2 flex items-center justify-between text-xs border-b border-blue-800 shadow-inner">
+              <div class="flex items-center gap-1.5">
+                <span class="text-sm">👑</span>
+                <span class="font-black text-xs text-yellow-300">Phân Tuyến:</span>
+                <span class="text-[11px] text-blue-100 font-medium hidden sm:inline">Phân bổ điểm bán cho người kiểm</span>
+              </div>
+              <div class="flex items-center gap-1.5">
+                <button 
+                  type="button" 
+                  id="btnToggleBulkMode" 
+                  onclick="CJAudit.toggleBulkMode()" 
+                  class="px-2.5 py-1 rounded-lg bg-white/20 hover:bg-white/30 text-white font-extrabold text-[11px] border border-white/30 flex items-center gap-1 transition active:scale-95 shadow-xs">
+                  <span id="btnToggleBulkModeIcon">☑️</span>
+                  <span id="btnToggleBulkModeText">Chọn nhiều</span>
+                </button>
+                <button 
+                  type="button" 
+                  onclick="CJExcel.exportStoreAssignments()" 
+                  class="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-black text-[11px] shadow flex items-center gap-1 transition active:scale-95" 
+                  title="Xuất file Excel danh sách phân bổ 3.061 điểm bán">
+                  <span>📥 Xuất Excel</span>
+                </button>
+              </div>
             </div>
 
             <!-- Active Audit Category Filter Indicator -->
@@ -3361,18 +3405,103 @@
     </div>
   </div>
 
+  <!-- Bulk Assignment Floating Bar (Dành cho Admin phân bổ hàng loạt) -->
+  <div id="bulkActionBar" class="hidden fixed bottom-0 left-0 right-0 z-50 bg-[#0f244a] text-white px-3 py-2.5 shadow-2xl border-t-2 border-yellow-400 flex items-center justify-between gap-2 max-w-lg mx-auto">
+    <div class="flex items-center gap-2 min-w-0">
+      <div class="text-xs">
+        <span class="text-gray-300">Đã chọn:</span>
+        <b id="bulkSelectedCount" class="text-yellow-300 text-base font-black ml-1">0</b>
+      </div>
+      <button 
+        type="button" 
+        id="btnBulkSelectAll" 
+        onclick="CJAudit.toggleBulkSelectAll()" 
+        class="px-2 py-1 bg-white/10 hover:bg-white/20 text-white text-[10px] font-bold rounded-lg border border-white/20 transition active:scale-95">
+        Chọn tất cả (<span id="bulkFilteredCount">0</span>)
+      </button>
+    </div>
+    <div class="flex items-center gap-1.5 shrink-0">
+      <button 
+        type="button" 
+        onclick="CJAudit.openBulkAssignModal()" 
+        class="px-3.5 py-1.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-black text-xs rounded-xl shadow-lg flex items-center gap-1 active:scale-95 transition">
+        <span>👥 Gán Người</span>
+      </button>
+      <button 
+        type="button" 
+        onclick="CJAudit.toggleBulkMode(false)" 
+        class="p-1.5 text-gray-400 hover:text-white rounded-lg active:scale-95 text-xs font-bold" 
+        title="Thoát chế độ chọn nhiều">
+        ✕
+      </button>
+    </div>
+  </div>
+
+  <!-- MODAL PHÂN CÔNG NGƯỜI KIỂM TRA (ADMIN CHỌN NGƯỜI KIỂM CHO 1 HOẶC NHIỀU ĐIỂM) -->
+  <div id="modalAssignAuditor" class="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 z-50 hidden">
+    <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl overflow-hidden flex flex-col max-h-[90vh] border border-gray-200">
+      
+      <!-- Modal Header -->
+      <div class="bg-gradient-to-r from-blue-900 to-indigo-900 px-4 py-3.5 text-white flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span class="text-xl">👥</span>
+          <div>
+            <h3 class="font-extrabold text-sm sm:text-base leading-tight">Phân Bổ Người Kiểm Tra</h3>
+            <p class="text-[10px] text-blue-200" id="assignModalSubtitle">Chọn nhân sự phụ trách kiểm tra điểm bán</p>
+          </div>
+        </div>
+        <button type="button" onclick="CJAudit.closeAssignAuditorModal()" class="text-gray-300 hover:text-white text-lg font-bold p-1">✕</button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="p-4 overflow-y-auto space-y-3 flex-1 text-xs">
+        <!-- Thông tin điểm bán mục tiêu -->
+        <div id="assignStoreInfoBox" class="bg-blue-50/70 p-3 rounded-xl border border-blue-200 text-gray-800 space-y-1">
+          <div class="font-black text-blue-950 text-sm flex items-center justify-between">
+            <span id="assignTargetTitle">Cửa Hàng</span>
+            <span id="assignTargetBadge" class="text-[10px] bg-blue-100 text-blue-900 px-2 py-0.5 rounded-full font-bold">1 điểm</span>
+          </div>
+          <div class="text-gray-600 text-[11px]" id="assignTargetAddress">Địa chỉ...</div>
+          <div class="flex items-center gap-2 pt-1 text-[11px] font-bold">
+            <span class="text-gray-700">Người kiểm hiện tại:</span>
+            <span id="assignCurrentAuditor" class="text-purple-900 bg-purple-100 px-2 py-0.5 rounded-full">Chưa phân công</span>
+          </div>
+        </div>
+
+        <!-- Danh sách nhân sự phụ trách (Radio list) -->
+        <div>
+          <label class="block font-black text-gray-800 text-xs mb-2">Chọn nhân sự phân công kiểm tra:</label>
+          <div id="assignAuditorOptionsList" class="space-y-2">
+            <!-- Render động từ GSBH_ACCOUNTS -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="bg-gray-50 px-4 py-3 border-t border-gray-200 flex items-center justify-between gap-2">
+        <button type="button" onclick="CJAudit.closeAssignAuditorModal()" class="px-4 py-2 rounded-xl border border-gray-300 text-gray-700 font-bold hover:bg-gray-100 transition active:scale-95">
+          Hủy bỏ
+        </button>
+        <button type="button" onclick="CJAudit.saveAuditorAssignment()" id="btnSaveAssignment" class="px-5 py-2 rounded-xl bg-gradient-to-r from-blue-700 to-indigo-800 hover:from-blue-800 hover:to-indigo-900 text-white font-black shadow-md flex items-center gap-1.5 transition active:scale-95">
+          <span>💾 Xác Nhận Phân Bổ</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
   <!-- Toast notification banner -->
   <div id="appToast" class="fixed top-5 right-5 z-50 opacity-0 translate-y-[-20px] pointer-events-none transition-all duration-300"></div>
 
   <!-- ================= APPLICATION SCRIPTS ================= -->
-  <script src="js/data.js?v=16.0"></script>
-  <script src="js/auth.js?v=16.0"></script>
-  <script src="js/storage.js?v=16.0"></script>
-  <script src="js/watermark.js?v=16.0"></script>
-  <script src="js/cloud_sync.js?v=16.0"></script>
-  <script src="js/audit.js?v=16.0"></script>
-  <script src="js/dashboard.js?v=16.0"></script>
-  <script src="js/excel.js?v=16.0"></script>
-  <script src="js/app.js?v=16.0"></script>
+  <script src="js/data.js?v=17.0"></script>
+  <script src="js/auth.js?v=17.0"></script>
+  <script src="js/storage.js?v=17.0"></script>
+  <script src="js/watermark.js?v=17.0"></script>
+  <script src="js/cloud_sync.js?v=17.0"></script>
+  <script src="js/audit.js?v=17.0"></script>
+  <script src="js/dashboard.js?v=17.0"></script>
+  <script src="js/excel.js?v=17.0"></script>
+  <script src="js/app.js?v=17.0"></script>
 </body>
 </html>
