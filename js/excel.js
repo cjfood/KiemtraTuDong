@@ -771,6 +771,8 @@ const CJExcel = {
         "Tủ có hàng CJ?": a.hasCjGoods || "Chưa kiểm",
         "Đơn hàng CJ 30 ngày?": a.orders30d !== undefined ? a.orders30d : "",
         "Doanh số CJ 30 ngày (VND)": a.sales30d !== undefined ? a.sales30d : "",
+        "8. Thông tin điểm bán": a.storeInfoStatus || "Đúng thông tin KH",
+        "Chi tiết thông tin đúng": a.storeInfoDetail || "",
         "Loại hình điểm bán": a.storeType || s.channel || "",
         "Kinh doanh ngành hàng gì?": a.businessCategory || "",
         "Phù hợp nhóm CJ mục tiêu?": a.matchCjTarget || "",
