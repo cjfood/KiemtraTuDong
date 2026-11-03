@@ -13,12 +13,15 @@ const CJAudit = {
   },
   currentGPS: { lat: 10.801522, lng: 106.708215 },
   selectedSalesRep: "ALL",
+  selectedArea: "ALL",
+  selectedNpp: "ALL",
   displayLimit: 40,
 
   init() {
     this.requestGPS();
     this.bindEvents();
     this.populateSalesRepFilter();
+    this.populateAreaAndNppFilters();
     this.setStatusFilter("3t");
     if (this.gsbhMap) {
       this.renderGsbhMapPins();
@@ -758,6 +761,27 @@ const CJAudit = {
       stores = stores.filter(isUnassigned);
     } else if (this.statusFilter === "assigned") {
       stores = stores.filter(isAssigned);
+    }
+
+    // Filter by Area (Khu vực)
+    if (this.selectedArea && this.selectedArea !== "ALL") {
+      const aLower = this.selectedArea.toLowerCase().trim();
+      stores = stores.filter(s => {
+        const a = (s.area || "").toLowerCase().trim();
+        const r = (s.region || "").toLowerCase().trim();
+        const addr = (s.address || "").toLowerCase();
+        return a === aLower || r === aLower || addr.includes(aLower);
+      });
+    }
+
+    // Filter by NPP / Tuyến / GSBH
+    if (this.selectedNpp && this.selectedNpp !== "ALL") {
+      const nLower = this.selectedNpp.toLowerCase().trim();
+      stores = stores.filter(s => {
+        const gsbh = (s.gsbhName || "").toLowerCase().trim();
+        const route = (s.route || "").toLowerCase().trim();
+        return gsbh === nLower || route === nLower || route.includes(nLower);
+      });
     } else if (this.statusFilter === "active") {
       stores = stores.filter(s => s.isActive !== false);
     } else if (this.statusFilter === "inactive") {
@@ -798,6 +822,29 @@ const CJAudit = {
     this.currentFilteredStores = stores;
     const bulkFilteredCountEl = document.getElementById("bulkFilteredCount");
     if (bulkFilteredCountEl) bulkFilteredCountEl.textContent = stores.length;
+
+    // Cập nhật Thanh tác vụ nhanh: Chuyển toàn bộ điểm đang lọc cho 1 User
+    const quickAssignBanner = document.getElementById("quickAssignBanner");
+    const quickAssignCountEl = document.getElementById("quickAssignStoreCount");
+    const quickAssignDescEl = document.getElementById("quickAssignFilterDesc");
+
+    if (quickAssignBanner) {
+      if (isAdmin && stores.length > 0) {
+        quickAssignBanner.classList.remove("hidden");
+        if (quickAssignCountEl) quickAssignCountEl.textContent = stores.length;
+        if (quickAssignDescEl) {
+          const areaTxt = (this.selectedArea && this.selectedArea !== "ALL") ? `Khu vực: ${this.selectedArea}` : "Toàn quốc";
+          const nppTxt = (this.selectedNpp && this.selectedNpp !== "ALL") ? ` • NPP: ${this.selectedNpp}` : "";
+          const statusTxt = this.statusFilter === "unassigned" ? " • Chưa phân công" : 
+                            this.statusFilter === "assigned" ? " • Đã phân công" : 
+                            this.statusFilter === "3t" ? " • Tủ 3T ko mua" : 
+                            this.statusFilter === "1t" ? " • Tủ 1T ko mua" : "";
+          quickAssignDescEl.textContent = `${areaTxt}${nppTxt}${statusTxt}`;
+        }
+      } else {
+        quickAssignBanner.classList.add("hidden");
+      }
+    }
 
     // Refresh map pins if map view is currently open
     if (this.currentViewMode === "map" && this.gsbhMap) {
