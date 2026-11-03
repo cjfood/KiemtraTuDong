@@ -39,7 +39,9 @@ var HEADERS = [
   "6. Có Bán Hàng Đối Thủ",          // 19: S
   "Chi Tiết Hàng Đối Thủ",           // 20: T
   "7. Tiềm Năng Doanh Số / Tháng",   // 21: U
-  "8. Loại Hình Cửa Hàng",           // 22: V
+  "8. Thông Tin Điểm Bán",           // 22: V
+  "Chi Tiết Thông Tin Đúng",         // 23: W
+  "9. Loại Hình Cửa Hàng",           // 24: X
   "9. Ngành Hàng Kinh Doanh",        // 23: W
   "10. Phù Hợp Định Hướng CJ",       // 24: X
   "11. Vị Trí Đặt Tủ",               // 25: Y
