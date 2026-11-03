@@ -18,50 +18,47 @@ var SHEET_NAME = "DuLieuKiemTra";
 var FOLDER_NAME = "CJ_Market_Audit_Photos";
 
 var HEADERS = [
-  "Thời Gian Kiểm Tra",              // 1: A
-  "Mã Nhân Viên (User)",             // 2: B
-  "Tên Người Kiểm Tra",              // 3: C
-  "Mã Khách Hàng (Mã KH)",           // 4: D
-  "Tên Khách Hàng",                  // 5: E
-  "Kênh Bán Hàng",                   // 6: F
-  "Tuyến Bán Hàng",                  // 7: G
-  "Địa Chỉ Cửa Hàng",                // 8: H
-  "Số Điện Thoại",                   // 9: I
-  "NVBH Tuyến",                      // 10: J
-  "SĐT NVBH",                        // 11: K
-  "Mã Tủ / Barcode / Serial",        // 12: L
-  "Model Tủ Đông",                   // 13: M
-  "1. Tình Trạng Tủ",                // 14: N
-  "2. Tủ Cắm Điện 24/7",             // 15: O
-  "3. Tủ Có Hàng CJ",                // 16: P
-  "4. Đơn Hàng CJ 30 Ngày",          // 17: Q
-  "5. Doanh Số CJ 30 Ngày (VNĐ)",    // 18: R
-  "6. Có Bán Hàng Đối Thủ",          // 19: S
-  "Chi Tiết Hàng Đối Thủ",           // 20: T
-  "7. Tiềm Năng Doanh Số / Tháng",   // 21: U
-  "8. Thông Tin Điểm Bán",           // 22: V
-  "Chi Tiết Thông Tin Đúng",         // 23: W
-  "9. Loại Hình Cửa Hàng",           // 24: X
-  "9. Ngành Hàng Kinh Doanh",        // 23: W
-  "10. Phù Hợp Định Hướng CJ",       // 24: X
-  "11. Vị Trí Đặt Tủ",               // 25: Y
-  "12. Độ Nhận Diện Tủ",             // 26: Z
-  "13. Tuyến Có Xe Tải Giao",        // 27: AA
-  "14. Tần Suất Giao Của NPP / NVBH",// 28: AB
-  "15. Nguyên Nhân Không Lấy Hàng",  // 29: AC
-  "Chi Tiết Nguyên Nhân",            // 30: AD
-  "17. Đề Xuất Xử Lý",               // 31: AE
-  "18. PIC Hành Động",               // 32: AF
-  "19. Hạn Hoàn Thành (Deadline)",   // 33: AG
-  "20. Trạng Thái Xử Lý",            // 34: AH
-  "22. Kết Quả Sau Xử Lý",           // 35: AI
-  "23. Ngày Follow-Up",              // 36: AJ
-  "GPS Vĩ Độ (Lat)",                 // 37: AK
-  "GPS Kinh Độ (Lng)",               // 38: AL
-  "📸 Link Ảnh Kiểm Tra Tủ Đông",    // 39: AM
-  "📸 Link Ảnh Tổng Quan Cửa Hàng",  // 40: AN
-  "Drive ID (Tủ Đông)",              // 41: AO
-  "Drive ID (Tổng Quan)"             // 42: AP
+  "Thời Gian Kiểm Tra",                         // 1: A
+  "Mã Nhân Viên (User)",                        // 2: B
+  "Tên Người Kiểm Tra",                         // 3: C
+  "Mã Khách Hàng (Mã KH)",                      // 4: D
+  "Tên Khách Hàng",                             // 5: E
+  "Kênh Bán Hàng",                              // 6: F
+  "Tuyến Bán Hàng",                             // 7: G
+  "Địa Chỉ Cửa Hàng",                           // 8: H
+  "Số Điện Thoại",                              // 9: I
+  "NVBH Tuyến",                                 // 10: J
+  "SĐT NVBH",                                   // 11: K
+  "Mã QR POSM",                                 // 12: L
+  "Số Seri Tủ",                                 // 13: M
+  "Model Tủ Đông",                              // 14: N
+  "1. Tình Trạng Tủ",                           // 15: O
+  "2. Tủ Cắm Điện 24/7",                        // 16: P
+  "3. Tủ Có Hàng CJ",                           // 17: Q
+  "4. Đơn Hàng CJ 30 Ngày",                     // 18: R
+  "5. Doanh Số CJ 30 Ngày (VNĐ)",               // 19: S
+  "6. Có Bán Hàng Đối Thủ?",                    // 20: T
+  "Chi Tiết Đối Thủ",                           // 21: U
+  "7. Tiềm Năng Doanh Số / Tháng",              // 22: V
+  "8. Thông Tin Điểm Bán",                      // 23: W
+  "Chi Tiết Thông Tin Đúng",                    // 24: X
+  "9. Loại Hình Điểm Bán",                      // 25: Y
+  "10. Phù Hợp Nhóm CJ Mục Tiêu?",              // 26: Z
+  "11. Vị Trí Đặt Tủ",                          // 27: AA
+  "12. Tần Suất Giao Hàng của NPP / NVBH",      // 28: AB
+  "13. Nguyên Nhân Chính Không Lấy Hàng",       // 29: AC
+  "14. Nguyên Nhân Chi Tiết & Ý Kiến Điểm Bán", // 30: AD
+  "15. Đề Xuất Xử Lý",                          // 31: AE
+  "Chi Tiết Đề Xuất Xử Lý",                     // 32: AF
+  "16. Ngày Follow-Up (Tái Kiểm Tra)",          // 33: AG
+  "Trạng Thái Xử Lý",                           // 34: AH
+  "GPS Vĩ Độ (Lat)",                            // 35: AI
+  "GPS Kinh Độ (Lng)",                          // 36: AJ
+  "Địa Chỉ GPS Thực Địa",                       // 37: AK
+  "📸 Link Ảnh Tấm 1: Tủ Đông & Hàng CJ",       // 38: AL
+  "📸 Link Ảnh Tấm 2: Toàn Cảnh Điểm Bán",       // 39: AM
+  "Google Drive ID (Ảnh 1)",                    // 40: AN
+  "Google Drive ID (Ảnh 2)"                     // 41: AO
 ];
 
 function doGet(e) {
@@ -141,37 +138,35 @@ function doGet(e) {
           phone: String(row[8] || "").trim(),
           salesRep: String(row[9] || "").trim(),
           salesRepPhone: String(row[10] || "").trim(),
-          freezerBarcode: String(row[11] || "").trim(),
-          freezerModel: String(row[12] || "").trim(),
-          workingCondition: String(row[13] || "").trim(),
-          condition: String(row[13] || "").trim(),
-          powerStatus: String(row[14] || "").trim(),
-          hasCjGoods: String(row[15] || "").trim(),
-          orders30d: row[16] || 0,
-          sales30d: row[17] || 0,
-          hasCompetitor: String(row[18] || "").trim(),
-          competitorDetail: String(row[19] || "").trim(),
-          revenuePotential: String(row[20] || "").trim(),
-          storeType: String(row[21] || "").trim(),
-          businessCategory: String(row[22] || "").trim(),
-          matchCjTarget: String(row[23] || "").trim(),
-          freezerLocation: String(row[24] || "").trim(),
-          freezerVisibility: String(row[25] || "").trim(),
-          truckAccessible: String(row[26] || "").trim(),
+          qrCode: String(row[11] || "").trim(),
+          freezerBarcode: String(row[12] || "").trim(),
+          freezerModel: String(row[13] || "").trim(),
+          condition: String(row[14] || "").trim(),
+          workingCondition: String(row[14] || "").trim(),
+          powerStatus: String(row[15] || "").trim(),
+          hasCjGoods: String(row[16] || "").trim(),
+          orders30d: row[17] || 0,
+          sales30d: row[18] || 0,
+          hasCompetitor: String(row[19] || "").trim(),
+          competitorDetail: String(row[20] || "").trim(),
+          revenuePotential: String(row[21] || "").trim(),
+          storeInfoStatus: String(row[22] || "").trim(),
+          storeInfoDetail: String(row[23] || "").trim(),
+          storeType: String(row[24] || "").trim(),
+          matchCjTarget: String(row[25] || "").trim(),
+          freezerLocation: String(row[26] || "").trim(),
           deliveryFrequency: String(row[27] || "").trim(),
           rootCause: String(row[28] || "").trim(),
           rootCauseDetail: String(row[29] || "").trim(),
           actionProposal: String(row[30] || "").trim(),
-          actionPic: String(row[31] || "").trim(),
-          deadline: String(row[32] || "").trim(),
+          actionProposalDetail: String(row[31] || "").trim(),
+          followUpDate: String(row[32] || "").trim(),
           actionStatus: String(row[33] || "").trim(),
-          actionResult: String(row[34] || "").trim(),
-          followUpDate: String(row[35] || "").trim(),
-          latitude: row[36] || "",
-          longitude: row[37] || "",
-          photoPosmUrl: String(row[38] || "").trim(),
-          photoOverviewUrl: String(row[39] || "").trim()
-        });
+          latitude: row[34] || "",
+          longitude: row[35] || "",
+          gpsAddress: String(row[36] || "").trim(),
+          photoPosmUrl: String(row[37] || "").trim(),
+          photoOverviewUrl: String(row[38] || "").trim()        });
       }
       
       return ContentService.createTextOutput(JSON.stringify({
@@ -248,47 +243,46 @@ function doPost(e) {
     var timestamp = new Date();
     var rowData = [
       formatDate(timestamp),                                            // 1: Thời Gian Kiểm Tra
-      data.userCode || data.auditorUser || "",                          // 2: Mã NV Kiểm Tra
+      data.userCode || data.auditorUser || "",                          // 2: Mã Nhân Viên (User)
       data.userName || data.auditorName || "",                          // 3: Tên Người Kiểm Tra
-      data.customerCode || data.storeCode || data.storeId || "",        // 4: Mã Khách Hàng
+      data.customerCode || data.storeCode || data.storeId || "",        // 4: Mã Khách Hàng (Mã KH)
       data.customerName || data.storeName || "",                        // 5: Tên Khách Hàng
       data.channel || "GT",                                             // 6: Kênh Bán Hàng
       data.route || "",                                                 // 7: Tuyến Bán Hàng
-      data.address || "",                                               // 8: Địa Chỉ
+      data.address || "",                                               // 8: Địa Chỉ Cửa Hàng
       data.phone || "",                                                 // 9: Số Điện Thoại
       data.salesRep || "",                                              // 10: NVBH Tuyến
       data.salesRepPhone || "",                                         // 11: SĐT NVBH
-      data.freezerBarcode || data.barcode || data.freezerId || "",      // 12: Mã Tủ / Serial
-      data.freezerModel || data.model || "",                            // 13: Model Tủ
-      data.condition || data.workingCondition || "Bình thường",         // 14: 1. Tình Trạng Tủ
-      data.powerStatus || "",                                           // 15: 2. Tủ Cắm Điện 24/7
-      data.hasCjGoods || "",                                            // 16: 3. Tủ Có Hàng CJ
-      data.orders30d !== undefined ? data.orders30d : "",               // 17: 4. Đơn Hàng CJ 30 Ngày
-      data.sales30d !== undefined ? data.sales30d : "",                 // 18: 5. Doanh Số CJ 30 Ngày
-      data.hasCompetitor || "",                                         // 19: 6. Có Bán Hàng Đối Thủ
-      data.competitorDetail || "",                                      // 20: Chi Tiết Đối Thủ
-      data.revenuePotential || "",                                      // 21: 7. Tiềm Năng Doanh Số
-      data.storeType || "",                                             // 22: 8. Loại Hình Cửa Hàng
-      data.businessCategory || "",                                      // 23: 9. Ngành Hàng Kinh Doanh
-      data.matchCjTarget || "",                                         // 24: 10. Phù Hợp Định Hướng CJ
-      data.freezerLocation || "",                                       // 25: 11. Vị Trí Đặt Tủ
-      data.freezerVisibility || "",                                     // 26: 12. Độ Nhận Diện Tủ
-      data.truckAccessible || "",                                       // 27: 13. Tuyến Có Xe Tải Giao
-      data.deliveryFrequency || "",                                     // 28: 14. Tần Suất Giao Của NPP / NVBH
-      data.rootCause || "",                                             // 29: 15. Nguyên Nhân Không Lấy Hàng
-      data.rootCauseDetail || "",                                       // 30: Chi Tiết Nguyên Nhân
-      data.actionProposal || "",                                        // 31: 17. Đề Xuất Xử Lý
-      data.actionPic || "",                                             // 32: 18. PIC Hành Động
-      data.deadline || "",                                              // 33: 19. Hạn Hoàn Thành
-      data.actionStatus || "Chờ xử lý",                                 // 34: 20. Trạng Thái Xử Lý
-      data.actionResult || "",                                          // 35: 22. Kết Quả Sau Xử Lý
-      data.followUpDate || "",                                          // 36: 23. Ngày Follow-Up
-      data.latitude || (data.photoMetadata ? data.photoMetadata.lat : "") || "",  // 37: Vĩ Độ
-      data.longitude || (data.photoMetadata ? data.photoMetadata.lng : "") || "", // 38: Kinh Độ
-      photoPosmUrl || "Không có ảnh",                                   // 39: Link Ảnh Tủ Đông
-      photoOverviewUrl || "Không có ảnh",                               // 40: Link Ảnh Tổng Quan
-      fileIdPosm || "",                                                 // 41: Drive ID Tủ Đông
-      fileIdOverview || ""                                              // 42: Drive ID Tổng Quan
+      data.qrCode || "",                                                // 12: Mã QR POSM
+      data.freezerBarcode || data.barcode || data.freezerId || "",      // 13: Số Seri Tủ
+      data.freezerModel || data.model || "",                            // 14: Model Tủ Đông
+      data.condition || data.workingCondition || "Bình thường",         // 15: 1. Tình Trạng Tủ
+      data.powerStatus || "",                                           // 16: 2. Tủ Cắm Điện 24/7
+      data.hasCjGoods || "",                                            // 17: 3. Tủ Có Hàng CJ
+      data.orders30d !== undefined ? data.orders30d : "",               // 18: 4. Đơn Hàng CJ 30 Ngày
+      data.sales30d !== undefined ? data.sales30d : "",                 // 19: 5. Doanh Số CJ 30 Ngày (VNĐ)
+      data.hasCompetitor || "",                                         // 20: 6. Có Bán Hàng Đối Thủ?
+      data.competitorDetail || "",                                      // 21: Chi Tiết Đối Thủ
+      data.revenuePotential || "",                                      // 22: 7. Tiềm Năng Doanh Số / Tháng
+      data.storeInfoStatus || "Đúng thông tin KH",                      // 23: 8. Thông Tin Điểm Bán
+      data.storeInfoDetail || "",                                       // 24: Chi Tiết Thông Tin Đúng
+      data.storeType || "",                                             // 25: 9. Loại Hình Điểm Bán
+      data.matchCjTarget || "",                                         // 26: 10. Phù Hợp Nhóm CJ Mục Tiêu?
+      data.freezerLocation || "",                                       // 27: 11. Vị Trí Đặt Tủ
+      data.deliveryFrequency || "",                                     // 28: 12. Tần Suất Giao Hàng của NPP / NVBH
+      data.rootCause || "",                                             // 29: 13. Nguyên Nhân Chính Không Lấy Hàng
+      data.rootCauseDetail || "",                                       // 30: 14. Nguyên Nhân Chi Tiết & Ý Kiến Điểm Bán
+      data.actionProposal || "",                                        // 31: 15. Đề Xuất Xử Lý
+      data.actionProposalDetail || "",                                  // 32: Chi Tiết Đề Xuất Xử Lý
+      data.followUpDate || "",                                          // 33: 16. Ngày Follow-Up (Tái Kiểm Tra)
+      data.actionStatus || "Chờ xử lý",                                 // 34: Trạng Thái Xử Lý
+      data.latitude || (data.photoMetadata ? data.photoMetadata.lat : "") || "",  // 35: GPS Vĩ Độ (Lat)
+      data.longitude || (data.photoMetadata ? data.photoMetadata.lng : "") || "", // 36: GPS Kinh Độ (Lng)
+      data.gpsAddress || (data.photoMetadata ? data.photoMetadata.address : "") || data.address || "", // 37: Địa Chỉ GPS Thực Địa
+      photoPosmUrl || "Không có ảnh",                                   // 38: 📸 Link Ảnh Tấm 1: Tủ Đông & Hàng CJ
+      photoOverviewUrl || "Không có ảnh",                               // 39: 📸 Link Ảnh Tấm 2: Toàn Cảnh Điểm Bán
+      fileIdPosm || "",                                                 // 40: Google Drive ID (Ảnh 1)
+      fileIdOverview || ""                                              // 41: Google Drive ID (Ảnh 2)
     ];
 
     sheet.appendRow(rowData);
@@ -300,7 +294,7 @@ function doPost(e) {
         .setText("🔗 Xem Ảnh Tủ Đông (GPS)")
         .setLinkUrl(photoPosmUrl)
         .build();
-      sheet.getRange(lastRow, 39).setRichTextValue(richTextPosm);
+      sheet.getRange(lastRow, 38).setRichTextValue(richTextPosm);
     }
 
     if (photoOverviewUrl && photoOverviewUrl.indexOf("http") === 0) {
@@ -359,18 +353,16 @@ function initSheetHeader(sheet) {
 
 function ensureComprehensiveHeaders(sheet) {
   try {
-    var curCols = sheet.getLastColumn();
-    if (curCols < HEADERS.length) {
-      sheet.getRange(1, 1, 1, HEADERS.length).setValues([HEADERS]);
-      var headerRange = sheet.getRange(1, 1, 1, HEADERS.length);
-      headerRange.setBackground("#c62828")
-                 .setFontColor("#ffffff")
-                 .setFontWeight("bold")
-                 .setHorizontalAlignment("center")
-                 .setVerticalAlignment("middle");
-      sheet.setRowHeight(1, 38);
-      sheet.setFrozenRows(1);
-    }
+    // Luôn ghi đè cập nhật dòng tiêu đề 1 khớp chính xác 100% với form khảo sát mới nhất của App
+    sheet.getRange(1, 1, 1, HEADERS.length).setValues([HEADERS]);
+    var headerRange = sheet.getRange(1, 1, 1, HEADERS.length);
+    headerRange.setBackground("#c62828")
+               .setFontColor("#ffffff")
+               .setFontWeight("bold")
+               .setHorizontalAlignment("center")
+               .setVerticalAlignment("middle");
+    sheet.setRowHeight(1, 38);
+    sheet.setFrozenRows(1);
   } catch (e) {
     console.warn("Lỗi đồng bộ headers:", e);
   }
