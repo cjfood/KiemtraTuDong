@@ -693,7 +693,7 @@ const CJAudit = {
       else pAssignedBtn.classList.add("hidden");
     }
 
-    const rawStores = filteredStores || CJStorage.getStoresForCurrentGSBH(this.selectedSalesRep);
+    const rawStores = filteredStores || this.getAccessibleStores();
 
     const is1T = (s) => {
       const st = String(s.assetStatus || "").toLowerCase().trim();
@@ -3128,36 +3128,50 @@ const CJAudit = {
       return;
     }
 
-    const auditorUser = selectedRadio.value;
-    const auditorName = selectedRadio.dataset.name || "";
+    const auditorUser = (selectedRadio.value || "").trim();
+    const auditorName = (selectedRadio.dataset.name || "").trim();
 
-    if (this.assignMode === "single") {
-      const storeId = this.assignTargetStoreId;
-      if (!storeId) return;
+    try {
+      if (this.assignMode === "single") {
+        const storeId = this.assignTargetStoreId;
+        if (!storeId) {
+          this.showToast("⚠️ Không tìm thấy điểm bán cần phân công!", "warning");
+          return;
+        }
 
-      const res = CJStorage.assignStoreAuditor(storeId, auditorUser, auditorName);
-      if (res && res.success) {
-        const msg = auditorUser 
-          ? `✓ Đã phân công điểm bán cho ${auditorName || auditorUser}!` 
-          : `✓ Đã chuyển điểm bán về Chưa phân công!`;
-        this.showToast(msg, "success");
+        const res = CJStorage.assignStoreAuditor(storeId, auditorUser, auditorName);
+        if (res && res.success) {
+          const msg = auditorUser 
+            ? `✓ Đã phân công điểm bán cho ${auditorName || auditorUser}!` 
+            : `✓ Đã chuyển điểm bán về Chưa phân công!`;
+          this.showToast(msg, "success");
+        }
+      } else {
+        // Bulk mode (either via checkbox selection or via quickAssignFilteredStoresToAuditor)
+        const storeIds = Array.from(this.bulkSelectedIds || []);
+        if (storeIds.length === 0) {
+          this.showToast("⚠️ Không có điểm bán nào được chọn để phân công!", "warning");
+          return;
+        }
+
+        const res = CJStorage.bulkAssignAuditor(storeIds, auditorUser, auditorName);
+        if (res && res.success) {
+          const msg = auditorUser 
+            ? `✓ Đã phân công thành công ${storeIds.length} điểm bán cho ${auditorName || auditorUser}!` 
+            : `✓ Đã chuyển ${storeIds.length} điểm bán về Chưa phân công!`;
+          this.showToast(msg, "success");
+        }
+        if (this.bulkSelectedIds) this.bulkSelectedIds.clear();
+        if (this.isBulkMode) this.toggleBulkMode(false);
       }
-    } else if (this.assignMode === "bulk") {
-      const storeIds = Array.from(this.bulkSelectedIds);
-      if (storeIds.length === 0) return;
-
-      const res = CJStorage.bulkAssignAuditor(storeIds, auditorUser, auditorName);
-      if (res && res.success) {
-        const msg = auditorUser 
-          ? `✓ Đã phân công thành công ${storeIds.length} điểm bán cho ${auditorName || auditorUser}!` 
-          : `✓ Đã chuyển ${storeIds.length} điểm bán về Chưa phân công!`;
-        this.showToast(msg, "success");
-      }
-      this.bulkSelectedIds.clear();
-      this.toggleBulkMode(false);
+    } catch (err) {
+      console.error("[CJAudit] Error in saveAuditorAssignment:", err);
+      this.showToast("❌ Lỗi khi lưu phân công: " + (err.message || err.toString()), "danger");
     }
 
     this.closeAssignAuditorModal();
+    // Refresh accessible stores & territory filters
+    this.populateTerritoryFilters();
     this.renderStoreList();
   },
 
@@ -3166,18 +3180,33 @@ const CJAudit = {
   // AREA, GSBH & NPP DYNAMIC CASCADE FILTERS
   // ==========================================
 
+  getAccessibleStores() {
+    const currentUser = (typeof CJAuth !== "undefined" && CJAuth.getCurrentUser) ? CJAuth.getCurrentUser() : null;
+    if (!currentUser) return [];
+
+    if (CJAuth.isAdmin()) {
+      const controlled = (typeof CJApp !== "undefined" && CJApp.adminControlledUser) ? CJApp.adminControlledUser : "ALL";
+      if (controlled !== "ALL") {
+        return CJStorage.getStoresForUser(controlled);
+      }
+      return CJStorage.getAllStores();
+    }
+
+    // User is NOT admin (auditor, GSBH, sales rep): ONLY return stores assigned to this user!
+    return CJStorage.getStoresForUser(currentUser.username);
+  },
+
   populateTerritoryFilters() {
     const areaEl = document.getElementById("filterAreaSelect");
     const gsbhEl = document.getElementById("filterGsbhSelect");
     const nppEl = document.getElementById("filterNppSelect");
     if (!areaEl || !gsbhEl || !nppEl) return;
 
-    const allStores = (typeof CJStorage !== "undefined" && CJStorage.getAllStores) ? CJStorage.getAllStores() : [];
-    if (!allStores || allStores.length === 0) return;
+    const accessibleStores = this.getAccessibleStores();
 
     // 1. Populate Areas
     const areaCounts = new Map();
-    allStores.forEach(s => {
+    accessibleStores.forEach(s => {
       const a = (s.area || "").trim();
       if (a) {
         areaCounts.set(a, (areaCounts.get(a) || 0) + 1);
@@ -3185,24 +3214,27 @@ const CJAudit = {
     });
 
     const sortedAreas = Array.from(areaCounts.keys()).sort();
-    let areaHtml = `<option value="ALL">📍 Tất cả Khu Vực (${allStores.length})</option>`;
+    let areaHtml = `<option value="ALL">📍 Tất cả Khu Vực (${accessibleStores.length})</option>`;
     sortedAreas.forEach(a => {
       const c = areaCounts.get(a);
       areaHtml += `<option value="${a}" ${this.selectedArea === a ? 'selected' : ''}>📍 ${a} (${c})</option>`;
     });
     areaEl.innerHTML = areaHtml;
+    if (this.selectedArea && this.selectedArea !== "ALL" && !areaCounts.has(this.selectedArea)) {
+      this.selectedArea = "ALL";
+    }
     areaEl.value = this.selectedArea || "ALL";
 
     // 2. Cascade populate GSBH & NPP
-    this.populateGsbhAndNppOnly(allStores);
+    this.populateGsbhAndNppOnly(accessibleStores);
   },
 
-  populateGsbhAndNppOnly(allStores = null) {
+  populateGsbhAndNppOnly(storesList = null) {
     const gsbhEl = document.getElementById("filterGsbhSelect");
     const nppEl = document.getElementById("filterNppSelect");
     if (!gsbhEl || !nppEl) return;
 
-    const stores = allStores || ((typeof CJStorage !== "undefined" && CJStorage.getAllStores) ? CJStorage.getAllStores() : []);
+    const stores = storesList || this.getAccessibleStores();
 
     // Filter stores by selectedArea
     let areaStores = stores;
@@ -3347,7 +3379,6 @@ const CJAudit = {
     this.renderAuditorOptionsList("");
     modal.classList.remove("hidden");
   },
-
 };
 
 if (typeof window !== "undefined") {
