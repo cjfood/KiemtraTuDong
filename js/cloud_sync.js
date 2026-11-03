@@ -152,6 +152,8 @@ const CJCloudSync = (function () {
             hasCompetitor: auditData.hasCompetitor || '',
             competitorDetail: auditData.competitorDetail || '',
             revenuePotential: auditData.revenuePotential || '',
+            storeInfoStatus: auditData.storeInfoStatus || 'Đúng thông tin KH',
+            storeInfoDetail: auditData.storeInfoDetail || '',
             storeType: auditData.storeType || auditData.channel || 'GT',
             businessCategory: auditData.businessCategory || '',
             matchCjTarget: auditData.matchCjTarget || '',
