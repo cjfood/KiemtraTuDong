@@ -28,7 +28,7 @@ const CJStorage = {
   },
 
   init(force = false) {
-    const DATA_VERSION = "2026.11.03_MASTER_V11";
+    const DATA_VERSION = "2026.11.03_MASTER_V12";
     const currentVer = localStorage.getItem("cj_market_audit_data_ver");
     const dataTimestamp = (typeof CJ_DATA_TIMESTAMP !== "undefined") ? CJ_DATA_TIMESTAMP : "";
     const lastSyncTs = localStorage.getItem("cj_market_audit_sync_timestamp");
@@ -37,10 +37,11 @@ const CJStorage = {
 
     if (needInit) {
       this._storesCache = null;
-      // Clean up legacy bulky stores from localStorage to prevent quota errors & stale data
+      // Clean up legacy bulky stores & local overrides so fresh Master Excel assignments take full effect
       try {
         localStorage.removeItem(this.KEYS.STORES);
         localStorage.removeItem(this.KEYS.FREEZERS);
+        localStorage.removeItem(this.KEYS.CUSTOM_ASSIGNMENTS);
       } catch (e) {}
 
       this.safeSetItem(this.KEYS.USERS, JSON.stringify(GSBH_ACCOUNTS));
