@@ -2151,6 +2151,15 @@ const CJAudit = {
       this.onCompetitorChange(document.getElementById("inAuditHasCompetitor").value);
 
       document.getElementById("inAuditRevenuePotential").value = existing?.revenuePotential || "1M ~ 3M";
+      
+      const storeInfoStatus = existing?.storeInfoStatus || "Đúng thông tin KH";
+      const storeInfoDetail = existing?.storeInfoDetail || "";
+      const stInfoEl = document.getElementById("inAuditStoreInfoStatus");
+      if (stInfoEl) stInfoEl.value = storeInfoStatus;
+      const stInfoDetailEl = document.getElementById("inAuditStoreInfoDetail");
+      if (stInfoDetailEl) stInfoDetailEl.value = storeInfoDetail;
+      this.onStoreInfoStatusChange(storeInfoStatus);
+
       document.getElementById("inAuditStoreType").value = existing?.storeType || store.channel || "Tiệm tạp hóa truyền thống";
       if (document.getElementById("inAuditBusinessCategory")) {
         document.getElementById("inAuditBusinessCategory").value = existing?.businessCategory || "Thực phẩm đông lạnh, Tạp hóa";
@@ -2251,6 +2260,26 @@ const CJAudit = {
     if (modal) {
       modal.classList.add("hidden");
       modal.style.display = "none";
+    }
+  },
+
+  onStoreInfoStatusChange(val) {
+    const box = document.getElementById("inAuditStoreInfoDetailBox");
+    const input = document.getElementById("inAuditStoreInfoDetail");
+    if (box) {
+      if (val === "Sai thông tin") {
+        box.classList.remove("hidden");
+        if (input) {
+          input.required = true;
+          input.focus();
+        }
+      } else {
+        box.classList.add("hidden");
+        if (input) {
+          input.required = false;
+          input.value = "";
+        }
+      }
     }
   },
 
@@ -2608,6 +2637,15 @@ Vui lòng bấm nút [Chụp hình] để chụp đủ tối thiểu 2 tấm tr�
     const hasCompetitor = document.getElementById("inAuditHasCompetitor").value;
     const competitorDetail = document.getElementById("inAuditCompetitorDetail").value;
     const revenuePotential = document.getElementById("inAuditRevenuePotential").value;
+    const storeInfoStatus = document.getElementById("inAuditStoreInfoStatus")?.value || "Đúng thông tin KH";
+    const storeInfoDetail = document.getElementById("inAuditStoreInfoDetail")?.value?.trim() || "";
+
+    if (storeInfoStatus === "Sai thông tin" && !storeInfoDetail) {
+      alert("Vui lòng nhập chi tiết thông tin đúng của điểm bán (Tên, SĐT, Địa chỉ...)!");
+      document.getElementById("inAuditStoreInfoDetail")?.focus();
+      return;
+    }
+
     const storeType = document.getElementById("inAuditStoreType").value;
     const businessCategory = document.getElementById("inAuditBusinessCategory")?.value || "Thực phẩm đông lạnh, Tạp hóa";
     const matchCjTarget = document.getElementById("inAuditMatchCjTarget").value;
@@ -2657,6 +2695,8 @@ Vui lòng bấm nút [Chụp hình] để chụp đủ tối thiểu 2 tấm tr�
       hasCompetitor,
       competitorDetail,
       revenuePotential,
+      storeInfoStatus,
+      storeInfoDetail,
       storeType,
       businessCategory,
       matchCjTarget,
