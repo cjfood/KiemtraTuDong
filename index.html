@@ -3074,7 +3074,7 @@
       </div>
 
       <!-- Audit Form Accordion / Step Blocks (23 Tiêu Chí) -->
-      <form id="formInactiveAudit" onsubmit="event.preventDefault(); CJAudit.submitInactiveAudit();" class="space-y-4 text-xs">
+      <form id="formInactiveAudit" novalidate onsubmit="event.preventDefault(); CJAudit.submitInactiveAudit(); return false;" class="space-y-4 text-xs">
 
         <!-- ================= NHÓM 1: VẬN HÀNH TỦ POSM ================= -->
         <div class="bg-white border border-gray-200 rounded-2xl p-3.5 sm:p-4 space-y-3 shadow-sm">
@@ -3350,7 +3350,7 @@
           <button type="button" onclick="CJAudit.closeInactiveAuditModal()" class="px-4 py-2.5 rounded-xl border border-gray-300 font-bold text-gray-700 hover:bg-gray-100 transition active:scale-95">
             Hủy bỏ
           </button>
-          <button type="submit" class="bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white font-black px-6 py-2.5 rounded-xl shadow-lg flex items-center gap-2 transition active:scale-95 text-xs sm:text-sm">
+          <button type="button" id="btnSaveInactiveAudit" onclick="CJAudit.submitInactiveAudit()" class="bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white font-black px-6 py-2.5 rounded-xl shadow-lg flex items-center gap-2 transition active:scale-95 text-xs sm:text-sm cursor-pointer">
             <span>💾</span>
             <span>LƯU PHIẾU KIỂM TRA (SAVE AUDIT)</span>
           </button>
@@ -3365,14 +3365,14 @@
   <div id="appToast" class="fixed top-5 right-5 z-50 opacity-0 translate-y-[-20px] pointer-events-none transition-all duration-300"></div>
 
   <!-- ================= APPLICATION SCRIPTS ================= -->
-  <script src="js/data.js?v=13.0"></script>
-  <script src="js/auth.js?v=13.0"></script>
-  <script src="js/storage.js?v=13.0"></script>
-  <script src="js/watermark.js?v=13.0"></script>
-  <script src="js/cloud_sync.js?v=13.0"></script>
-  <script src="js/audit.js?v=13.0"></script>
-  <script src="js/dashboard.js?v=13.0"></script>
-  <script src="js/excel.js?v=13.0"></script>
-  <script src="js/app.js?v=13.0"></script>
+  <script src="js/data.js?v=14.0"></script>
+  <script src="js/auth.js?v=14.0"></script>
+  <script src="js/storage.js?v=14.0"></script>
+  <script src="js/watermark.js?v=14.0"></script>
+  <script src="js/cloud_sync.js?v=14.0"></script>
+  <script src="js/audit.js?v=14.0"></script>
+  <script src="js/dashboard.js?v=14.0"></script>
+  <script src="js/excel.js?v=14.0"></script>
+  <script src="js/app.js?v=14.0"></script>
 </body>
 </html>
