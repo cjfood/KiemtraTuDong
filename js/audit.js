@@ -14,6 +14,7 @@ const CJAudit = {
   currentGPS: { lat: 10.801522, lng: 106.708215 },
   selectedSalesRep: "ALL",
   selectedArea: "ALL",
+  selectedGsbh: "ALL",
   selectedNpp: "ALL",
   displayLimit: 40,
 
@@ -21,7 +22,7 @@ const CJAudit = {
     this.requestGPS();
     this.bindEvents();
     this.populateSalesRepFilter();
-    this.populateAreaAndNppFilters();
+    this.populateTerritoryFilters();
     this.setStatusFilter("3t");
     if (this.gsbhMap) {
       this.renderGsbhMapPins();
@@ -702,17 +703,46 @@ const CJAudit = {
       const st = String(s.assetStatus || "").toLowerCase().trim();
       return st === "3t ko mua" || st === "3t" || st.includes("3t");
     };
-
     const isUnassigned = (s) => !s.auditorUser || String(s.auditorUser).trim() === "";
     const isAssigned = (s) => Boolean(s.auditorUser && String(s.auditorUser).trim() !== "");
 
-    const allCount = rawStores.length;
-    const count1T = rawStores.filter(is1T).length;
-    const count3T = rawStores.filter(is3T).length;
-    const countUnassigned = rawStores.filter(isUnassigned).length;
-    const countAssigned = rawStores.filter(isAssigned).length;
-    const activeCount = rawStores.filter(s => s.isActive !== false).length;
-    const inactiveCount = rawStores.filter(s => s.isActive === false).length;
+    // 1. ÁP DỤNG BỘ LỌC ĐỊA BÀN: KHU VỰC -> GSBH -> NPP
+    let stores = rawStores;
+
+    if (this.selectedArea && this.selectedArea !== "ALL") {
+      const aLower = this.selectedArea.toLowerCase().trim();
+      stores = stores.filter(s => {
+        const a = (s.area || "").toLowerCase().trim();
+        const r = (s.region || "").toLowerCase().trim();
+        return a === aLower || r === aLower;
+      });
+    }
+
+    if (this.selectedGsbh && this.selectedGsbh !== "ALL") {
+      const gLower = this.selectedGsbh.toLowerCase().trim();
+      stores = stores.filter(s => {
+        const g = (s.gsbhName || s.gsbhUsername || "").toLowerCase().trim();
+        return g === gLower || g.includes(gLower);
+      });
+    }
+
+    if (this.selectedNpp && this.selectedNpp !== "ALL") {
+      const nLower = this.selectedNpp.toLowerCase().trim();
+      stores = stores.filter(s => {
+        const npp = (s.nppName || "").toLowerCase().trim();
+        const code = (s.nppCode || "").toLowerCase().trim();
+        return npp === nLower || npp.includes(nLower) || code === nLower;
+      });
+    }
+
+    // 2. CẬP NHẬT SỐ LƯỢNG TRÊN CÁC NÚT TRẠNG THÁI (Đồng bộ theo khu vực/GSBH/NPP đang chọn)
+    const countTerritoryAll = stores.length;
+    const countTerritory1T = stores.filter(is1T).length;
+    const countTerritory3T = stores.filter(is3T).length;
+    const countTerritoryUnassigned = stores.filter(isUnassigned).length;
+    const countTerritoryAssigned = stores.filter(isAssigned).length;
+    const activeCount = stores.filter(s => s.isActive !== false).length;
+    const inactiveCount = stores.filter(s => s.isActive === false).length;
 
     const pAll = document.getElementById("pillCountAll");
     const p1T = document.getElementById("pillCount1T");
@@ -721,20 +751,19 @@ const CJAudit = {
     const pAssigned = document.getElementById("pillCountAssigned");
     const pActive = document.getElementById("pillCountActive");
     const pInactive = document.getElementById("pillCountInactive");
-
-    if (pUnassigned) pUnassigned.textContent = countUnassigned;
-    if (pAssigned) pAssigned.textContent = countAssigned;
     const bannerBadge = document.getElementById("customerBannerBadge");
     const assignedBadge = document.getElementById("assignedStoreCountBadge");
 
-    const uniqueStoresCount = new Set(rawStores.map(s => s.storeCode || s.id)).size;
-    if (pAll) pAll.textContent = allCount;
-    if (p1T) p1T.textContent = count1T;
-    if (p3T) p3T.textContent = count3T;
+    const uniqueStoresCount = new Set(stores.map(s => s.storeCode || s.id)).size;
+    if (pAll) pAll.textContent = countTerritoryAll;
+    if (p1T) p1T.textContent = countTerritory1T;
+    if (p3T) p3T.textContent = countTerritory3T;
+    if (pUnassigned) pUnassigned.textContent = countTerritoryUnassigned;
+    if (pAssigned) pAssigned.textContent = countTerritoryAssigned;
     if (pActive) pActive.textContent = activeCount;
     if (pInactive) pInactive.textContent = inactiveCount;
-    if (bannerBadge) bannerBadge.textContent = `GT: ${allCount} Tủ (${uniqueStoresCount} KH)`;
-    if (assignedBadge) assignedBadge.textContent = `${allCount} tủ đông (${uniqueStoresCount} KH)`;
+    if (bannerBadge) bannerBadge.textContent = `GT: ${countTerritoryAll} Tủ (${uniqueStoresCount} KH)`;
+    if (assignedBadge) assignedBadge.textContent = `${countTerritoryAll} tủ đông (${uniqueStoresCount} KH)`;
 
     const gsbhTitleEl = document.getElementById("currentGsbhTitle");
     if (gsbhTitleEl) {
@@ -752,7 +781,7 @@ const CJAudit = {
 
     this.updateAuditorWidget();
 
-    let stores = rawStores;
+    // 3. ÁP DỤNG BỘ LỌC TRẠNG THÁI (Nếu chọn 1t, 3t, unassigned, assigned, ...)
     if (this.statusFilter === "1t") {
       stores = stores.filter(is1T);
     } else if (this.statusFilter === "3t") {
@@ -761,27 +790,6 @@ const CJAudit = {
       stores = stores.filter(isUnassigned);
     } else if (this.statusFilter === "assigned") {
       stores = stores.filter(isAssigned);
-    }
-
-    // Filter by Area (Khu vực)
-    if (this.selectedArea && this.selectedArea !== "ALL") {
-      const aLower = this.selectedArea.toLowerCase().trim();
-      stores = stores.filter(s => {
-        const a = (s.area || "").toLowerCase().trim();
-        const r = (s.region || "").toLowerCase().trim();
-        const addr = (s.address || "").toLowerCase();
-        return a === aLower || r === aLower || addr.includes(aLower);
-      });
-    }
-
-    // Filter by NPP / Tuyến / GSBH
-    if (this.selectedNpp && this.selectedNpp !== "ALL") {
-      const nLower = this.selectedNpp.toLowerCase().trim();
-      stores = stores.filter(s => {
-        const gsbh = (s.gsbhName || "").toLowerCase().trim();
-        const route = (s.route || "").toLowerCase().trim();
-        return gsbh === nLower || route === nLower || route.includes(nLower);
-      });
     } else if (this.statusFilter === "active") {
       stores = stores.filter(s => s.isActive !== false);
     } else if (this.statusFilter === "inactive") {
@@ -799,12 +807,16 @@ const CJAudit = {
       });
     }
 
+    // 4. ÁP DỤNG TÌM KIẾM TỪ KHÓA
     const q = (this.searchQuery || "").toLowerCase().trim();
     if (q) {
       stores = stores.filter(s =>
         (s.name && s.name.toLowerCase().includes(q)) ||
         (s.id && s.id.toLowerCase().includes(q)) ||
         (s.storeCode && s.storeCode.toLowerCase().includes(q)) ||
+        (s.nppName && s.nppName.toLowerCase().includes(q)) ||
+        (s.gsbhName && s.gsbhName.toLowerCase().includes(q)) ||
+        (s.area && s.area.toLowerCase().includes(q)) ||
         (s.qrCode && s.qrCode.toLowerCase().includes(q)) ||
         (s.serialNumber && s.serialNumber.toLowerCase().includes(q)) ||
         (s.barcode && s.barcode.toLowerCase().includes(q)) ||
@@ -3147,6 +3159,193 @@ const CJAudit = {
 
     this.closeAssignAuditorModal();
     this.renderStoreList();
+  },
+
+
+  // ==========================================
+  // AREA, GSBH & NPP DYNAMIC CASCADE FILTERS
+  // ==========================================
+
+  populateTerritoryFilters() {
+    const areaEl = document.getElementById("filterAreaSelect");
+    const gsbhEl = document.getElementById("filterGsbhSelect");
+    const nppEl = document.getElementById("filterNppSelect");
+    if (!areaEl || !gsbhEl || !nppEl) return;
+
+    const allStores = (typeof CJStorage !== "undefined" && CJStorage.getAllStores) ? CJStorage.getAllStores() : [];
+    if (!allStores || allStores.length === 0) return;
+
+    // 1. Populate Areas
+    const areaCounts = new Map();
+    allStores.forEach(s => {
+      const a = (s.area || "").trim();
+      if (a) {
+        areaCounts.set(a, (areaCounts.get(a) || 0) + 1);
+      }
+    });
+
+    const sortedAreas = Array.from(areaCounts.keys()).sort();
+    let areaHtml = `<option value="ALL">📍 Tất cả Khu Vực (${allStores.length})</option>`;
+    sortedAreas.forEach(a => {
+      const c = areaCounts.get(a);
+      areaHtml += `<option value="${a}" ${this.selectedArea === a ? 'selected' : ''}>📍 ${a} (${c})</option>`;
+    });
+    areaEl.innerHTML = areaHtml;
+    areaEl.value = this.selectedArea || "ALL";
+
+    // 2. Cascade populate GSBH & NPP
+    this.populateGsbhAndNppOnly(allStores);
+  },
+
+  populateGsbhAndNppOnly(allStores = null) {
+    const gsbhEl = document.getElementById("filterGsbhSelect");
+    const nppEl = document.getElementById("filterNppSelect");
+    if (!gsbhEl || !nppEl) return;
+
+    const stores = allStores || ((typeof CJStorage !== "undefined" && CJStorage.getAllStores) ? CJStorage.getAllStores() : []);
+
+    // Filter stores by selectedArea
+    let areaStores = stores;
+    if (this.selectedArea && this.selectedArea !== "ALL") {
+      const aLower = this.selectedArea.toLowerCase().trim();
+      areaStores = stores.filter(s => {
+        const a = (s.area || "").toLowerCase().trim();
+        const r = (s.region || "").toLowerCase().trim();
+        return a === aLower || r === aLower;
+      });
+    }
+
+    // Populate GSBH
+    const gsbhCounts = new Map();
+    areaStores.forEach(s => {
+      const g = (s.gsbhName || "").trim();
+      if (g) {
+        gsbhCounts.set(g, (gsbhCounts.get(g) || 0) + 1);
+      }
+    });
+
+    const sortedGsbhs = Array.from(gsbhCounts.entries()).sort((a, b) => b[1] - a[1]);
+    let gsbhHtml = `<option value="ALL">👮‍♂️ Tất cả GSBH (${sortedGsbhs.length})</option>`;
+    sortedGsbhs.forEach(([g, count]) => {
+      gsbhHtml += `<option value="${g}" ${this.selectedGsbh === g ? 'selected' : ''}>${g} (${count})</option>`;
+    });
+    gsbhEl.innerHTML = gsbhHtml;
+    if (this.selectedGsbh && this.selectedGsbh !== "ALL" && !gsbhCounts.has(this.selectedGsbh)) {
+      this.selectedGsbh = "ALL";
+    }
+    gsbhEl.value = this.selectedGsbh || "ALL";
+
+    // Populate NPP based on Area AND GSBH
+    let nppStores = areaStores;
+    if (this.selectedGsbh && this.selectedGsbh !== "ALL") {
+      const gLower = this.selectedGsbh.toLowerCase().trim();
+      nppStores = areaStores.filter(s => {
+        const g = (s.gsbhName || s.gsbhUsername || "").toLowerCase().trim();
+        return g === gLower || g.includes(gLower);
+      });
+    }
+
+    const nppCounts = new Map();
+    nppStores.forEach(s => {
+      const npp = (s.nppName || s.route || "").trim();
+      if (npp) {
+        nppCounts.set(npp, (nppCounts.get(npp) || 0) + 1);
+      }
+    });
+
+    const sortedNpps = Array.from(nppCounts.entries()).sort((a, b) => b[1] - a[1]);
+    let nppHtml = `<option value="ALL">🏢 Tất cả NPP (${sortedNpps.length})</option>`;
+    sortedNpps.forEach(([npp, count]) => {
+      nppHtml += `<option value="${npp}" ${this.selectedNpp === npp ? 'selected' : ''}>🏢 ${npp} (${count} điểm)</option>`;
+    });
+    nppEl.innerHTML = nppHtml;
+    if (this.selectedNpp && this.selectedNpp !== "ALL" && !nppCounts.has(this.selectedNpp)) {
+      this.selectedNpp = "ALL";
+    }
+    nppEl.value = this.selectedNpp || "ALL";
+  },
+
+  onAreaChange(val) {
+    this.selectedArea = val;
+    this.selectedGsbh = "ALL";
+    this.selectedNpp = "ALL";
+    this.populateGsbhAndNppOnly();
+    this.displayLimit = 40;
+    this.renderStoreList();
+    if (this.gsbhMap) {
+      this.renderGsbhMapPins();
+    }
+  },
+
+  onGsbhChange(val) {
+    this.selectedGsbh = val;
+    this.selectedNpp = "ALL";
+    this.populateGsbhAndNppOnly();
+    this.displayLimit = 40;
+    this.renderStoreList();
+    if (this.gsbhMap) {
+      this.renderGsbhMapPins();
+    }
+  },
+
+  onNppChange(val) {
+    this.selectedNpp = val;
+    this.displayLimit = 40;
+    this.renderStoreList();
+    if (this.gsbhMap) {
+      this.renderGsbhMapPins();
+    }
+  },
+
+  resetTerritoryFilters() {
+    this.selectedArea = "ALL";
+    this.selectedGsbh = "ALL";
+    this.selectedNpp = "ALL";
+    this.statusFilter = "all";
+    this.populateTerritoryFilters();
+    this.setStatusFilter("all");
+    this.showToast("✓ Đã đặt lại toàn bộ bộ lọc!", "info");
+  },
+
+  quickAssignFilteredStoresToAuditor() {
+    if (!this.currentFilteredStores || this.currentFilteredStores.length === 0) {
+      this.showToast("⚠️ Không có điểm bán nào trong bộ lọc hiện tại!", "warning");
+      return;
+    }
+
+    const count = this.currentFilteredStores.length;
+    this.bulkSelectedIds = new Set(this.currentFilteredStores.map(s => s.id));
+    this.assignMode = "bulk";
+    this.assignTargetStoreId = null;
+
+    const modal = document.getElementById("modalAssignAuditor");
+    if (!modal) return;
+
+    const areaTxt = (this.selectedArea && this.selectedArea !== "ALL") ? `Khu vực: ${this.selectedArea}` : "Toàn quốc";
+    const gsbhTxt = (this.selectedGsbh && this.selectedGsbh !== "ALL") ? ` • GSBH: ${this.selectedGsbh}` : "";
+    const nppTxt = (this.selectedNpp && this.selectedNpp !== "ALL") ? ` • NPP: ${this.selectedNpp}` : "";
+    const filterSummary = `${areaTxt}${gsbhTxt}${nppTxt}`;
+
+    const subTitle = document.getElementById("assignModalSubtitle");
+    if (subTitle) subTitle.textContent = `Chuyển toàn bộ ${count} điểm bán theo bộ lọc (${filterSummary}) cho 1 User`;
+
+    const targetTitle = document.getElementById("assignTargetTitle");
+    if (targetTitle) targetTitle.textContent = `Chuyển ${count} Điểm Bán Đang Lọc`;
+
+    const targetBadge = document.getElementById("assignTargetBadge");
+    if (targetBadge) targetBadge.textContent = `${count} điểm`;
+
+    const targetAddr = document.getElementById("assignTargetAddress");
+    if (targetAddr) targetAddr.textContent = `Điều kiện lọc: ${filterSummary}. Toàn bộ ${count} điểm bán này sẽ được chuyển ngay sang người kiểm tra được chọn.`;
+
+    const curAuditorEl = document.getElementById("assignCurrentAuditor");
+    if (curAuditorEl) {
+      curAuditorEl.textContent = `${count} điểm đang lọc`;
+      curAuditorEl.className = "text-amber-950 bg-amber-100 px-2 py-0.5 rounded-full font-bold";
+    }
+
+    this.renderAuditorOptionsList("");
+    modal.classList.remove("hidden");
   },
 
 };
