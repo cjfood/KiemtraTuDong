@@ -2705,6 +2705,7 @@ const CJAudit = {
         storeCode: store.storeCode || store.id,
         storeName: store.originalStoreName || store.name,
         address: store.address,
+        qrCode: store.qrCode || "",
         freezerId: store.serialNumber || store.freezerId,
         model: store.model || store.modelTu,
         condition,
