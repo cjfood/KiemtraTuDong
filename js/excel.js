@@ -817,7 +817,107 @@ const CJExcel = {
     if (typeof CJAudit !== "undefined" && CJAudit.showToast) {
       CJAudit.showToast(`✓ Đã xuất thành công ${rows.length} dòng báo cáo 23 tiêu chí!`, "success");
     }
-  }
+  },
+
+  /**
+   * Export complete master list of all 3,061 stores with updated auditor assignments to Excel
+   */
+  exportStoreAssignments() {
+    if (typeof XLSX === "undefined") {
+      alert("Thư viện xuất Excel (SheetJS) chưa sẵn sàng!");
+      return;
+    }
+
+    const stores = (typeof CJStorage !== "undefined" && CJStorage.getAllStores) ? CJStorage.getAllStores() : [];
+    if (!stores || stores.length === 0) {
+      alert("Không có dữ liệu điểm bán để xuất file!");
+      return;
+    }
+
+    const now = new Date();
+    const dateStr = now.toLocaleDateString("vi-VN").replace(/\//g, "-");
+
+    const rows = [
+      [
+        "STT",
+        "Mã Khách Hàng",
+        "Tên Khách Hàng",
+        "Kênh Bán Hàng",
+        "Tuyến Bán Hàng",
+        "Khu Vực",
+        "Địa Chỉ",
+        "Số Điện Thoại",
+        "NVBH Tuyến",
+        "SĐT NVBH",
+        "Mã QR POSM",
+        "Số Seri Tủ",
+        "Model Tủ Đông",
+        "Trạng Thái Tài Sản",
+        "Doanh Số TB 3T (VNĐ)",
+        "User Kiểm Tra",
+        "Tên Người Kiểm Tra",
+        "Trạng Thái Phân Tuyến"
+      ]
+    ];
+
+    stores.forEach((s, idx) => {
+      const isAssigned = Boolean(s.auditorUser && String(s.auditorUser).trim() !== "");
+      rows.push([
+        idx + 1,
+        s.storeCode || s.id || "",
+        s.name || s.originalStoreName || "",
+        s.channel || "GT",
+        s.route || "",
+        s.area || s.region || "",
+        s.address || "",
+        s.phone || "",
+        s.salesRep || "",
+        s.salesRepPhone || "",
+        s.qrCode || s.barcode || s.freezerId || "",
+        s.serialNumber || s.barcode || "",
+        s.modelTu || s.freezerModel || s.model || "Tủ đông tiêu chuẩn",
+        s.assetStatus || "",
+        s.salesAvg3M !== undefined ? s.salesAvg3M : 0,
+        s.auditorUser || "",
+        s.auditorName || "",
+        isAssigned ? "Đã phân công" : "Chưa phân công"
+      ]);
+    });
+
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+
+    ws['!cols'] = [
+      { wch: 6 },
+      { wch: 14 },
+      { wch: 28 },
+      { wch: 20 },
+      { wch: 24 },
+      { wch: 16 },
+      { wch: 45 },
+      { wch: 14 },
+      { wch: 22 },
+      { wch: 14 },
+      { wch: 16 },
+      { wch: 18 },
+      { wch: 22 },
+      { wch: 16 },
+      { wch: 18 },
+      { wch: 16 },
+      { wch: 22 },
+      { wch: 20 }
+    ];
+
+    XLSX.utils.book_append_sheet(wb, ws, "DS_PhanCong_KiemTra");
+
+    const fileName = `CJ_DS_PhanCong_KiemTra_TuDong_${dateStr}.xlsx`;
+    XLSX.writeFile(wb, fileName);
+
+    if (typeof CJAudit !== "undefined" && CJAudit.showToast) {
+      CJAudit.showToast(`✓ Đã xuất thành công ${stores.length} điểm bán ra file Excel!`, "success");
+    }
+  },
+
 };
 
 if (typeof window !== "undefined") {
