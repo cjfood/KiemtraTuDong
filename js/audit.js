@@ -432,7 +432,7 @@ const CJAudit = {
             <div>👤 <b>NVBH:</b> ${store.salesRep} (${store.salesRepCode || 'NV'})</div>
             <div>📞 <b>SĐT NVBH:</b> <a href="tel:${store.salesRepPhone}" style="color: #2563EB; font-weight: bold;">${store.salesRepPhone || '0903 123 456'}</a></div>
             <div style="margin-top: 4px; padding-top: 4px; border-top: 1px dashed #D1D5DB;">
-              ❄️ <b>Tủ CJ:</b> ${freezer ? freezer.assetTag : 'FZ-CJ-001'} (${store.lastTemp || -18}°C)
+              ❄️ <b>Mã QR:</b> <span style="font-weight: 800; color: #1E40AF;">${store.qrCode || store.serialNumber || 'Chưa có'}</span> (${store.lastTemp || -18}°C)
             </div>
           </div>
 
