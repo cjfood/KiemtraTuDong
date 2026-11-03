@@ -743,33 +743,67 @@
                 </button>
               </div>
 
-              <!-- BỘ LỌC CHỌN NHANH KHU VỰC & NPP / TUYẾN (DÀNH CHO ADMIN & KIỂM TRA THỊ TRƯỜNG) -->
-              <div class="grid grid-cols-2 gap-2 pt-1 text-xs">
-                <div>
-                  <label class="block text-[10px] font-black text-yellow-300 uppercase mb-1 flex items-center gap-1">
-                    <span>📍</span>
-                    <span>KHU VỰC:</span>
-                  </label>
-                  <select 
-                    id="filterAreaSelect" 
-                    onchange="CJAudit.onAreaChange(this.value)" 
-                    class="w-full bg-white text-gray-900 font-black text-xs py-2 px-2.5 rounded-xl border border-blue-300 outline-none shadow-sm cursor-pointer focus:ring-2 focus:ring-yellow-400">
-                    <option value="ALL">📍 Tất cả Khu Vực</option>
-                  </select>
+              <!-- BỘ LỌC ĐỊA BÀN: KHU VỰC, GSBH, NPP (GỌN GÀNG, TRỰC QUAN TRÊN MOBILE) -->
+              <div class="bg-blue-950/70 p-2.5 rounded-2xl border border-blue-400/40 space-y-2 text-xs shadow-inner">
+                
+                <!-- Tiêu đề bộ lọc & Nút Đặt lại -->
+                <div class="flex items-center justify-between pb-1 border-b border-blue-800/80">
+                  <div class="flex items-center gap-1.5 font-black text-yellow-300 text-[11px] tracking-wide uppercase">
+                    <span>⚡</span>
+                    <span>BỘ LỌC: KHU VỰC • GSBH • NPP</span>
+                  </div>
+                  <button 
+                    type="button" 
+                    onclick="CJAudit.resetTerritoryFilters()" 
+                    class="px-2 py-0.5 rounded-md bg-white/10 hover:bg-white/20 text-blue-200 hover:text-white font-extrabold text-[10px] transition active:scale-95 flex items-center gap-1 cursor-pointer">
+                    <span>↺</span>
+                    <span>Đặt lại</span>
+                  </button>
                 </div>
 
+                <!-- Hàng 1: Khu Vực (50%) & GSBH (50%) -->
+                <div class="grid grid-cols-2 gap-2">
+                  <div>
+                    <label class="block text-[10px] font-black text-blue-200 uppercase mb-1 flex items-center gap-1">
+                      <span>📍</span>
+                      <span>Khu Vực:</span>
+                    </label>
+                    <select 
+                      id="filterAreaSelect" 
+                      onchange="CJAudit.onAreaChange(this.value)" 
+                      class="w-full bg-white text-gray-900 font-extrabold text-xs py-2 px-2 rounded-xl border border-blue-300 outline-none shadow-sm cursor-pointer focus:ring-2 focus:ring-yellow-400">
+                      <option value="ALL">📍 Tất cả Khu Vực</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label class="block text-[10px] font-black text-blue-200 uppercase mb-1 flex items-center gap-1">
+                      <span>👮‍♂️</span>
+                      <span>GSBH:</span>
+                    </label>
+                    <select 
+                      id="filterGsbhSelect" 
+                      onchange="CJAudit.onGsbhChange(this.value)" 
+                      class="w-full bg-white text-gray-900 font-extrabold text-xs py-2 px-2 rounded-xl border border-blue-300 outline-none shadow-sm cursor-pointer focus:ring-2 focus:ring-yellow-400">
+                      <option value="ALL">👮‍♂️ Tất cả GSBH</option>
+                    </select>
+                  </div>
+                </div>
+
+                <!-- Hàng 2: Nhà Phân Phối (NPP) 100% full width -->
                 <div>
-                  <label class="block text-[10px] font-black text-yellow-300 uppercase mb-1 flex items-center gap-1">
+                  <label class="block text-[10px] font-black text-blue-200 uppercase mb-1 flex items-center gap-1">
                     <span>🏢</span>
-                    <span>NPP / TUYẾN:</span>
+                    <span>Nhà Phân Phối (NPP):</span>
                   </label>
                   <select 
                     id="filterNppSelect" 
                     onchange="CJAudit.onNppChange(this.value)" 
                     class="w-full bg-white text-gray-900 font-black text-xs py-2 px-2.5 rounded-xl border border-blue-300 outline-none shadow-sm cursor-pointer focus:ring-2 focus:ring-yellow-400">
-                    <option value="ALL">🏢 Tất cả NPP / Tuyến</option>
+                    <option value="ALL">🏢 Tất cả Nhà Phân Phối (NPP)</option>
                   </select>
                 </div>
+
               </div>
 
             </div>
@@ -3544,14 +3578,14 @@
   <div id="appToast" class="fixed top-5 right-5 z-50 opacity-0 translate-y-[-20px] pointer-events-none transition-all duration-300"></div>
 
   <!-- ================= APPLICATION SCRIPTS ================= -->
-  <script src="js/data.js?v=18.0"></script>
-  <script src="js/auth.js?v=18.0"></script>
-  <script src="js/storage.js?v=18.0"></script>
-  <script src="js/watermark.js?v=18.0"></script>
-  <script src="js/cloud_sync.js?v=18.0"></script>
-  <script src="js/audit.js?v=18.0"></script>
-  <script src="js/dashboard.js?v=18.0"></script>
-  <script src="js/excel.js?v=18.0"></script>
-  <script src="js/app.js?v=18.0"></script>
+  <script src="js/data.js?v=19.0"></script>
+  <script src="js/auth.js?v=19.0"></script>
+  <script src="js/storage.js?v=19.0"></script>
+  <script src="js/watermark.js?v=19.0"></script>
+  <script src="js/cloud_sync.js?v=19.0"></script>
+  <script src="js/audit.js?v=19.0"></script>
+  <script src="js/dashboard.js?v=19.0"></script>
+  <script src="js/excel.js?v=19.0"></script>
+  <script src="js/app.js?v=19.0"></script>
 </body>
 </html>
