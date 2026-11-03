@@ -387,6 +387,9 @@ const CJApp = {
 
     // Initialize modules with the new GSBH context (default to ALL to view all stores)
     CJAudit.selectedSalesRep = "ALL";
+    CJAudit.selectedArea = "ALL";
+    CJAudit.selectedGsbh = "ALL";
+    CJAudit.selectedNpp = "ALL";
     CJAudit.displayLimit = 40;
     CJAudit.init();
 
@@ -750,7 +753,11 @@ const CJApp = {
     this.populateSalesSelectorInAddStoreModal();
     if (typeof CJAudit !== "undefined") {
       CJAudit.selectedSalesRep = "ALL";
+      CJAudit.selectedArea = "ALL";
+      CJAudit.selectedGsbh = "ALL";
+      CJAudit.selectedNpp = "ALL";
       CJAudit.populateSalesRepFilter();
+      if (CJAudit.populateTerritoryFilters) CJAudit.populateTerritoryFilters();
     }
     if (typeof CJDashboard !== "undefined") {
       CJDashboard.populateSalesFilterDropdown();
