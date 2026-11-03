@@ -72,6 +72,43 @@ function doGet(e) {
     })).setMimeType(ContentService.MimeType.JSON);
   }
 
+  if (action === "getAssignments") {
+    try {
+      var ss = SpreadsheetApp.getActiveSpreadsheet();
+      var sheet = ss.getSheetByName("PhanCong");
+      if (!sheet || sheet.getLastRow() <= 1) {
+        return ContentService.createTextOutput(JSON.stringify({
+          status: "success",
+          total: 0,
+          assignments: {}
+        })).setMimeType(ContentService.MimeType.JSON);
+      }
+      var rows = sheet.getRange(2, 1, sheet.getLastRow() - 1, 5).getValues();
+      var assignments = {};
+      for (var p = 0; p < rows.length; p++) {
+        var r = rows[p];
+        var code = String(r[0] || "").trim();
+        if (!code) continue;
+        assignments[code] = {
+          auditorUser: String(r[1] || "").trim(),
+          auditorName: String(r[2] || "").trim(),
+          updatedAt: String(r[3] || ""),
+          assignedBy: String(r[4] || "")
+        };
+      }
+      return ContentService.createTextOutput(JSON.stringify({
+        status: "success",
+        total: Object.keys(assignments).length,
+        assignments: assignments
+      })).setMimeType(ContentService.MimeType.JSON);
+    } catch (err) {
+      return ContentService.createTextOutput(JSON.stringify({
+        status: "error",
+        message: err.toString()
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
+  }
+
   if (action === "clearAudits") {
     try {
       var ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -198,6 +235,56 @@ function doPost(e) {
     }
 
     var data = JSON.parse(e.postData.contents);
+
+    if (data.action === "saveAssignments" && data.assignments) {
+      var ssAssign = SpreadsheetApp.getActiveSpreadsheet();
+      var assignSheet = ssAssign.getSheetByName("PhanCong");
+      if (!assignSheet) {
+        assignSheet = ssAssign.insertSheet("PhanCong");
+        var assignHeaders = ["Mã Khách Hàng", "User Kiểm Tra", "Tên Người Kiểm Tra", "Thời Gian Cập Nhật", "Người Phân Bổ"];
+        assignSheet.getRange(1, 1, 1, assignHeaders.length).setValues([assignHeaders]);
+        assignSheet.getRange(1, 1, 1, assignHeaders.length).setBackground("#184594").setFontColor("#FFFFFF").setFontWeight("bold");
+      }
+      
+      var storeKeys = Object.keys(data.assignments);
+      if (storeKeys.length > 0) {
+        var existingData = assignSheet.getLastRow() > 1 ? assignSheet.getRange(2, 1, assignSheet.getLastRow() - 1, 1).getValues() : [];
+        var rowMap = {};
+        for (var ex = 0; ex < existingData.length; ex++) {
+          var sCode = String(existingData[ex][0] || "").trim();
+          if (sCode) rowMap[sCode] = ex + 2;
+        }
+
+        var newRows = [];
+        var nowStr = formatDate(new Date());
+
+        for (var k = 0; k < storeKeys.length; k++) {
+          var sId = storeKeys[k];
+          var aObj = data.assignments[sId];
+          if (!aObj) continue;
+          var rowVals = [
+            sId,
+            aObj.auditorUser || "",
+            aObj.auditorName || "",
+            aObj.updatedAt || nowStr,
+            aObj.assignedBy || "admin"
+          ];
+          if (rowMap[sId]) {
+            assignSheet.getRange(rowMap[sId], 1, 1, 5).setValues([rowVals]);
+          } else {
+            newRows.push(rowVals);
+          }
+        }
+        if (newRows.length > 0) {
+          assignSheet.getRange(assignSheet.getLastRow() + 1, 1, newRows.length, 5).setValues(newRows);
+        }
+      }
+
+      return ContentService.createTextOutput(JSON.stringify({
+        status: "success",
+        message: "Đã lưu thông tin phân công thành công!"
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
     var ss = SpreadsheetApp.getActiveSpreadsheet();
     var sheet = ss.getSheetByName(SHEET_NAME);
 
