@@ -10,7 +10,8 @@ const CJStorage = {
     AUDITS: "cj_market_audit_audits_gsbh_v5",
     ORDERS: "cj_market_audit_orders_v1",
     USERS: "cj_market_audit_users_v6",
-    TICKETS: "cj_market_audit_tickets_v5"
+    TICKETS: "cj_market_audit_tickets_v5",
+    CUSTOM_ASSIGNMENTS: "cj_market_audit_custom_assignments"
   },
 
   _storesCache: null,
@@ -430,6 +431,22 @@ const CJStorage = {
         const raw = localStorage.getItem(this.KEYS.STORES);
         if (raw) stores = JSON.parse(raw) || [];
       } catch (e) {}
+    }
+
+    // 1.5 Overlay custom auditor assignments saved by Admin
+    try {
+      const customAssignments = this.getCustomAssignments();
+      if (customAssignments && typeof customAssignments === "object") {
+        stores.forEach(s => {
+          const ca = customAssignments[s.id] || customAssignments[s.storeCode];
+          if (ca && ca.auditorUser !== undefined) {
+            s.auditorUser = ca.auditorUser;
+            s.auditorName = ca.auditorName || "";
+          }
+        });
+      }
+    } catch (e) {
+      console.warn("[CJStorage] Error overlaying custom assignments:", e);
     }
 
     // 2. Overlay audit records submitted locally
