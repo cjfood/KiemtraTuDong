@@ -489,6 +489,120 @@ const CJStorage = {
    * CRITICAL FILTER:
    * Returns ONLY stores assigned to the logged-in GSBH or Sales Rep!
    */
+
+  // ==========================================
+  // CUSTOM AUDITOR ASSIGNMENTS MODULE
+  // ==========================================
+
+  getCustomAssignments() {
+    try {
+      const raw = localStorage.getItem(this.KEYS.CUSTOM_ASSIGNMENTS || "cj_market_audit_custom_assignments");
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && typeof parsed === "object") return parsed;
+      }
+    } catch (e) {
+      console.warn("[CJStorage] Error loading custom assignments:", e);
+    }
+    return {};
+  },
+
+  saveCustomAssignments(assignments) {
+    if (!assignments || typeof assignments !== "object") return false;
+    try {
+      this.safeSetItem(this.KEYS.CUSTOM_ASSIGNMENTS || "cj_market_audit_custom_assignments", JSON.stringify(assignments));
+      return true;
+    } catch (e) {
+      console.error("[CJStorage] Failed to save custom assignments:", e);
+      return false;
+    }
+  },
+
+  assignStoreAuditor(storeId, auditorUser, auditorName) {
+    if (!storeId) return { success: false, message: "Thiếu mã điểm bán!" };
+    return this.bulkAssignAuditor([storeId], auditorUser, auditorName);
+  },
+
+  bulkAssignAuditor(storeIds, auditorUser, auditorName) {
+    if (!Array.isArray(storeIds) || storeIds.length === 0) {
+      return { success: false, message: "Danh sách điểm bán trống!" };
+    }
+
+    const assignments = this.getCustomAssignments();
+    const currentUser = (typeof CJAuth !== "undefined" && CJAuth.getCurrentUser) ? CJAuth.getCurrentUser() : null;
+    const assignedBy = currentUser ? currentUser.username : "admin";
+    const nowIso = new Date().toISOString();
+
+    const normalizedUser = (auditorUser || "").trim();
+    const normalizedName = (auditorName || "").trim();
+
+    const idSet = new Set(storeIds.map(id => String(id).trim()));
+
+    // 1. Update in-memory stores cache if loaded
+    if (this._storesCache && Array.isArray(this._storesCache)) {
+      this._storesCache.forEach(s => {
+        if (idSet.has(String(s.id).trim()) || idSet.has(String(s.storeCode).trim())) {
+          s.auditorUser = normalizedUser;
+          s.auditorName = normalizedName;
+        }
+      });
+    }
+
+    // 2. Update persistent assignments dictionary
+    storeIds.forEach(id => {
+      const cleanId = String(id).trim();
+      if (!cleanId) return;
+      assignments[cleanId] = {
+        auditorUser: normalizedUser,
+        auditorName: normalizedName,
+        updatedAt: nowIso,
+        assignedBy: assignedBy
+      };
+    });
+
+    this.saveCustomAssignments(assignments);
+
+    // 3. Invalidate cache so any subsequent call to getAllStores will overlay fresh assignments
+    this._storesCache = null;
+
+    // 4. Trigger background sync to Google Sheet if online
+    if (typeof CJCloudSync !== "undefined" && CJCloudSync.sendAssignmentsToCloud) {
+      try {
+        CJCloudSync.sendAssignmentsToCloud(assignments);
+      } catch (eSync) {
+        console.warn("[CJStorage] Cloud sync assignments background dispatch error:", eSync);
+      }
+    }
+
+    return {
+      success: true,
+      count: storeIds.length,
+      auditorUser: normalizedUser,
+      auditorName: normalizedName
+    };
+  },
+
+  syncAssignmentsFromCloud(cloudAssignments) {
+    if (!cloudAssignments || typeof cloudAssignments !== "object") return 0;
+    const local = this.getCustomAssignments();
+    let updatedCount = 0;
+    Object.keys(cloudAssignments).forEach(storeId => {
+      const item = cloudAssignments[storeId];
+      if (item && item.auditorUser !== undefined) {
+        local[storeId] = {
+          auditorUser: item.auditorUser,
+          auditorName: item.auditorName || "",
+          updatedAt: item.updatedAt || new Date().toISOString(),
+          assignedBy: item.assignedBy || "cloud"
+        };
+        updatedCount++;
+      }
+    });
+    this.saveCustomAssignments(local);
+    this._storesCache = null;
+    return updatedCount;
+  },
+
   getStoresForCurrentGSBH(salesRepUsername = "ALL") {
     const all = this.getAllStores();
     const currentUser = CJAuth.getCurrentUser();
