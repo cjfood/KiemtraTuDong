@@ -523,6 +523,10 @@ const CJAudit = {
   statusFilter: "3t",
   searchQuery: "",
   orderCart: {},
+  isBulkMode: false,
+  bulkSelectedIds: new Set(),
+  assignMode: "single",
+  assignTargetStoreId: null,
   currentOrderStore: null,
 
   setStatusFilter(filter) {
@@ -532,6 +536,8 @@ const CJAudit = {
       { id: "pillAllStores", key: "all" },
       { id: "pill1TStores", key: "1t" },
       { id: "pill3TStores", key: "3t" },
+      { id: "pillUnassignedStores", key: "unassigned" },
+      { id: "pillAssignedStores", key: "assigned" },
       { id: "pillActiveStores", key: "active" },
       { id: "pillInactiveStores", key: "inactive" },
       { id: "pillPendingStores", key: "pending" },
@@ -665,6 +671,24 @@ const CJAudit = {
     const currentUser = CJAuth.getCurrentUser();
     if (!currentUser) return;
 
+    const isAdmin = Boolean(currentUser && (currentUser.role === 'admin' || currentUser.username === 'admin'));
+    const adminToolbar = document.getElementById("adminAssignmentToolbar");
+    const pUnassignedBtn = document.getElementById("pillUnassignedStores");
+    const pAssignedBtn = document.getElementById("pillAssignedStores");
+
+    if (adminToolbar) {
+      if (isAdmin) adminToolbar.classList.remove("hidden");
+      else adminToolbar.classList.add("hidden");
+    }
+    if (pUnassignedBtn) {
+      if (isAdmin) pUnassignedBtn.classList.remove("hidden");
+      else pUnassignedBtn.classList.add("hidden");
+    }
+    if (pAssignedBtn) {
+      if (isAdmin) pAssignedBtn.classList.remove("hidden");
+      else pAssignedBtn.classList.add("hidden");
+    }
+
     const rawStores = filteredStores || CJStorage.getStoresForCurrentGSBH(this.selectedSalesRep);
 
     const is1T = (s) => {
@@ -676,17 +700,27 @@ const CJAudit = {
       return st === "3t ko mua" || st === "3t" || st.includes("3t");
     };
 
+    const isUnassigned = (s) => !s.auditorUser || String(s.auditorUser).trim() === "";
+    const isAssigned = (s) => Boolean(s.auditorUser && String(s.auditorUser).trim() !== "");
+
     const allCount = rawStores.length;
     const count1T = rawStores.filter(is1T).length;
     const count3T = rawStores.filter(is3T).length;
+    const countUnassigned = rawStores.filter(isUnassigned).length;
+    const countAssigned = rawStores.filter(isAssigned).length;
     const activeCount = rawStores.filter(s => s.isActive !== false).length;
     const inactiveCount = rawStores.filter(s => s.isActive === false).length;
 
     const pAll = document.getElementById("pillCountAll");
     const p1T = document.getElementById("pillCount1T");
     const p3T = document.getElementById("pillCount3T");
+    const pUnassigned = document.getElementById("pillCountUnassigned");
+    const pAssigned = document.getElementById("pillCountAssigned");
     const pActive = document.getElementById("pillCountActive");
     const pInactive = document.getElementById("pillCountInactive");
+
+    if (pUnassigned) pUnassigned.textContent = countUnassigned;
+    if (pAssigned) pAssigned.textContent = countAssigned;
     const bannerBadge = document.getElementById("customerBannerBadge");
     const assignedBadge = document.getElementById("assignedStoreCountBadge");
 
@@ -720,6 +754,10 @@ const CJAudit = {
       stores = stores.filter(is1T);
     } else if (this.statusFilter === "3t") {
       stores = stores.filter(is3T);
+    } else if (this.statusFilter === "unassigned") {
+      stores = stores.filter(isUnassigned);
+    } else if (this.statusFilter === "assigned") {
+      stores = stores.filter(isAssigned);
     } else if (this.statusFilter === "active") {
       stores = stores.filter(s => s.isActive !== false);
     } else if (this.statusFilter === "inactive") {
@@ -758,6 +796,8 @@ const CJAudit = {
 
     // Lưu danh sách sau lọc để map pin, popup và modal dùng đồng bộ số thứ tự
     this.currentFilteredStores = stores;
+    const bulkFilteredCountEl = document.getElementById("bulkFilteredCount");
+    if (bulkFilteredCountEl) bulkFilteredCountEl.textContent = stores.length;
 
     // Refresh map pins if map view is currently open
     if (this.currentViewMode === "map" && this.gsbhMap) {
@@ -812,6 +852,16 @@ const CJAudit = {
           
           <!-- Header: [Số thứ tự] + Tên KH + Mã KH + Trạng thái kiểm tra -->
           <div class="flex items-start justify-between gap-2">
+            ${this.isBulkMode ? `
+              <div class="mr-1.5 shrink-0 flex items-center pt-0.5" onclick="event.stopPropagation()">
+                <input 
+                  type="checkbox" 
+                  class="w-5 h-5 rounded-md text-blue-700 border-2 border-gray-400 focus:ring-blue-500 cursor-pointer" 
+                  ${this.bulkSelectedIds && this.bulkSelectedIds.has(store.id) ? 'checked' : ''} 
+                  onchange="CJAudit.onBulkCheckChange(this, '${store.id}')" 
+                />
+              </div>
+            ` : ''}
             <div class="flex-1">
               <h3 class="font-black text-gray-900 text-sm sm:text-base leading-snug flex items-center flex-wrap gap-1.5">
                 <!-- Số thứ tự không có dấu #, đứng trước tên KH -->
@@ -863,11 +913,15 @@ const CJAudit = {
                     TB 3T: <b>${Math.round(store.salesAvg3M).toLocaleString('vi-VN')} đ</b>
                   </span>
                 ` : ''}
-                ${store.auditorName ? `
+                ${isAdmin ? `
+                  <button type="button" onclick="event.stopPropagation(); CJAudit.openAssignAuditorModal('${store.id}')" class="px-2.5 py-0.5 rounded-full font-bold ${store.auditorUser ? 'bg-purple-100 text-purple-950 border border-purple-300 hover:bg-purple-200' : 'bg-amber-100 text-amber-950 border border-dashed border-amber-400 hover:bg-amber-200'} transition flex items-center gap-1 active:scale-95 shadow-xs cursor-pointer" title="${store.auditorUser ? 'Bấm để đổi người kiểm tra' : 'Bấm để phân bổ người kiểm tra'}">
+                    <span>${store.auditorUser ? `👤 Người kiểm: <b>${store.auditorName || store.auditorUser}</b> ✏️` : `➕ Phân công`}</span>
+                  </button>
+                ` : (store.auditorName ? `
                   <span class="px-2 py-0.5 rounded-full font-bold bg-purple-50 text-purple-900 border border-purple-200">
                     👤 Người kiểm: <b>${store.auditorName}</b>
                   </span>
-                ` : ''}
+                ` : '')}
               </div>
             </div>
           </div>
@@ -2788,6 +2842,264 @@ const CJAudit = {
         saveBtn.innerHTML = `<span>💾</span><span>LƯU PHIẾU KIỂM TRA (SAVE AUDIT)</span>`;
       }
     }
+  },
+
+
+  // ==========================================
+  // BULK & STORE AUDITOR ASSIGNMENT MODULE
+  // ==========================================
+
+  toggleBulkMode(forceVal = null) {
+    if (forceVal !== null) {
+      this.isBulkMode = Boolean(forceVal);
+    } else {
+      this.isBulkMode = !this.isBulkMode;
+    }
+
+    if (!this.bulkSelectedIds) {
+      this.bulkSelectedIds = new Set();
+    }
+    if (!this.isBulkMode) {
+      this.bulkSelectedIds.clear();
+    }
+
+    const btn = document.getElementById("btnToggleBulkMode");
+    const icon = document.getElementById("btnToggleBulkModeIcon");
+    const text = document.getElementById("btnToggleBulkModeText");
+    const bar = document.getElementById("bulkActionBar");
+
+    if (btn && text) {
+      if (this.isBulkMode) {
+        btn.className = "px-2.5 py-1 rounded-lg bg-yellow-400 hover:bg-yellow-500 text-blue-950 font-black text-[11px] shadow flex items-center gap-1 transition active:scale-95";
+        if (icon) icon.textContent = "✕";
+        text.textContent = "Đóng chọn";
+      } else {
+        btn.className = "px-2.5 py-1 rounded-lg bg-white/20 hover:bg-white/30 text-white font-extrabold text-[11px] border border-white/30 flex items-center gap-1 transition active:scale-95 shadow-xs";
+        if (icon) icon.textContent = "☑️";
+        text.textContent = "Chọn nhiều";
+      }
+    }
+
+    if (bar) {
+      if (this.isBulkMode) {
+        bar.classList.remove("hidden");
+      } else {
+        bar.classList.add("hidden");
+      }
+    }
+
+    this.updateBulkCountUI();
+    this.renderStoreList();
+  },
+
+  onBulkCheckChange(chk, storeId) {
+    if (!this.bulkSelectedIds) this.bulkSelectedIds = new Set();
+    if (chk.checked) {
+      this.bulkSelectedIds.add(storeId);
+    } else {
+      this.bulkSelectedIds.delete(storeId);
+    }
+    this.updateBulkCountUI();
+  },
+
+  updateBulkCountUI() {
+    const countEl = document.getElementById("bulkSelectedCount");
+    if (countEl) {
+      countEl.textContent = this.bulkSelectedIds ? this.bulkSelectedIds.size : 0;
+    }
+    const filteredCountEl = document.getElementById("bulkFilteredCount");
+    if (filteredCountEl) {
+      filteredCountEl.textContent = this.currentFilteredStores ? this.currentFilteredStores.length : 0;
+    }
+  },
+
+  toggleBulkSelectAll() {
+    if (!this.currentFilteredStores || this.currentFilteredStores.length === 0) return;
+    if (!this.bulkSelectedIds) this.bulkSelectedIds = new Set();
+
+    const allFilteredSelected = this.currentFilteredStores.length > 0 && this.currentFilteredStores.every(s => this.bulkSelectedIds.has(s.id));
+
+    if (allFilteredSelected) {
+      this.currentFilteredStores.forEach(s => this.bulkSelectedIds.delete(s.id));
+    } else {
+      this.currentFilteredStores.forEach(s => this.bulkSelectedIds.add(s.id));
+    }
+
+    this.updateBulkCountUI();
+    this.renderStoreList();
+  },
+
+  openAssignAuditorModal(storeId) {
+    this.assignMode = "single";
+    this.assignTargetStoreId = storeId;
+    const store = (typeof CJStorage !== "undefined") ? CJStorage.getStoreById(storeId) : null;
+    if (!store) return;
+
+    const modal = document.getElementById("modalAssignAuditor");
+    if (!modal) return;
+
+    const subTitle = document.getElementById("assignModalSubtitle");
+    if (subTitle) subTitle.textContent = `Phân công kiểm tra cho điểm bán ${store.storeCode || store.id}`;
+    
+    const targetTitle = document.getElementById("assignTargetTitle");
+    if (targetTitle) targetTitle.textContent = `${store.name} (${store.storeCode || store.id})`;
+
+    const targetBadge = document.getElementById("assignTargetBadge");
+    if (targetBadge) targetBadge.textContent = "1 điểm";
+
+    const targetAddr = document.getElementById("assignTargetAddress");
+    if (targetAddr) targetAddr.textContent = store.address || "Chưa có địa chỉ";
+    
+    const curAuditorEl = document.getElementById("assignCurrentAuditor");
+    if (curAuditorEl) {
+      if (store.auditorUser) {
+        curAuditorEl.textContent = `${store.auditorName || store.auditorUser} (${store.auditorUser})`;
+        curAuditorEl.className = "text-purple-950 bg-purple-100 px-2 py-0.5 rounded-full font-bold";
+      } else {
+        curAuditorEl.textContent = "Chưa phân công";
+        curAuditorEl.className = "text-amber-950 bg-amber-100 px-2 py-0.5 rounded-full font-bold";
+      }
+    }
+
+    this.renderAuditorOptionsList(store.auditorUser || "");
+    modal.classList.remove("hidden");
+  },
+
+  openBulkAssignModal() {
+    if (!this.bulkSelectedIds || this.bulkSelectedIds.size === 0) {
+      this.showToast("⚠️ Vui lòng tick chọn ít nhất 1 điểm bán trước khi gán!", "warning");
+      return;
+    }
+
+    this.assignMode = "bulk";
+    this.assignTargetStoreId = null;
+
+    const modal = document.getElementById("modalAssignAuditor");
+    if (!modal) return;
+
+    const count = this.bulkSelectedIds.size;
+    const subTitle = document.getElementById("assignModalSubtitle");
+    if (subTitle) subTitle.textContent = `Phân bổ hàng loạt cho ${count} điểm bán đã chọn`;
+
+    const targetTitle = document.getElementById("assignTargetTitle");
+    if (targetTitle) targetTitle.textContent = `Phân công hàng loạt (${count} điểm bán)`;
+
+    const targetBadge = document.getElementById("assignTargetBadge");
+    if (targetBadge) targetBadge.textContent = `${count} điểm`;
+
+    const targetAddr = document.getElementById("assignTargetAddress");
+    if (targetAddr) targetAddr.textContent = "Áp dụng phân bổ đồng loạt cho toàn bộ các điểm bán đang tick chọn.";
+    
+    const curAuditorEl = document.getElementById("assignCurrentAuditor");
+    if (curAuditorEl) {
+      curAuditorEl.textContent = `${count} điểm bán đang chọn`;
+      curAuditorEl.className = "text-blue-950 bg-blue-100 px-2 py-0.5 rounded-full font-bold";
+    }
+
+    this.renderAuditorOptionsList("");
+    modal.classList.remove("hidden");
+  },
+
+  closeAssignAuditorModal() {
+    const modal = document.getElementById("modalAssignAuditor");
+    if (modal) modal.classList.add("hidden");
+  },
+
+  renderAuditorOptionsList(currentSelectedUser = "") {
+    const container = document.getElementById("assignAuditorOptionsList");
+    if (!container) return;
+
+    const accounts = (typeof GSBH_ACCOUNTS !== "undefined") ? GSBH_ACCOUNTS : [];
+    const auditors = accounts.filter(a => a.role === "auditor");
+
+    let html = auditors.map(a => {
+      const isChecked = (a.username.toLowerCase() === (currentSelectedUser || "").toLowerCase());
+      return `
+        <label class="flex items-center justify-between p-3 rounded-xl border ${isChecked ? 'border-blue-600 bg-blue-50/70 shadow-xs' : 'border-gray-200 hover:bg-gray-50'} cursor-pointer transition">
+          <div class="flex items-center gap-3">
+            <span class="text-xl shrink-0">${a.avatar || '👤'}</span>
+            <div>
+              <div class="font-black text-gray-900 text-xs sm:text-sm flex items-center gap-1.5">
+                <span>${a.name}</span>
+                <span class="text-[10px] font-mono text-gray-500 font-normal">(@${a.username})</span>
+              </div>
+              <div class="text-[11px] text-gray-500 font-medium">${a.roleTitle || a.area || 'Nhân sự kiểm tra'}</div>
+            </div>
+          </div>
+          <input 
+            type="radio" 
+            name="assignAuditorRadio" 
+            value="${a.username}" 
+            data-name="${a.name}" 
+            class="w-4 h-4 text-blue-600 focus:ring-blue-500 cursor-pointer" 
+            ${isChecked ? 'checked' : ''} 
+          />
+        </label>
+      `;
+    }).join("");
+
+    const isUnassignedChecked = !currentSelectedUser;
+    html += `
+      <label class="flex items-center justify-between p-3 rounded-xl border ${isUnassignedChecked ? 'border-amber-500 bg-amber-50/70' : 'border-gray-200 hover:bg-gray-50'} cursor-pointer transition mt-2">
+        <div class="flex items-center gap-3">
+          <span class="text-xl shrink-0">🗑️</span>
+          <div>
+            <div class="font-bold text-gray-800 text-xs sm:text-sm">Để trống (Chưa phân công)</div>
+            <div class="text-[11px] text-gray-500">Đưa điểm bán về trạng thái chưa phân bổ</div>
+          </div>
+        </div>
+        <input 
+          type="radio" 
+          name="assignAuditorRadio" 
+          value="" 
+          data-name="" 
+          class="w-4 h-4 text-amber-600 focus:ring-amber-500 cursor-pointer" 
+          ${isUnassignedChecked ? 'checked' : ''} 
+        />
+      </label>
+    `;
+
+    container.innerHTML = html;
+  },
+
+  saveAuditorAssignment() {
+    const selectedRadio = document.querySelector('input[name="assignAuditorRadio"]:checked');
+    if (!selectedRadio) {
+      this.showToast("⚠️ Vui lòng chọn một người kiểm tra hoặc chọn 'Để trống'!", "warning");
+      return;
+    }
+
+    const auditorUser = selectedRadio.value;
+    const auditorName = selectedRadio.dataset.name || "";
+
+    if (this.assignMode === "single") {
+      const storeId = this.assignTargetStoreId;
+      if (!storeId) return;
+
+      const res = CJStorage.assignStoreAuditor(storeId, auditorUser, auditorName);
+      if (res && res.success) {
+        const msg = auditorUser 
+          ? `✓ Đã phân công điểm bán cho ${auditorName || auditorUser}!` 
+          : `✓ Đã chuyển điểm bán về Chưa phân công!`;
+        this.showToast(msg, "success");
+      }
+    } else if (this.assignMode === "bulk") {
+      const storeIds = Array.from(this.bulkSelectedIds);
+      if (storeIds.length === 0) return;
+
+      const res = CJStorage.bulkAssignAuditor(storeIds, auditorUser, auditorName);
+      if (res && res.success) {
+        const msg = auditorUser 
+          ? `✓ Đã phân công thành công ${storeIds.length} điểm bán cho ${auditorName || auditorUser}!` 
+          : `✓ Đã chuyển ${storeIds.length} điểm bán về Chưa phân công!`;
+        this.showToast(msg, "success");
+      }
+      this.bulkSelectedIds.clear();
+      this.toggleBulkMode(false);
+    }
+
+    this.closeAssignAuditorModal();
+    this.renderStoreList();
   },
 
 };
