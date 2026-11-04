@@ -418,30 +418,67 @@ const CJAudit = {
       const marker = L.marker([store.lat, store.lng], { icon: icon }).addTo(this.gsbhMap);
       marker.storeId = store.id;
 
+      const is1T = (s) => {
+        const st = String(s.assetStatus || "").toLowerCase().trim();
+        return st === "chưa mua" || st === "chua mua" || st.includes("1t") || st === "chưa_mua";
+      };
+      const is3T = (s) => {
+        const st = String(s.assetStatus || "").toLowerCase().trim();
+        return st === "3t ko mua" || st === "3t" || st.includes("3t");
+      };
+
+      const statusBadge = is3T(store)
+        ? `<span style="display: inline-flex; align-items: center; gap: 2px; background: #FFE4E6; color: #9F1239; font-weight: 800; font-size: 10px; padding: 1.5px 6px; border-radius: 9999px; border: 1px solid #FDA4AF;">🚨 3T Ko Mua</span>`
+        : is1T(store)
+        ? `<span style="display: inline-flex; align-items: center; gap: 2px; background: #FEF3C7; color: #92400E; font-weight: 800; font-size: 10px; padding: 1.5px 6px; border-radius: 9999px; border: 1px solid #FCD34D;">⚠️ 1T Ko Mua</span>`
+        : `<span style="display: inline-flex; align-items: center; gap: 2px; background: #D1FAE5; color: #065F46; font-weight: 800; font-size: 10px; padding: 1.5px 6px; border-radius: 9999px; border: 1px solid #6EE7B7;">🟢 ${store.assetStatus || 'Active'}</span>`;
+
+      const avgSalesFormatted = (store.salesAvg3M !== undefined && store.salesAvg3M > 0)
+        ? `${Math.round(store.salesAvg3M).toLocaleString('vi-VN')} đ`
+        : (store.salesTier ? `DS: ${store.salesTier}` : '0 đ');
+
       const gmapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${store.lat},${store.lng}`;
+      const escapedStoreName = (store.name || '').replace(/'/g, "\\'");
 
       const popupHtml = `
-        <div style="font-family: system-ui, -apple-system, sans-serif; min-width: 250px; padding: 4px;" class="space-y-2">
+        <div style="font-family: system-ui, -apple-system, sans-serif; min-width: 260px; padding: 4px;" class="space-y-2">
           <div style="border-bottom: 1px solid #E5E7EB; padding-bottom: 6px;">
-            <div style="font-size: 11px; font-weight: 800; color: #E31837;">${idx + 1} • ${store.id} (${store.channel})</div>
+            <div style="font-size: 11px; font-weight: 800; color: #E31837; display: flex; align-items: center; justify-content: space-between;">
+              <span>${idx + 1} • ${store.id} (${store.channel})</span>
+              ${isAudited ? '<span style="color: #059669; font-size: 10px; font-weight: 900;">✓ ĐÃ AUDIT</span>' : ''}
+            </div>
             <div style="font-size: 14px; font-weight: 900; color: #111827; line-height: 1.25; margin-top: 2px;">${store.name}</div>
             <div style="font-size: 11px; color: #4B5563; margin-top: 3px;">📍 ${store.address}</div>
           </div>
 
-          <div style="font-size: 11px; background: #F3F4F6; padding: 6px 8px; border-radius: 8px; line-height: 1.4;">
+          <div style="font-size: 11px; background: #F8FAFC; border: 1px solid #E2E8F0; padding: 7px 9px; border-radius: 10px; line-height: 1.45;">
             <div>👤 <b>NVBH:</b> ${store.salesRep} (${store.salesRepCode || 'NV'})</div>
-            <div>📞 <b>SĐT NVBH:</b> <a href="tel:${store.salesRepPhone}" style="color: #2563EB; font-weight: bold;">${store.salesRepPhone || '0903 123 456'}</a></div>
-            <div style="margin-top: 4px; padding-top: 4px; border-top: 1px dashed #D1D5DB;">
+            <div>📞 <b>SĐT NVBH:</b> <a href="tel:${store.salesRepPhone}" style="color: #2563EB; font-weight: bold;">${store.salesRepPhone || '0901 888 999'}</a></div>
+            <div style="margin-top: 4px; padding-top: 4px; border-top: 1px dashed #CBD5E1;">
               ❄️ <b>Mã QR:</b> <span style="font-weight: 800; color: #1E40AF;">${store.qrCode || store.serialNumber || 'Chưa có'}</span> (${store.lastTemp || -18}°C)
+            </div>
+            <div style="margin-top: 4px; padding-top: 4px; border-top: 1px dashed #CBD5E1; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 4px;">
+              <span>📊 <b>TB 3 Tháng:</b> <b style="color: #DC2626;">${avgSalesFormatted}</b></span>
+              ${statusBadge}
             </div>
           </div>
 
+          <!-- Nhóm nút chỉ đường: Trong App & Google Maps -->
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 8px;">
-            <a href="${gmapsUrl}" target="_blank" rel="noopener noreferrer" style="background: #2563EB; color: white; padding: 8px 4px; border-radius: 8px; text-decoration: none; font-size: 11px; font-weight: bold; text-align: center; display: block; box-shadow: 0 1px 2px rgba(0,0,0,0.1);">
-              📍 Dẫn Đường
+            <button onclick="CJAudit.routeInApp(${store.lat}, ${store.lng}, '${escapedStoreName}', '${gmapsUrl}')" style="background: #0284C7; hover:bg-sky-700; color: white; border: none; padding: 7px 4px; border-radius: 8px; font-size: 11px; font-weight: 800; cursor: pointer; text-align: center; display: flex; align-items: center; justify-content: center; gap: 3px; box-shadow: 0 1px 2px rgba(0,0,0,0.12);">
+              <span>🧭</span>
+              <span>Dẫn đường App</span>
+            </button>
+            <a href="${gmapsUrl}" target="_blank" rel="noopener noreferrer" style="background: #2563EB; color: white; padding: 7px 4px; border-radius: 8px; text-decoration: none; font-size: 11px; font-weight: 800; text-align: center; display: flex; align-items: center; justify-content: center; gap: 3px; box-shadow: 0 1px 2px rgba(0,0,0,0.12);">
+              <span>🗺️</span>
+              <span>Google Maps</span>
             </a>
-            <button onclick="CJAudit.openInactiveAuditModal('${store.id}')" style="background: ${isAudited ? '#059669' : '#E31837'}; color: white; border: none; padding: 8px 4px; border-radius: 8px; font-size: 11px; font-weight: bold; cursor: pointer; text-align: center; box-shadow: 0 1px 2px rgba(0,0,0,0.1);">
-              ${isAudited ? '🔄 Xem / Sửa' : '🔍 Kiểm Tra Tủ'}
+          </div>
+
+          <!-- Nút kiểm tra tủ -->
+          <div style="margin-top: 6px;">
+            <button onclick="CJAudit.openInactiveAuditModal('${store.id}')" style="width: 100%; background: ${isAudited ? '#059669' : '#DC2626'}; color: white; border: none; padding: 8px 4px; border-radius: 8px; font-size: 11.5px; font-weight: 800; cursor: pointer; text-align: center; display: flex; align-items: center; justify-content: center; gap: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.15);">
+              <span>${isAudited ? '✓ ĐÃ KIỂM TRA (XEM / SỬA)' : '📝 KIỂM TRA TỦ ĐÔNG NÀY'}</span>
             </button>
           </div>
         </div>
@@ -453,6 +490,113 @@ const CJAudit = {
 
     if (bounds.length > 0) {
       this.gsbhMap.fitBounds(bounds, { padding: [40, 40], maxZoom: 15 });
+    }
+  },
+
+  activeRoutePolyline: null,
+
+  routeInApp(destLat, destLng, storeName, gmapsUrl) {
+    if (!this.gsbhMap) return;
+
+    const startRouting = (userLat, userLng) => {
+      this.clearInAppRoute();
+      this.showToast(`Đang tính lộ trình đến ${storeName}...`, "info");
+
+      // Approximate Haversine distance
+      const R = 6371;
+      const dLat = (destLat - userLat) * Math.PI / 180;
+      const dLon = (destLng - userLng) * Math.PI / 180;
+      const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                Math.cos(userLat * Math.PI / 180) * Math.cos(destLat * Math.PI / 180) *
+                Math.sin(dLon/2) * Math.sin(dLon/2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+      const directKm = Math.max(0.1, R * c);
+
+      const renderRouteUI = (latLngs, km, estMins) => {
+        this.activeRoutePolyline = L.polyline(latLngs, {
+          color: '#2563EB',
+          weight: 6,
+          opacity: 0.85,
+          dashArray: latLngs.length === 2 ? '8, 8' : null,
+          lineJoin: 'round'
+        }).addTo(this.gsbhMap);
+
+        this.gsbhMap.fitBounds(this.activeRoutePolyline.getBounds(), { padding: [60, 60], maxZoom: 16 });
+
+        const banner = document.getElementById("inAppRoutingBanner");
+        const titleEl = document.getElementById("inAppRoutingTitle");
+        const detailEl = document.getElementById("inAppRoutingDetails");
+        const gmapsLink = document.getElementById("inAppRoutingGmapsLink");
+
+        if (banner) {
+          banner.classList.remove("hidden");
+          if (titleEl) titleEl.textContent = `Lộ trình đến: ${storeName}`;
+          if (detailEl) detailEl.textContent = `Khoảng cách: ~${km.toFixed(1)} km • Thời gian ước tính: ~${estMins} phút`;
+          if (gmapsLink) gmapsLink.href = gmapsUrl;
+        }
+
+        this.showToast(`✓ Đã vẽ lộ trình dẫn đường (${km.toFixed(1)} km)!`, "success");
+      };
+
+      // Try OSRM route API for driving road geometry
+      const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${userLng},${userLat};${destLng},${destLat}?overview=full&geometries=geojson`;
+      const controller = (typeof AbortController !== "undefined") ? new AbortController() : null;
+      const timeoutId = controller ? setTimeout(() => controller.abort(), 4000) : null;
+
+      fetch(osrmUrl, controller ? { signal: controller.signal } : {})
+        .then(res => res.json())
+        .then(data => {
+          if (timeoutId) clearTimeout(timeoutId);
+          if (data && data.routes && data.routes.length > 0) {
+            const route = data.routes[0];
+            const coords = route.geometry.coordinates.map(pt => [pt[1], pt[0]]);
+            const roadKm = route.distance / 1000;
+            const roadMins = Math.max(1, Math.round(route.duration / 60));
+            renderRouteUI(coords, roadKm, roadMins);
+          } else {
+            const estMins = Math.max(1, Math.round(directKm * 2.5));
+            renderRouteUI([[userLat, userLng], [destLat, destLng]], directKm, estMins);
+          }
+        })
+        .catch(() => {
+          if (timeoutId) clearTimeout(timeoutId);
+          const estMins = Math.max(1, Math.round(directKm * 2.5));
+          renderRouteUI([[userLat, userLng], [destLat, destLng]], directKm, estMins);
+        });
+    };
+
+    if (this.currentGPS && this.currentGPS.lat && this.currentGPS.lng) {
+      startRouting(this.currentGPS.lat, this.currentGPS.lng);
+    } else if ("geolocation" in navigator) {
+      this.showToast("Đang xác định vị trí GPS của bạn...", "info");
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          this.currentGPS = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+          startRouting(this.currentGPS.lat, this.currentGPS.lng);
+        },
+        () => {
+          const fallbackLat = 10.7769;
+          const fallbackLng = 106.7009;
+          this.showToast("Không định vị được GPS, đang vẽ từ trung tâm TP.HCM", "warning");
+          startRouting(fallbackLat, fallbackLng);
+        },
+        { enableHighAccuracy: true, timeout: 5000 }
+      );
+    } else {
+      const fallbackLat = 10.7769;
+      const fallbackLng = 106.7009;
+      startRouting(fallbackLat, fallbackLng);
+    }
+  },
+
+  clearInAppRoute() {
+    if (this.activeRoutePolyline && this.gsbhMap) {
+      this.gsbhMap.removeLayer(this.activeRoutePolyline);
+      this.activeRoutePolyline = null;
+    }
+    const banner = document.getElementById("inAppRoutingBanner");
+    if (banner) {
+      banner.classList.add("hidden");
     }
   },
 
@@ -3279,7 +3423,7 @@ const CJAudit = {
 
     const nppCounts = new Map();
     nppStores.forEach(s => {
-      const npp = (s.nppName || s.route || "").trim();
+      const npp = (s.nppName || s.nppCode || "").trim();
       if (npp) {
         nppCounts.set(npp, (nppCounts.get(npp) || 0) + 1);
       }
