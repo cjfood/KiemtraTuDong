@@ -919,6 +919,25 @@
                     <button onclick="CJAudit.fitAllStoresOnMap()" class="bg-gray-800 text-white font-bold px-2 py-1 rounded-lg text-[11px]">🔄 Toàn bộ</button>
                   </div>
                 </div>
+
+                <!-- Banner Lộ trình Dẫn đường trực tiếp trong App -->
+                <div id="inAppRoutingBanner" class="hidden bg-gradient-to-r from-blue-900 via-indigo-900 to-blue-950 text-white p-2.5 rounded-xl shadow-md flex items-center justify-between gap-2 text-xs border border-blue-400/40">
+                  <div class="flex items-center gap-2 overflow-hidden">
+                    <span class="text-lg shrink-0 animate-bounce">🚗</span>
+                    <div class="truncate">
+                      <div id="inAppRoutingTitle" class="font-black text-yellow-300 truncate">Lộ trình đến: Cửa hàng</div>
+                      <div id="inAppRoutingDetails" class="text-[11px] text-blue-200 font-bold">Khoảng cách: ~2.5 km • ~8 phút</div>
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-1.5 shrink-0">
+                    <a id="inAppRoutingGmapsLink" href="#" target="_blank" rel="noopener noreferrer" class="bg-blue-600 hover:bg-blue-500 text-white text-[10px] font-black px-2 py-1.5 rounded-lg shadow-sm flex items-center gap-1">
+                      <span>🗺️</span>
+                      <span>Google</span>
+                    </a>
+                    <button onclick="CJAudit.clearInAppRoute()" class="bg-white/20 hover:bg-white/30 text-white text-[10px] font-black px-2 py-1.5 rounded-lg cursor-pointer">✕ Đóng</button>
+                  </div>
+                </div>
+
                 <div id="gsbhMap" class="w-full h-[450px] lg:h-[560px] rounded-2xl border border-gray-300 shadow-inner z-10 overflow-hidden"></div>
               </div>
             </div>
@@ -3551,14 +3570,14 @@
   <div id="appToast" class="fixed top-5 right-5 z-50 opacity-0 translate-y-[-20px] pointer-events-none transition-all duration-300"></div>
 
   <!-- ================= APPLICATION SCRIPTS ================= -->
-  <script src="js/data.js?v=25.0"></script>
-  <script src="js/auth.js?v=25.0"></script>
-  <script src="js/storage.js?v=25.0"></script>
-  <script src="js/watermark.js?v=25.0"></script>
-  <script src="js/cloud_sync.js?v=25.0"></script>
-  <script src="js/audit.js?v=25.0"></script>
-  <script src="js/dashboard.js?v=25.0"></script>
-  <script src="js/excel.js?v=25.0"></script>
-  <script src="js/app.js?v=25.0"></script>
+  <script src="js/data.js?v=26.0"></script>
+  <script src="js/auth.js?v=26.0"></script>
+  <script src="js/storage.js?v=26.0"></script>
+  <script src="js/watermark.js?v=26.0"></script>
+  <script src="js/cloud_sync.js?v=26.0"></script>
+  <script src="js/audit.js?v=26.0"></script>
+  <script src="js/dashboard.js?v=26.0"></script>
+  <script src="js/excel.js?v=26.0"></script>
+  <script src="js/app.js?v=26.0"></script>
 </body>
 </html>
